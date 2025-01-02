@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap" rel="stylesheet">
+
+    <title>Take a Hike</title>
+
+    <script>
+      "use strict";
+
+      function randomDraw(deck, removesFromDeck) {
+        const randomIndex = Math.floor(Math.random() * deck.length);
+        const drawResult = removesFromDeck ? deck.splice(randomIndex, 1)[0] : deck[randomIndex];
+        return drawResult;
+      }
+
+      function wrapInBadge(text) {
+        return `<span class="badge">${text}</span>`;
+      }
+
+      const root = document.querySelector(':root');
+
+      function updateCssVar(varName, value) {
+        root.style.setProperty(varName, value);
+      }
+
+      const parcelOptions = [
+        {
+          id: "litter",
+          description: "Blech, it's just trash!",
+          content: ["bottle", "wrapper"],
+          chance: 6,
+        },
+        {
+          id: "snack",
+          description: "Was this someone's snack?",
+          content: ["nut", "berry"],
+          chance: 4,
+        },
+        {
+          id: "material",
+          description: "Got a nice ribbon.  :O",
+          content: ["ribbon"],
+          chance: 2,
+        },
+        {
+          id: "bar",
+          description: "Score!",
+          content: ["snackbar"],
+          chance: 1,
+        },
+        {
+          id: "capacity",
+          description: "An empty but usable bag, sweet!",
+          content: ["bag"],
+          chance: 1,
+        },
+      ];
+
+      // ID -> parcel option
+      const parcelOptionsMap = new Map(parcelOptions.map(parcelOption => [parcelOption.id, parcelOption]));
+
+      const parcelDeck = [];
+
+      for (const parcelOption of parcelOptions) {
+        for (let i = 0; i < parcelOption.chance; i++) {
+          parcelDeck.push(parcelOption.id);
+        }
+      }
+
+      const mushroomSideEffects = [
+        {
+          id: "nothing",
+          description: "Tastes nice!",
+          chance: 8,
+        },
+        {
+          id: "queasy",
+          description: "I feel a little queasy...",
+          chance: 6,
+          onEffect(player) {
+            player.queasyCounter += 5;
+            game.updateStaminaDisplay();
+          },
+        },
+        {
+          id: "yucky",
+          description: "Yuck, nasty!",
+          chance: 4,
+          onEffect(player) {
+            player.loseStamina(5);
+          },
+        },
+        {
+          id: "toxic",
+          description: "I feel weaker...",
+          chance: 3,
+          onEffect(player) {
+            player.loseMaxStamina(2);
+          },
+        },
+        // {
+        //   id: "whoa",
+        //   description: "Whoa man...",
+        //   chance: 1,
+        //   onEffect(player) {
+        //     player.increaseHighPathSizeCounter(10);
+        //   },
+        // },
+        // {
+        //   id: "blurry",
+        //   description: "My vision's getting blurry...",
+        //   chance: 2,
+        //   onEffect(player) {
+        //     player.increaseLowVisionCounter(20);
+        //   },
+        // },
+      ];
+
+      // ID -> mushroom side effect
+      const mushroomSideEffectsMap = new Map(mushroomSideEffects.map(mushroomSideEffect => [mushroomSideEffect.id, mushroomSideEffect]));
+
+      const mushroomSideEffectsDeck = [];
+
+      for (const mushroomSideEffect of mushroomSideEffects) {
+        for (let i = 0; i < mushroomSideEffect.chance; i++) {
+          mushroomSideEffectsDeck.push(mushroomSideEffect.id);
+        }
+      }
+
+      // TODO - 🪦🥀↔️🧺☘️🍀🐚🪶🍃🍂🍁🐌🐞🪲🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦉🦎🐍🐢
+      // Clover - small chance to be four-leafed when picked up, which increases the likelihood of favorable outcomes
+
+      const pathOptions = [
+        {
+          id: "blank",
+          name: "&#x200B;",
+          tags: [],
+          description: "Represents a path option with nothing on it.  If I see this description, it's a bug!",
+          chance: 15,
+          onPick(player) {
+            // Gain nothing
+            return true;
+          },
+        },
+        {
+          id: "bag",
+          name: "👜 Bag",
+          tags: ["treasure", "tool"],
+          description: "Nice, I can carry more with this!",
+          chance: 0,
+          onPick(player) {
+            player.capacity += 2;
+            return false;
+          },
+          onDispose(player) {
+            player.capacity -= 2;
+
+            if (player.environment === "receptacle") {
+              player.actionMessage = `I put the ${wrapInBadge(this.name)} into the receptacle.  I Hope I know what I'm doing...`;
+              return true;
+            }
+
+            player.actionMessage += "  I Hope I know what I'm doing...";
+            return false;
+          },
+        },
+        {
+          id: "snackbar",
+          name: "🍫 Snack Bar",
+          tags: ["consumable"],
+          description: "Eat to recover 5 stamina.",
+          chance: 0,
+          specialConditions: [
+            {
+              id: "waste",
+              get description() {
+                return `Leaves me with a ${wrapInBadge(pathOptionsMap.get("wrapper").name)} when consumed.`;
+              },
+            },
+          ],
+          onConsume(player) {
+            player.recoverStamina(5);
+            player.encounterPathOptionById("wrapper");
+            player.actionMessage = `Ate the ${wrapInBadge(this.name)}.  That hit the spot!`;
+
+            guidebook.notesMap.get(this.id).specialConditions.get("waste").encountered = true;
+            return true;
+          },
+          onDispose(player) {
+            if (player.environment === "receptacle") {
+              player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  What a waste...`;
+              return true;
+            }
+
+            player.actionMessage += "  What a waste...";
+            return false;
+          },
+        },
+        {
+          id: "lunch",
+          name: "🧰 Packed Lunch",
+          tags: ["treasure", "consumable"],
+          description: "Eat to recover 10 stamina and free up the bag to carry something else.",
+          chance: 0,
+          specialConditions: [
+            {
+              id: "waste",
+              get description() {
+                return `Leaves me with ${wrapInBadge(pathOptionsMap.get("bag").name)}, ${wrapInBadge(pathOptionsMap.get("wrapper").name)
+                    }, ${wrapInBadge(pathOptionsMap.get("bottle").name)} when consumed.`;
+              },
+            },
+          ],
+          onConsume(player) {
+            player.recoverStamina(10);
+            player.encounterPathOptionById("bag");
+            player.encounterPathOptionById("wrapper");
+            player.encounterPathOptionById("bottle");
+            player.actionMessage = `Ate the ${wrapInBadge(this.name)}.  Delicious!`;
+
+            guidebook.notesMap.get(this.id).specialConditions.get("waste").encountered = true;
+            return true;
+          },
+          onDispose(player) {
+            if (player.environment === "receptacle") {
+              player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  &lt;/3`;
+              return true;
+            }
+
+            player.actionMessage += "  &lt;/3";
+            return false;
+          },
+        },
+        {
+          id: "parcel",
+          name: "📦 Abandoned Parcel",
+          tags: ["chest"],
+          description: "Ooh, what could be inside?",
+          chance: 3,
+          get specialConditions() {
+            return parcelOptions.map(parcelOption => {
+              return {
+                ...parcelOption,
+                get description() {
+                  return `Possibility: ${parcelOption.content.map(contentId => wrapInBadge(pathOptionsMap.get(contentId).name)).join(", ")}.`;
+                }
+              }
+            });
+          },
+          onPick(player) {
+            const parcelResultId = randomDraw(parcelDeck, false);
+            const parcelContents = parcelOptionsMap.get(parcelResultId);
+            player.actionMessage = `Checked the parcel...  ${parcelContents.description}`;
+
+            for (const resultId of parcelContents.content) {
+              player.encounterPathOptionById(resultId);
+            }
+
+            guidebook.notesMap.get(this.id).specialConditions.get(parcelResultId).encountered = true;
+
+            if (parcelResultId === "capacity") {
+              album.memoriesMap.get("bonus-bag").checkAchieved(player);
+            }
+
+            return true;
+          },
+        },
+        {
+          id: "robin",
+          name: "🐦 Bright Bird",
+          tags: ["bird"],
+          description: "Normally just flies away...  :(",
+          chance: 1,
+          specialConditions: [
+            {
+              id: "feed",
+              get description() {
+                return `I can feed it a ${wrapInBadge(pathOptionsMap.get("berry").name)} if I have one!`;
+              }
+            },
+            {
+              id: "cure",
+              description: "I'm so excited by getting to feed it that it cures my queasiness!",
+            },
+          ],
+          onPick(player) {
+            const berryIndex = player.heldItems.findIndex(heldItem => heldItem.id === "berry");
+
+            if (berryIndex >= 0) {
+              const berryItem = player.heldItems[berryIndex];
+              player.heldItems.splice(berryIndex, 1);
+
+              guidebook.notesMap.get(this.id).specialConditions.get("feed").encountered = true;
+              album.memoriesMap.get("bird-feeder").checkAchieved(player);
+
+              if (player.queasyCounter > 0) {
+                guidebook.notesMap.get(this.id).specialConditions.get("cure").encountered = true;
+                album.memoriesMap.get("wild-remedy").checkAchieved(player);
+              }
+
+              player.queasyCounter = 0;
+              player.actionMessage = `I got to feed a ${wrapInBadge(berryItem.name)} to the ${wrapInBadge(this.name)}!  Feeling great.  :D`;
+            } else {
+              player.actionMessage = "Aw, the bird flew away.  :(";
+            }
+
+            return true;
+          },
+        },
+        {
+          id: "blackbird",
+          name: "🐦‍⬛ Dark Bird",
+          tags: ["bird"],
+          description: "Normally just flies away...  :(",
+          chance: 1,
+          specialConditions: [
+            {
+              id: "feed",
+              get description() {
+                return `I can feed it a ${wrapInBadge(pathOptionsMap.get("nut").name)} if I have one!`;
+              }
+            },
+            {
+              id: "cure",
+              description: "I'm so excited by getting to feed it that it cures my queasiness!",
+            },
+          ],
+          onPick(player) {
+            const nutIndex = player.heldItems.findIndex(heldItem => heldItem.id === "nut");
+
+            if (nutIndex >= 0) {
+              const nutItem = player.heldItems[nutIndex];
+              player.heldItems.splice(nutIndex, 1);
+
+              guidebook.notesMap.get(this.id).specialConditions.get("feed").encountered = true;
+              album.memoriesMap.get("bird-feeder").checkAchieved(player);
+
+              if (player.queasyCounter > 0) {
+                guidebook.notesMap.get(this.id).specialConditions.get("cure").encountered = true;
+                album.memoriesMap.get("wild-remedy").checkAchieved(player);
+              }
+
+              player.queasyCounter = 0;
+              player.actionMessage = `I got to feed a ${wrapInBadge(nutItem.name)} to the ${wrapInBadge(this.name)}!  Feeling great.  :D`;
+            } else {
+              player.actionMessage = "Aw, the bird flew away.  :(";
+            }
+
+            return true;
+          },
+        },
+        {
+          id: "bottle",
+          name: "🍾 Discarded Bottle",
+          tags: ["obstacle", "trash"],
+          description: "Ugh.  Bring it to a receptacle to dispose of it properly.",
+          chance: 4,
+          onDispose(player) {
+            if (player.environment === "receptacle") {
+              pathOptionsMap.get(this.id).negativeModifier++;
+              pathOptionsMap.get("blank").positiveModifier++;
+              guidebook.notesMap.get("receptacle").specialConditions.get("clean").encountered = true;
+              player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  :)`;
+
+              album.memoriesMap.get("good-samaritan").checkAchieved(player);
+              return true;
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "wrapper",
+          name: "🍬 Discarded Wrapper",
+          tags: ["obstacle", "trash"],
+          description: "Gross.  Bring it to a receptacle to dispose of it properly.",
+          chance: 4,
+          onDispose(player) {
+            if (player.environment === "receptacle") {
+              pathOptionsMap.get(this.id).negativeModifier++;
+              pathOptionsMap.get("blank").positiveModifier++;
+              guidebook.notesMap.get("receptacle").specialConditions.get("clean").encountered = true;
+              player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  :)`;
+
+              album.memoriesMap.get("good-samaritan").checkAchieved(player);
+              return true;
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "receptacle",
+          name: "🚮 Trash Receptacle",
+          tags: ["environment"],
+          get description() {
+            return `There is a ${wrapInBadge(this.name)} available.`;
+          },
+          chance: 2,
+          specialConditions: [
+            {
+              id: "clean",
+              description: "More and more trash will appear in the woods over time, but I can reduce the amount whenever I use this to dispose of some.",
+            },
+          ],
+          onPick(player) {
+            player.environment = "receptacle";
+            return true;
+          },
+        },
+        {
+          id: "mushroom",
+          name: "🍄‍🟫 Mushroom",
+          tags: ["consumable"],
+          description: "Eat to recover 4 stamina, but may have side effects.",
+          chance: 6,
+          get specialConditions() {
+            return mushroomSideEffects.map(sideEffect => {
+              return {
+                ...sideEffect,
+                get description() {
+                  return `Possibility: ${sideEffect.description}`;
+                }
+              }
+            });
+          },
+          onConsume(player) {
+            player.recoverStamina(4);
+            const sideEffectId = randomDraw(mushroomSideEffectsDeck, false);
+            const sideEffect = mushroomSideEffectsMap.get(sideEffectId);
+
+            if (sideEffect.onEffect) {
+              sideEffect.onEffect(player);
+            }
+
+            guidebook.notesMap.get(this.id).specialConditions.get(sideEffectId).encountered = true;
+
+            player.actionMessage = `Ate the ${wrapInBadge(this.name)}...  ${sideEffect.description}`;
+            return true;
+          },
+        },
+        {
+          id: "berry",
+          name: "🫐 Berry",
+          tags: ["consumable"],
+          description: "Eat to recover stamina.  The more in one go, the better!",
+          chance: 12,
+          specialConditions: [
+            {
+              id: "fill",
+              description: "I keep craving and recovering more until I finally have my fill after 6 in a row.",
+            },
+          ],
+          onConsume(player) {
+            player.recoverStamina(player.berryStreak);
+
+            player.berryStreak = (player.berryStreak + 1) % 6;
+
+            player.actionMessage = `Ate the ${wrapInBadge(this.name)}.  ${
+                (player.berryStreak > 0) ? `I crave more!` : `Yummy!`}`;
+
+            album.memoriesMap.get("berry-bonanza").checkAchieved(player);
+
+            return true;
+          },
+        },
+        {
+          id: "cherry",
+          name: "🍒 Cherry",
+          tags: ["consumable"],
+          description: "Eat to recover 3 stamina, but has to be done in pairs.",
+          chance: 5,
+          onConsume(player) {
+            if (player.heldItems.filter(heldItem => heldItem.id === "cherry").length >= 2) {
+              player.recoverStamina(6);
+
+              setTimeout(() => {
+                const cherryIndex = player.heldItems.findIndex(heldItem => heldItem.id === "cherry");
+                player.heldItems.splice(cherryIndex, 1);
+                game.updateHeldItemsDisplay();
+              });
+
+              player.actionMessage = `Ate the ${wrapInBadge(this.name)} along with another, just as it was meant to be.  Ah...`;
+              return true;
+            }
+
+            player.actionMessage = `I need another ${wrapInBadge(this.name)} to eat with this.  It's the rules!  >:(`;
+            return false;
+          },
+        },
+        {
+          id: "tangerine",
+          name: "🍊 Fruit",
+          tags: ["consumable"],
+          description: "Eat to recover 7 stamina, but takes a while to peel.",
+          stepsLeftToPeel: 15,
+          chance: 2,
+          onConsume(player) {
+            if (this.stepsLeftToPeel <= 0) {
+              player.recoverStamina(7);
+              player.actionMessage = `Ate the ${wrapInBadge(this.name)}.  It took some work, but it was worth it.  :P`;
+              return true;
+            }
+
+            player.actionMessage = `I won't be done peeling this ${wrapInBadge(this.name)} for another ${this.stepsLeftToPeel} step${this.stepsLeftToPeel !== 1 ? "s" : ""}.`;
+            return false;
+          },
+        },
+        {
+          id: "nut",
+          name: "🌰 Nut",
+          tags: ["consumable"],
+          description: "Eat to gain 1 max stamina.  Requires something to break the shell.",
+          chance: 10,
+          specialConditions: [
+            {
+              id: "rock",
+              get description() {
+                return `I can use a ${wrapInBadge(pathOptionsMap.get("rock").name)} for this!`;
+              }
+            },
+          ],
+          onConsume(player) {
+            if (player.heldItems.some(heldItem => heldItem.id === "rock")) {
+              player.gainMaxStamina(1);
+              player.actionMessage = `Ate the ${wrapInBadge(this.name)} by breaking the shell with a ${wrapInBadge(pathOptionsMap.get("rock").name)}.  I feel stronger!`;
+
+              guidebook.notesMap.get(this.id).specialConditions.get("rock").encountered = true;
+              guidebook.notesMap.get("rock").specialConditions.get("nut").encountered = true;
+              return true;
+            }
+
+            const withText = player.heldItems.some(heldItem => heldItem.id === "bottle") ? `nothing but a flimsy ${wrapInBadge(pathOptionsMap.get("bottle").name)}` : "my bare hands";
+
+            player.actionMessage = `I can't crack open the ${wrapInBadge(this.name)} with ${withText}.  :(`;
+            return false;
+          },
+        },
+        {
+          id: "rock",
+          name: "🪨 Rock",
+          tags: ["tool"],
+          description: "A nice hefty rock.  Hard to carry, though...",
+          chance: 3,
+          specialConditions: [
+            {
+              id: "nut",
+              get description() {
+                return `Holding this allows me to break the shell of a ${wrapInBadge(pathOptionsMap.get("nut").name)}.`;
+              }
+            },
+            {
+              id: "bug",
+              description: "More and more bugs will appear in the woods over time, but I can reduce the amount whenever I use this to shoo some away.",
+              get description() {
+                return "I'll use this to shoo away a bug if I run into one.  Good riddance!";
+              }
+            },
+          ],
+          onPick(player) {
+            player.capacity--;
+
+            setTimeout(() => album.memoriesMap.get("rock-collector").checkAchieved(player), 0);
+            setTimeout(() => album.memoriesMap.get("rock-maniac").checkAchieved(player), 0);
+
+            return false;
+          },
+          onDispose(player) {
+            player.capacity++;
+            player.actionMessage += "  I feel lighter already.";
+            return false;
+          }
+        },
+        {
+          id: "mosquito",
+          name: "🦟 Nasty Nuisance",
+          tags: ["obstacle", "bug"],
+          description: "Nope!  No thanks.  I'll just run past it until I can't see it anymore.",
+          chance: 0,
+          specialConditions: [
+            {
+              id: "shoo",
+              get description() {
+                return `I'll shoo it away instead if I have a ${wrapInBadge(pathOptionsMap.get("rock").name)} I can use up.  Good riddance!`;
+              },
+            },
+          ],
+          onPick(player) {
+            const rockIndex = player.heldItems.findIndex(heldItem => heldItem.id === "rock");
+
+            if (rockIndex >= 0) {
+              const rockItem = player.heldItems[rockIndex];
+              rockItem.onDispose(player);
+              player.heldItems.splice(rockIndex, 1);
+              player.actionMessage = `Shooed the ${wrapInBadge(this.name)} away with a ${wrapInBadge(rockItem.name)}.  Good riddance!`;
+
+              pathOptionsMap.get(this.id).negativeModifier++;
+              pathOptionsMap.get("blank").positiveModifier++;
+              guidebook.notesMap.get(this.id).specialConditions.get("shoo").encountered = true;
+              guidebook.notesMap.get("rock").specialConditions.get("bug").encountered = true;
+              album.memoriesMap.get("bug-banisher").checkAchieved(player);
+            } else {
+              for (let i = 0; i < game.pathVisibility - 1; i++) {
+                game.takePathStep();
+              }
+
+              player.actionMessage = "Gah, a bug!  Managed to run passed it.";
+            }
+
+            return true;
+          },
+        },
+        {
+          id: "roach",
+          name: "🪳 Creepy Crawly",
+          tags: ["obstacle", "bug"],
+          description: "Nope!  No thanks.  I'll just run past it until I can't see it anymore.",
+          chance: 0,
+          specialConditions: [
+            {
+              id: "shoo",
+              get description() {
+                return `I'll shoo it away instead if I have a ${wrapInBadge(pathOptionsMap.get("rock").name)} I can use up.  Good riddance!`;
+              },
+            },
+          ],
+          onPick(player) {
+            const rockIndex = player.heldItems.findIndex(heldItem => heldItem.id === "rock");
+
+            if (rockIndex >= 0) {
+              const rockItem = player.heldItems[rockIndex];
+              rockItem.onDispose(player);
+              player.heldItems.splice(rockIndex, 1);
+              player.actionMessage = `Shooed the ${wrapInBadge(this.name)} away with a ${wrapInBadge(rockItem.name)}.  Good riddance!`;
+
+              pathOptionsMap.get(this.id).negativeModifier++;
+              pathOptionsMap.get("blank").positiveModifier++;
+              guidebook.notesMap.get(this.id).specialConditions.get("shoo").encountered = true;
+              guidebook.notesMap.get("rock").specialConditions.get("bug").encountered = true;
+              album.memoriesMap.get("bug-banisher").checkAchieved(player);
+            } else {
+              for (let i = 0; i < game.pathVisibility - 1; i++) {
+                game.takePathStep();
+              }
+
+              player.actionMessage = "Gah, a bug!  Managed to run passed it.";
+            }
+
+            return true;
+          },
+        },
+        {
+          id: "tracks",
+          name: "🐾 Animal Tracks",
+          tags: ["tracking"],
+          description: "Ooh, if I follow them all, what might they lead to?",
+          chance: 1,
+          onPick(player) {
+            player.trackCounter = -player.trackCounter;
+            player.trackCounter++;
+            player.actionMessage = "Ooh, animal tracks!  I wonder what they'll lead to if I keep following them...";
+
+            if (player.trackCounter >= player.trackPathLength) {
+              player.actionMessage += "  Oh!";
+            }
+
+            return true;
+          },
+          specialConditions: [
+            {
+              id: "sighting",
+              get description() {
+                return `Possibility: ${wrapInBadge(pathOptionsMap.get("bunny").name)}!  &lt;3`;
+              },
+            },
+            {
+              id: "bust",
+              get description() {
+                return `Possibility: ${wrapInBadge(pathOptionsMap.get("turd").name)}.  :/`;
+              },
+            },
+          ],
+        },
+        {
+          id: "bunny",
+          name: "🐇 Bunny",
+          tags: ["tracking"],
+          description: `So cute.  Makes my day!  &lt;3`,
+          chance: -1,
+          specialConditions: [
+            {
+              id: "cure",
+              get description() {
+                return `Seeing it not only recovers some stamina, but also cures my queasiness!`;
+              },
+            },
+          ],
+          onPick(player) {
+            player.actionMessage = `Whoa, a ${wrapInBadge(this.name)}!  So cute.  My day is made!  &lt;3`;
+            player.recoverStamina(2 * player.trackPathLength);
+            player.trackPathLength = 0;
+            album.memoriesMap.get("special-sighting").checkAchieved(player);
+
+            if (player.queasyCounter > 0) {
+              player.queasyCounter = 0;
+              guidebook.notesMap.get(this.id).specialConditions.get("cure").encountered = true;
+              album.memoriesMap.get("wild-remedy").checkAchieved(player);
+            }
+
+            return true;
+          },
+        },
+        {
+          id: "turd",
+          name: "💩 Turd",
+          tags: ["tracking"],
+          description: "Ew.  Makes me feel queasy...",
+          chance: -1,
+          onPick(player) {
+            // Counts down immediately after pick
+            player.queasyCounter += 2 * player.trackPathLength;
+            player.trackPathLength = 0;
+            player.actionMessage = "Ew, something defecated here!  I lost my appetite...";
+
+            album.memoriesMap.get("insatiable-curiosity").checkAchieved(player);
+            return true;
+          },
+        },
+        {
+          id: "bouquet",
+          name: "💐 Bouquet",
+          tags: ["treasure"],
+          // Use a regular function rather than a getter so that it recalculates on each access
+          // and survives copying the object with the spread operator
+          getDescription() {
+            return `A lovely bouquet of ${this.flowers.length ? `${this.flowers.length} flowers:\n${
+            this.flowers.map(flower => pathOptionsMap.get(flower).name.substring(0, 2)).join("")
+            }\n\n` : "flowers.  "}Much easier to carry.`
+          },
+          flowers: [],
+          chance: 0,
+          // TODO - special conditions: different flower combos could translate to different "codes" that can perhaps lead to different outcomes
+          // if left at shrines or on graves or something.  Lots of possibilities.
+          onPick(player) {
+            setTimeout(() => album.memoriesMap.get("balanced-bouquet").checkAchieved(player));
+            setTimeout(() => album.memoriesMap.get("favorite-flower").checkAchieved(player));
+            setTimeout(() => album.memoriesMap.get("fixated-florist").checkAchieved(player));
+            return false;
+          },
+          onDispose(player) {
+            if (player.environment === "receptacle") {
+              player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  C'est la vie...`;
+              return true;
+            }
+
+            player.actionMessage += "  C'est la vie...";
+            return false;
+          },
+        },
+        {
+          id: "ribbon",
+          name: "🎗️ Ribbon",
+          tags: ["tool"],
+          description: "With some effort, I can use this to turn all my flowers into a bouquet.",
+          chance: 1,
+          onConsume(player) {
+            const heldFlowers = player.heldItems.filter(heldItem => heldItem.tags.includes("flower"));
+
+            if (heldFlowers.length > 1) {
+              const nonFlowers = player.heldItems.filter(heldItem => heldItem.tags.includes("flower") === false);
+              player.heldItems = nonFlowers;
+
+              const bouquet = {...pathOptionsMap.get("bouquet")};
+              bouquet.flowers = heldFlowers.map(heldItem => heldItem.id);
+              player.encounterPathOption(bouquet);
+
+              player.actionMessage = `Used the ${wrapInBadge(this.name)} to make a ${wrapInBadge(pathOptionsMap.get("bouquet").name)} out of all my flowers.  :)`;
+              player.loseStamina(heldFlowers.length);
+              return true;
+            }
+
+            player.actionMessage = `I need at least two flowers to make a bouquet.`;
+            return false;
+          },
+          onDispose(player) {
+            if (player.environment === "receptacle") {
+              player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  C'est la vie...`;
+              return true;
+            }
+
+            player.actionMessage += "  C'est la vie...";
+            return false;
+          },
+        },
+        {
+          id: "rose",
+          name: "🌹 Red Flower",
+          tags: ["flower"],
+          description: "Collectable.  Smells nice!",
+          chance: 2,
+          onPick(player) {
+            setTimeout(() => album.memoriesMap.get("flower-finder").checkAchieved(player));
+            setTimeout(() => album.memoriesMap.get("flower-power").checkAchieved(player));
+            setTimeout(() => album.memoriesMap.get("flower-frenzy").checkAchieved(player));
+            return false;
+          },
+        },
+        {
+          id: "hyacinth",
+          name: "🪻 Purple Flower",
+          tags: ["flower"],
+          description: "Collectable.  So vibrant!",
+          chance: 2,
+          onPick(player) {
+            setTimeout(() => album.memoriesMap.get("flower-finder").checkAchieved(player));
+            setTimeout(() => album.memoriesMap.get("flower-power").checkAchieved(player));
+            setTimeout(() => album.memoriesMap.get("flower-frenzy").checkAchieved(player));
+            return false;
+          },
+        },
+        {
+          id: "tulip",
+          name: "🌷 Pink Flower",
+          tags: ["flower"],
+          description: "Collectable.  Soft petals!",
+          chance: 2,
+          onPick(player) {
+            setTimeout(() => album.memoriesMap.get("flower-finder").checkAchieved(player));
+            setTimeout(() => album.memoriesMap.get("flower-power").checkAchieved(player));
+            setTimeout(() => album.memoriesMap.get("flower-frenzy").checkAchieved(player));
+            return false;
+          },
+        },
+        {
+          id: "daisy",
+          name: "🌼 Pale Flower",
+          tags: ["flower"],
+          description: "Collectable.  Cheerful!",
+          chance: 2,
+          onPick(player) {
+            setTimeout(() => album.memoriesMap.get("flower-finder").checkAchieved(player));
+            setTimeout(() => album.memoriesMap.get("flower-power").checkAchieved(player));
+            setTimeout(() => album.memoriesMap.get("flower-frenzy").checkAchieved(player));
+            return false;
+          },
+        },
+      ];
+
+      // ID -> path option
+      const pathOptionsMap = new Map(pathOptions.map(pathOption => [pathOption.id, pathOption]));
+
+      class Guidebook {
+        notesMap;
+
+        constructor() {
+          this.notesMap = new Map(pathOptions.filter(pathOption => pathOption.id !== "blank").map(pathOption => [pathOption.id, {
+            ...pathOption,
+            encountered: false,
+            seen: false,
+            specialConditions: new Map(pathOption.specialConditions ?
+                pathOption.specialConditions.map(condition => [condition.id, {
+                  ...condition,
+                  encountered: false,
+                  seen: false,
+                }])
+                : null),
+          }]));
+        }
+
+        getSortedNotes() {
+          return [...this.notesMap.values()].sort((a, b) => {
+            if (a.encountered === b.encountered) {
+              if (a.seen === b.seen) {
+                return b.chance - a.chance;
+              }
+
+              if (a.seen) {
+                return -1;
+              }
+
+              return 1;
+            } else if (a.encountered) {
+              return -1;
+            }
+
+            return 1;
+          });
+        }
+
+        show() {
+          const guidebookContent = document.getElementById("guidebook-content");
+          guidebookContent.innerHTML = "";
+
+          setTimeout(() => guidebookContent.scrollTo(0, 0));
+
+          const sortedNotes = this.getSortedNotes();
+
+          for (const note of sortedNotes) {
+            const noteDiv = document.createElement("div");
+            noteDiv.tabIndex = 0;
+            noteDiv.classList.add("guidebook-note");
+
+            if (note.seen === false && note.encountered === false) {
+              noteDiv.classList.add("not-seen");
+            }
+
+            const noteName = document.createElement("h2");
+            noteName.classList.add("guidebook-note-name");
+            noteName.innerText = note.encountered === false && note.seen === false && note.chance <= 0 ? "???" : note.name;
+            noteDiv.appendChild(noteName);
+
+            const noteList = document.createElement("ul");
+
+            const noteDescription = document.createElement("li");
+            noteDescription.innerHTML = note.encountered ? (note.getDescription ? note.getDescription() : note.description) : "???";
+            noteList.appendChild(noteDescription);
+
+            for (const specialCondition of note.specialConditions.values()) {
+              const conditionDescription = document.createElement("li");
+              conditionDescription.innerHTML = specialCondition.encountered ? specialCondition.description : "???";
+              noteList.appendChild(conditionDescription);
+            }
+
+            noteDiv.appendChild(noteList);
+            guidebookContent.appendChild(noteDiv);
+          }
+
+          const guidebookDisplay = document.getElementById("guidebook-display");
+          guidebookDisplay.showModal();
+        }
+
+        hide() {
+          const guidebookDisplay = document.getElementById("guidebook-display");
+          guidebookDisplay.close();
+        }
+      }
+
+      function notifyAchievement(achievement) {
+        document.getElementById("memories-button").classList.add("notify");
+        // setTimeout(() => alert(`Achieved '${achievement.name}'!`));
+      }
+
+      // TODO - make an even number so that you don't end up with one large photo at the bottom of the album
+      const achievements = [
+        {
+          id: "bonus-bag",
+          emojiHint: "📦👜",
+          difficulty: 2,
+          name: "Bonus Bag",
+          imageName: "bonus-bag.jpg",
+          description: "Found a nice extra bag to use",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              this.achieved = true;
+              notifyAchievement(this);
+
+              return true;
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "berry-bonanza",
+          emojiHint: "🫐🫐🫐🫐🫐🫐",
+          difficulty: 2,
+          name: "Berry Bonanza",
+          imageName: "berry-bonanza.jpg",
+          description: "Ate my fill of berries",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              if (player.berryStreak === 0) {
+                this.achieved = true;
+                guidebook.notesMap.get("berry").specialConditions.get("fill").encountered = true;
+                notifyAchievement(this);
+
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
+        // Note that this assumes nuts will be the only way to raise max stamina
+        {
+          id: "nut-nut",
+          emojiHint: "🌰🌰🌰🌰🌰",
+          difficulty: 2,
+          name: "Nut Nut",
+          imageName: "nut-nut.jpg",
+          description: "Ate enough nuts to raise my max stamina to 25",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              if (player.maxStamina >= 25) {
+                this.achieved = true;
+                notifyAchievement(this);
+
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "super-nut-nut",
+          emojiHint: "🌰🌰🌰🌰🌰🌰🌰🌰🌰🌰",
+          difficulty: 4,
+          name: "Super Nut Nut",
+          imageName: "super-nut-nut.jpg",
+          description: "Ate enough nuts to raise my max stamina to 30",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              if (player.maxStamina >= 30) {
+                this.achieved = true;
+                notifyAchievement(this);
+
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "bird-feeder",
+          emojiHint: "🐦🫐🌰🐦‍⬛",
+          difficulty: 1,
+          name: "Bird Feeder",
+          imageName: "bird-feeder.jpg",
+          description: "Got to feed a bird",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              this.achieved = true;
+              notifyAchievement(this);
+
+              return true;
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "special-sighting",
+          emojiHint: "🐾🐾🐾💗",
+          difficulty: 2,
+          name: "Special Sighting",
+          imageName: "special-sighting.jpg",
+          description: "Spotted a bunny by following all of its tracks",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              this.achieved = true;
+              notifyAchievement(this);
+
+              return true;
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "insatiable-curiosity",
+          emojiHint: "🐾🤢",
+          difficulty: 1,
+          name: "Insatiable Curiosity",
+          imageName: "insatiable-curiosity.jpg",
+          description: "Just couldn't help myself",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              this.achieved = true;
+              notifyAchievement(this);
+
+              return true;
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "wild-remedy",
+          emojiHint: "🤢💗😊",
+          difficulty: 4,
+          name: "Wild Remedy",
+          imageName: "wild-remedy.jpg",
+          description: "Recovered from queasiness by having an exciting encounter",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              this.achieved = true;
+              notifyAchievement(this);
+
+              return true;
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "rock-collector",
+          emojiHint: "🪨🪨🪨",
+          difficulty: 3,
+          name: "Rock Collector",
+          imageName: "rock-collector.jpg",
+          description: "Held 3 rocks at once",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              if (player.heldItems.filter(item => item.id === "rock").length >= 3) {
+                this.achieved = true;
+                notifyAchievement(this);
+
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "rock-maniac",
+          emojiHint: "🪨🪨🪨🪨",
+          difficulty: 5,
+          name: "Rock Maniac",
+          imageName: "rock-maniac.jpg",
+          description: "Held 4 rocks at once",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              if (player.heldItems.filter(item => item.id === "rock").length >= 4) {
+                this.achieved = true;
+                notifyAchievement(this);
+
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "good-samaritan",
+          emojiHint: "🍾🍬🍾🍬🍾🍬🚮",
+          difficulty: 3,
+          name: "Good Samaritan",
+          imageName: "good-samaritan.jpg",
+          description: "Disposed of 6 pieces of trash properly and made the woods a little cleaner",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              const wrapperModifier = pathOptionsMap.get("wrapper").negativeModifier;
+              const bottleModifier = pathOptionsMap.get("bottle").negativeModifier;
+
+              if (wrapperModifier + bottleModifier >= 6) {
+                this.achieved = true;
+                notifyAchievement(this);
+
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "bug-banisher",
+          emojiHint: "🪨🪳🪨🦟🪨🪳",
+          difficulty: 4,
+          name: "Bug Banisher",
+          imageName: "bug-banisher.jpg",
+          description: "Shooed 3 bugs away and made the woods a little more pleasant",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              const roachModifier = pathOptionsMap.get("roach").negativeModifier;
+              const mosquitoModifier = pathOptionsMap.get("mosquito").negativeModifier;
+
+              if (roachModifier + mosquitoModifier >= 3) {
+                this.achieved = true;
+                notifyAchievement(this);
+
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "flower-finder",
+          emojiHint: "🌹🪻🌷🌼",
+          difficulty: 1,
+          name: "Flower Finder",
+          imageName: "flower-finder.jpg",
+          description: "Held all flower types at once",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              let heldFlowerTypes = new Set(player.heldItems.filter(item => item.tags.includes("flower")).map(flower => flower.id));
+              const bouquetFlowers = player.heldItems.filter(item => item.id === "bouquet").map(bouquet => bouquet.flowers).flat();
+
+              for (const bouquetFlower of bouquetFlowers) {
+                heldFlowerTypes.add(bouquetFlower);
+              }
+
+              const totalPossibleFlowerTypes = pathOptions.filter(item => item.tags.includes("flower")).length;
+
+              if (heldFlowerTypes.size >= totalPossibleFlowerTypes) {
+                this.achieved = true;
+                notifyAchievement(this);
+
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "balanced-bouquet",
+          emojiHint: "💐🌹🪻🌷🌼",
+          difficulty: 2,
+          name: "Balanced Bouquet",
+          imageName: "balanced-bouquet.jpg",
+          description: "Made a bouquet out of the same number of every flower type",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              const heldBouquets = player.heldItems.filter(item => item.id === "bouquet");
+              const possibleFlowerTypes = pathOptions.filter(item => item.tags.includes("flower"));
+
+              for (const bouquet of heldBouquets) {
+                const bouquetFlowerTypes = new Set(bouquet.flowers);
+
+                if (bouquet.flowers.length % bouquetFlowerTypes.size === 0) {
+                  const flowersPerType = bouquet.flowers.length / bouquetFlowerTypes.size;
+
+                  for (const flowerType of possibleFlowerTypes) {
+                    if (bouquet.flowers.filter(flowerId => flowerId === flowerType.id).length !== flowersPerType) {
+                      break;
+                    }
+
+                    this.achieved = true;
+                    notifyAchievement(this);
+
+                    return true;
+                  }
+                }
+              }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "favorite-flower",
+          emojiHint: "💐🌹🌹🌹",
+          difficulty: 3,
+          name: "Favorite Flower",
+          imageName: "favorite-flower.jpg",
+          description: "Made a bouquet of 3 or more of the all the same flower type",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              const heldBouquets = player.heldItems.filter(item => item.id === "bouquet");
+
+              for (const bouquet of heldBouquets) {
+                const bouquetFlowerTypes = new Set(bouquet.flowers);
+
+                if (bouquet.flowers.length >= 3 && bouquetFlowerTypes.size === 1) {
+                  this.achieved = true;
+                  notifyAchievement(this);
+
+                  return true;
+                }
+              }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "fixated-florist",
+          emojiHint: "💐🌹🌹🌹🌹🌹",
+          difficulty: 5,
+          name: "Fixated Florist",
+          imageName: "fixated-florist.jpg",
+          description: "Made a bouquet of 5 or more of the all the same flower type",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              const heldBouquets = player.heldItems.filter(item => item.id === "bouquet");
+
+              for (const bouquet of heldBouquets) {
+                const bouquetFlowerTypes = new Set(bouquet.flowers);
+
+                if (bouquet.flowers.length >= 5 && bouquetFlowerTypes.size === 1) {
+                  this.achieved = true;
+                  notifyAchievement(this);
+
+                  return true;
+                }
+              }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "flower-power",
+          emojiHint: "🌹🌹🪻🌷🪻🌼🌹",
+          difficulty: 3,
+          name: "Flower Power",
+          imageName: "flower-power.jpg",
+          description: "Held a total of 7 or more flowers at once",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              const heldFlowerIds = player.heldItems.filter(item => item.tags.includes("flower")).map(flower => flower.id);
+              const bouquetFlowerIds = player.heldItems.filter(item => item.id === "bouquet").map(bouquet => bouquet.flowers).flat();
+
+              const totalFlowers = heldFlowerIds.length + bouquetFlowerIds.length;
+
+              if (totalFlowers >= 7) {
+                this.achieved = true;
+                notifyAchievement(this);
+
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "flower-frenzy",
+          emojiHint: "🌹🌹🪻🌷🪻🌼🌹🌼🌼🌷🪻",
+          difficulty: 5,
+          name: "Flower Frenzy",
+          imageName: "flower-frenzy.jpg",
+          description: "Held a total of 11 or more flowers at once",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              const heldFlowerIds = player.heldItems.filter(item => item.tags.includes("flower")).map(flower => flower.id);
+              const bouquetFlowerIds = player.heldItems.filter(item => item.id === "bouquet").map(bouquet => bouquet.flowers).flat();
+
+              const totalFlowers = heldFlowerIds.length + bouquetFlowerIds.length;
+
+              if (totalFlowers >= 11) {
+                this.achieved = true;
+                notifyAchievement(this);
+
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
+      ];
+
+      class Album {
+        memoriesMap;
+
+        constructor() {
+          this.memoriesMap = new Map(achievements.map(achievement => [achievement.id, {...achievement}]));
+        }
+
+        getAchievedMemories() {
+          return [...this.memoriesMap.values()].filter(achievement => achievement.achieved);
+        }
+
+        getSortedMemories() {
+          return [...this.memoriesMap.values()].sort((a, b) => {
+            if (a.achieved === b.achieved) {
+              return a.difficulty - b.difficulty;
+            } else if (a.achieved) {
+              return -1;
+            }
+
+            return 1;
+          });
+        }
+
+        show() {
+          const memoriesButton = document.getElementById("memories-button");
+          memoriesButton.classList.remove("notify");
+
+          const albumContent = document.getElementById("album-content");
+          albumContent.innerHTML = "";
+
+          setTimeout(() => albumContent.scrollTo(0, 0));
+
+          const sortedMemories = this.getSortedMemories();
+
+          for (const memory of sortedMemories) {
+            const memoryDiv = document.createElement("div");
+            memoryDiv.tabIndex = 0;
+            memoryDiv.classList.add("album-memory");
+
+            if (memory.achieved === false) {
+              memoryDiv.classList.add("not-achieved");
+            }
+
+            const memoryContent = document.createElement("div");
+            memoryContent.classList.add("album-memory__content");
+
+            if (memory.achieved && memory.imageName) {
+              const memoryImage = document.createElement("img");
+              memoryImage.src = `images/${memory.imageName}`;
+              memoryImage.draggable = false;
+              memoryContent.appendChild(memoryImage);
+            } else {
+              const memoryHint = document.createElement("span");
+              memoryHint.innerHTML = memory.emojiHint;
+              memoryContent.appendChild(memoryHint);
+            }
+            memoryDiv.appendChild(memoryContent);
+
+            const memoryHeader = document.createElement("h3");
+            memoryHeader.classList.add("album-memory__header");
+            memoryDiv.appendChild(memoryHeader);
+
+            const memoryText = document.createElement("span");
+            memoryText.innerHTML = memory.name;
+            memoryHeader.appendChild(memoryText);
+
+            const difficultyRating = document.createElement("span");
+            difficultyRating.innerHTML = "⭐".repeat(memory.difficulty);
+            memoryHeader.appendChild(difficultyRating);
+
+            const memoryDescription = document.createElement("p");
+            memoryDescription.classList.add("album-memory__description");
+            memoryDescription.innerHTML = memory.achieved ? memory.description : "???";
+            memoryDiv.appendChild(memoryDescription);
+
+            albumContent.appendChild(memoryDiv);
+          }
+
+          const albumDisplay = document.getElementById("album-display");
+          albumDisplay.showModal();
+        }
+
+        hide() {
+          const albumDisplay = document.getElementById("album-display");
+          albumDisplay.close();
+        }
+      }
+
+      class Player {
+        maxStamina;
+        stamina;
+        capacity;
+        heldItems;
+        environment;
+        actionMessage;
+        berryStreak;
+        queasyCounter;
+        trackCounter;
+        trackPathLength;
+
+        constructor() {
+          this.maxStamina = 20;
+          this.stamina = this.maxStamina;
+          this.capacity = 6;
+          this.heldItems = [];
+          this.environment = null;
+          this.actionMessage = null;
+          this.berryStreak = 0;
+          this.queasyCounter = 0;
+          this.trackCounter = 0;
+          this.trackPathLength = 0;
+
+          // Pick a random flower to become allergic to, causing low visibility or dropping an item?
+        }
+
+        gainMaxStamina(amount) {
+          this.maxStamina += amount;
+          game.updateStaminaDisplay();
+
+          album.memoriesMap.get("nut-nut").checkAchieved(this);
+          album.memoriesMap.get("super-nut-nut").checkAchieved(this);
+        }
+
+        loseMaxStamina(amount) {
+          this.maxStamina -= amount;
+          this.stamina = Math.min(this.stamina, this.maxStamina);
+          game.updateStaminaDisplay();
+
+          if (this.stamina <= 0) {
+            game.gameOver();
+          }
+        }
+
+        recoverStamina(amount) {
+          this.stamina = Math.min(this.stamina + amount, this.maxStamina);
+          game.updateStaminaDisplay();
+        }
+
+        loseStamina(amount) {
+          this.stamina = Math.max(this.stamina - amount, 0);
+          game.updateStaminaDisplay();
+
+          if (this.stamina <= 0) {
+            game.gameOver();
+          }
+        }
+
+        selectPathOption(pathOptionId) {
+          this.environment = null;
+          this.actionMessage = null;
+
+          this.encounterPathOptionById(pathOptionId);
+
+          game.takePathStep();
+        }
+
+        encounterPathOptionById(optionId) {
+          this.encounterPathOption({...pathOptionsMap.get(optionId)});
+        }
+
+        encounterPathOption(option) {
+          if (option.id === "blank") {
+            return;
+          }
+
+          // Returns true if replacing default behavior
+          if (option.onPick == null || !option.onPick(this)) {
+            this.heldItems.push(option);
+          }
+
+          guidebook.notesMap.get(option.id).encountered = true;
+        }
+
+        disposeItem(heldItemIndex) {
+          const heldItem = this.heldItems.splice(heldItemIndex, 1)[0];
+          this.actionMessage = `Tossed the ${wrapInBadge(heldItem.name)}!`;
+
+          // Returns true if replacing default behavior
+          if (heldItem.onDispose == null || !heldItem.onDispose(this)) {
+            this.loseStamina(1);
+          }
+
+          game.updatePathDisplay();
+          game.updateMessagesDisplay();
+          game.updateHeldItemsDisplay();
+        }
+
+        consumeItem(heldItemIndex) {
+          const heldItem = this.heldItems[heldItemIndex];
+
+          if (heldItem.tags.includes("consumable") && this.queasyCounter > 0) {
+            this.actionMessage = `I feel too queasy to eat anything.  I need to walk it off for ${this.queasyCounter} more step${this.queasyCounter !== 1 ? "s" : ""}.`;
+            game.updateMessagesDisplay();
+            return;
+          }
+
+          // Returns true if consume succeeded
+          if (heldItem.onConsume && heldItem.onConsume(this)) {
+            this.heldItems.splice(this.heldItems.indexOf(heldItem), 1);
+
+            if (heldItem.id !== "berry") {
+              this.berryStreak = 0;
+            }
+
+            game.updatePathDisplay();
+            game.updateMessagesDisplay();
+            game.updateHeldItemsDisplay();
+          } else {
+            game.updateMessagesDisplay();
+          }
+        }
+      }
+
+      class Game {
+        player;
+        gameActive;
+        pathDeck;
+        pathStepOptions;
+        pathSize;
+        pathVisibility;
+        stepCount;
+        iterationsCount;
+
+        constructor() {
+          this.player = new Player();
+          this.gameActive = false;
+          this.pathDeck = [];
+          this.pathStepOptions = [];
+          this.pathSize = 3;
+          this.pathVisibility = 3;
+          this.iterationsCount = 0;
+          this.stepCount = 0;
+        }
+
+        updateStaminaDisplay() {
+          const staminaDisplay = document.getElementById('stamina-display');
+          const staminaStatus = document.getElementById('stamina-status');
+          staminaDisplay.innerText = `${this.player.stamina}/${this.player.maxStamina}`;
+
+          if (this.player.stamina === 0) {
+            staminaDisplay.classList.add('low');
+            staminaStatus.innerHTML = '😩';
+          } else if (this.player.stamina <= 5) {
+            staminaDisplay.classList.add('low');
+            staminaStatus.innerHTML = this.player.queasyCounter > 0 ? '🤢' : '🥵'; // 😰
+          } else {
+            staminaDisplay.classList.remove('low');
+
+            if (this.player.queasyCounter > 0) {
+              staminaStatus.innerHTML = '🤢';
+            } else if (this.player.stamina <= 10) {
+              staminaStatus.innerHTML = '🙁'; // 😐🫤😓
+            } else if (this.player.stamina <= 15) {
+              staminaStatus.innerHTML = '🙂';
+            } else {
+              staminaStatus.innerHTML = '😊';
+            }
+          }
+        }
+
+        updateMessagesDisplay() {
+          const messagesDisplay = document.querySelector('#messages');
+
+          if (this.gameActive === false) {
+            let totalFlowers = this.player.heldItems.filter(item => item.tags.includes("flower")).length;
+            const bouquets = this.player.heldItems.filter(item => item.id === "bouquet");
+            totalFlowers = bouquets.reduce((total, bouquet) => total + bouquet.flowers.length, totalFlowers);
+
+            const achievedMemories = album.getAchievedMemories();
+            const totalAchievementDifficulty = achievedMemories.reduce((total, memory) => total + memory.difficulty, 0);
+
+            let finalMessage = "That was a nice hike.  :)";
+
+            if (totalAchievementDifficulty <= 5) {
+              finalMessage = "I should try to make things more memorable next time.";
+            } else if (totalAchievementDifficulty >= 15) {
+              finalMessage = "Wow, that was a hike to remember!  :D";
+            } else if (this.iterationsCount < 2) {
+              finalMessage = "I didn't walk very far.  There's still more to see!";
+            }
+
+            // Track litter disposal (but probably shouldn't count from own items)?  Bird encounters?
+
+            messagesDisplay.innerHTML = `<p>I'm beat.  Time to go home.</p><p>I took a total of ${this.stepCount} steps and made ${
+                achievedMemories.length} special memor${achievedMemories.length !== 1 ? "ies" : "y"}.</p><p>${finalMessage}</p>`;
+            return;
+          }
+
+          const messages = [];
+
+          if (this.player.actionMessage) {
+            messages.push(this.player.actionMessage);
+          }
+
+          if (this.player.environment) {
+            const environmentOption = pathOptionsMap.get(this.player.environment);
+
+            if (environmentOption) {
+              messages.push(environmentOption.description);
+            }
+          }
+
+          if (this.player.heldItems.length > this.player.capacity) {
+            messages.push("I have too many things to carry with me.")
+          }
+
+          messagesDisplay.innerHTML = messages.map(message => `<p>${message}</p>`).join('');
+        }
+
+        updateHeldItemsDisplay() {
+          const heldItemsDisplay = document.querySelector('#held-items');
+          heldItemsDisplay.innerHTML = "";
+
+          for (let i = 0; i < this.player.heldItems.length; i++) {
+            const heldItem = this.player.heldItems[i];
+            const itemDisplay = document.createElement('div');
+            itemDisplay.innerText = heldItem.name;
+            itemDisplay.tabIndex = 0;
+            itemDisplay.classList.add('held-item');
+
+            const itemDescription = document.createElement('p');
+            itemDescription.classList.add('item-description');
+            itemDescription.innerText = heldItem.getDescription ? heldItem.getDescription() : heldItem.description;
+            itemDisplay.appendChild(itemDescription);
+
+            const itemButtons = document.createElement('div');
+            itemButtons.classList.add('item-buttons');
+            itemDisplay.appendChild(itemButtons);
+
+            if (heldItem.onConsume) {
+              const consumeButton = document.createElement('button');
+              consumeButton.type = "button";
+              consumeButton.disabled = this.gameActive === false;
+              consumeButton.innerText = heldItem.tags.includes("consumable") ? "Consume" : "Use";
+              consumeButton.style.flexGrow = 3;
+              consumeButton.onclick = () => {
+                this.player.consumeItem(i);
+              };
+              itemButtons.appendChild(consumeButton);
+            }
+
+            // TODO - consider still allowing with a warning, maybe as an unlock after demonstrating a good handle of the game?
+            if (heldItem.tags.includes("treasure") === false) {
+              const disposeButton = document.createElement('button');
+              disposeButton.type = "button";
+              disposeButton.disabled = this.gameActive === false;
+              // Need to keep track of exceptions
+              disposeButton.innerText = this.player.environment === "receptacle" && heldItem.onDispose && heldItem.id !== "rock" ? "🚮" : "X";
+              disposeButton.ariaLabel = "Dispose";
+              disposeButton.onclick = () => {
+                this.player.disposeItem(i);
+              };
+              itemButtons.appendChild(disposeButton);
+            }
+
+
+            heldItemsDisplay.appendChild(itemDisplay);
+          }
+        }
+
+        updatePathDisplay() {
+          const pathDisplay = document.getElementById('path');
+          pathDisplay.innerHTML = "";
+
+          for (let i = 0; i < this.pathStepOptions.length; i++) {
+            for (const stepOptionId of this.pathStepOptions[i]) {
+              const stepOption = pathOptionsMap.get(stepOptionId);
+              const optionDisplay = document.createElement('button');
+              optionDisplay.type = "button";
+              optionDisplay.innerHTML = stepOption.name;
+              optionDisplay.classList.add('path-option');
+              optionDisplay.style.gridRow = this.pathStepOptions.length - i;
+              optionDisplay.disabled = this.player.heldItems.length > this.player.capacity || i > 0 || this.gameActive === false;
+              optionDisplay.onclick = () => {
+                this.player.selectPathOption(stepOption.id);
+              };
+
+              pathDisplay.appendChild(optionDisplay);
+
+              if (stepOptionId !== "blank") {
+                guidebook.notesMap.get(stepOptionId).seen = true;
+              }
+            }
+          }
+        }
+
+        addToPathDeck() {
+          for (const pathOption of pathOptions) {
+            for (let i = 0; i < (pathOption.chance + pathOption.positiveModifier - pathOption.negativeModifier); i++) {
+              this.pathDeck.push(pathOption.id);
+            }
+          }
+        }
+
+        drawFromPathDeck() {
+          if (this.pathDeck.length < 20) {
+            game.iterationsCount++;
+
+            for (const pathOption of pathOptions) {
+              if (pathOption.tags.includes("obstacle")) {
+                pathOption.positiveModifier += game.iterationsCount;
+                pathOptionsMap.get("blank").negativeModifier += game.iterationsCount;
+              } else if (pathOption.tags.includes("flower")) {
+                pathOption.positiveModifier++;
+              }
+            }
+
+            this.addToPathDeck();
+          }
+
+          const pathOptionId = randomDraw(this.pathDeck, true);
+          return pathOptionId;
+        }
+
+        takePathStep() {
+          this.pathStepOptions.splice(0, 1);
+          this.addToPathStepOptions();
+          this.updatePathDisplay();
+          this.updateMessagesDisplay();
+          this.updateHeldItemsDisplay();
+          this.player.loseStamina(1);
+          // this.player.berryStreak = 0;
+
+          this.stepCount++;
+
+          if (this.player.queasyCounter > 0) {
+            this.player.queasyCounter--;
+
+            if (this.player.queasyCounter === 0) {
+              this.updateStaminaDisplay();
+            }
+          }
+
+          const heldFruit = this.player.heldItems.filter(item => item.id === "tangerine");
+
+          for (const fruit of heldFruit) {
+            if (fruit.stepsLeftToPeel > 0) {
+              fruit.stepsLeftToPeel--;
+            }
+          }
+        }
+
+        addToPathStepOptions() {
+          const stepOptions = [];
+
+          let randomIndex = -1;
+
+          if (this.player.trackCounter > 0) {
+            randomIndex = Math.floor(Math.random() * this.pathSize);
+          }
+
+          for (let i = 0; i < this.pathSize; i++) {
+            if (randomIndex === i) {
+              let tracksOptionId;
+
+              if (this.player.trackCounter >= this.player.trackPathLength) {
+                if (Math.random() < 0.5) {
+                  tracksOptionId = "bunny";
+                  guidebook.notesMap.get("tracks").specialConditions.get("sighting").encountered = true;
+                } else {
+                  tracksOptionId = "turd";
+                  guidebook.notesMap.get("tracks").specialConditions.get("bust").encountered = true;
+                }
+
+                this.player.trackCounter = 0;
+              } else {
+                tracksOptionId = "tracks";
+                this.player.trackCounter = -this.player.trackCounter;
+              }
+
+              stepOptions.push(tracksOptionId);
+
+              continue;
+            }
+
+            let pathOptionId;
+
+            do {
+              pathOptionId = this.drawFromPathDeck();
+            } while (pathOptionId === "tracks" && (randomIndex >= 0 || [...stepOptions, ...this.pathStepOptions.flat()]
+                .some(optionId => pathOptionsMap.get(optionId).tags.includes("tracking"))));
+
+            if (pathOptionId === "tracks") {
+              this.player.trackCounter = 0;
+              this.player.trackPathLength = Math.floor(Math.random() * 3) + 2;
+            }
+
+            stepOptions.push(pathOptionId);
+          }
+
+          this.pathStepOptions.push(stepOptions);
+        }
+
+        startGame() {
+          // TODO - needs to reset so long as it's used for assessing the hike, but would be nice for it to persist...
+          album = new Album();
+
+          this.player = new Player();
+          this.player.encounterPathOptionById("lunch");
+          this.player.encounterPathOptionById("snackbar");
+
+          this.gameActive = true;
+          this.pathDeck = [];
+          this.pathStepOptions = [];
+
+          this.pathSize = 3;
+          updateCssVar('--path-size', 3);
+
+          this.pathVisibility = 3;
+          updateCssVar('--path-visibility', 3);
+
+
+          for (const pathOption of pathOptions) {
+            pathOption.negativeModifier = 0;
+            pathOption.positiveModifier = 0;
+          }
+
+          this.iterationsCount = 0;
+          this.stepCount = 0;
+          this.addToPathDeck();
+
+          for (let i = 0; i < this.pathVisibility; i++) {
+            this.addToPathStepOptions();
+          }
+
+          this.player.actionMessage = "Time to take a hike!  :)";
+
+          this.updateMessagesDisplay();
+          this.updatePathDisplay();
+          this.updateHeldItemsDisplay();
+          this.updateStaminaDisplay();
+
+          const titleScreen = document.getElementById('title-screen');
+          titleScreen.style.display = "none";
+
+          const hikeWrapper = document.getElementById('hike-wrapper');
+          hikeWrapper.style.display = "flex";
+
+          const restartButton = document.getElementById('restart-button');
+          restartButton.style.display = "none";
+        }
+
+        gameOver() {
+          this.gameActive = false;
+          this.updateMessagesDisplay();
+          this.updatePathDisplay();
+          this.updateHeldItemsDisplay();
+
+          const restartButton = document.getElementById('restart-button');
+          restartButton.style.display = null;
+        }
+      }
+
+      // TODO - save and load?
+      let album = new Album();
+      const guidebook = new Guidebook();
+      const game = new Game();
+
+      function main() {
+        // TODO - title screen
+        game.startGame();
+      }
+    </script>
+
+    <style>
+      *, ::before, ::after {
+        box-sizing: border-box;
+      }
+
+      :root {
+        --path-visibility: 3;
+        --path-size: 3;
+        font-size: clamp(50%, 0.5vw + 0.5rem, 100%);
+      }
+
+      html {
+        overflow: hidden;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+
+      h1, h2, h3, h4, h5, h6, p {
+        margin: 0;
+      }
+
+      /* TODO - light mode? */
+
+      body {
+        background: black url(images/forest-path-edited.webp) bottom no-repeat fixed;
+        background-size: cover;
+        color: white;
+        line-height: 1.5;
+        font-family: Parkinsans, sans-serif;
+        overflow: auto;
+        padding-bottom: 40px;
+      }
+
+      #title-screen {
+        margin: auto;
+        min-width: 40%;
+        width: 500px;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        height: 100%;
+        padding: 0 20px;
+
+        #title {
+          font-size: 4rem;
+          line-height: 1;
+          font-weight: bold;
+        }
+
+        #author {
+          font-size: 1.25rem;
+          font-weight: 600;
+          margin-bottom: 20px;
+        }
+
+        #start-button {
+          margin-top: 20px;
+        }
+      }
+
+      #hike-wrapper {
+        display: none;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+      }
+
+      button {
+        cursor: pointer;
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+
+        &:disabled {
+          cursor: default;
+        }
+      }
+
+      #fog-back {
+        position: absolute;
+        top: 0;
+        z-index: -10;
+        width: 100%;
+        height: 70%;
+        background: linear-gradient(to top, #8880, #8888);
+      }
+
+      #fog-front {
+        position: absolute;
+        top: 0;
+        z-index: 10;
+        pointer-events: none;
+        width: 100%;
+        height: 200px;
+        background: linear-gradient(to top, #fff0, #fff8);
+      }
+
+      .backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        /* backdrop-filter: blur(3px); */
+      }
+
+      .panel-title {
+        padding: 40px;
+        font-size: 1.75em;
+        font-weight: bold;
+        margin: 0;
+        text-align: center;
+
+        &::before {
+          content: '🙞🙟  ';
+          white-space-collapse: preserve;
+        }
+
+        &::after {
+          content: '  🙝🙜';
+          white-space-collapse: preserve;
+        }
+      }
+
+      .panel-content {
+        overflow: auto;
+        scroll-padding: 40px;
+        padding: 0 40px 40px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      #guidebook-display {
+        .guidebook-note {
+          white-space-collapse: preserve;
+
+          &.not-seen {
+            opacity: 0.75;
+          }
+
+          .guidebook-note-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0;
+          }
+
+          ul {
+            margin: 0;
+          }
+        }
+      }
+
+      #album-display {
+        #album-content {
+          display: flex;
+          flex-flow: row wrap;
+        }
+
+        .album-memory {
+          white-space-collapse: preserve;
+          background: white;
+          color: black;
+          padding: 10px;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          min-width: 275px;
+          aspect-ratio: 1;
+
+          &.not-achieved {
+            background: #ffffff80;
+          }
+        }
+
+        .album-memory__content {
+          flex: 1 1 auto;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background: black;
+          font-size: 1.75rem;
+
+          > span {
+            margin: 10px;
+            text-align: center;
+          }
+
+          > img {
+            border: 1px solid black;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+        }
+
+        .album-memory__header {
+          display: flex;
+          justify-content: space-between;
+          gap: 2px;
+          font-size: 1.25rem;
+          font-weight: bold;
+          margin: 0;
+        }
+
+        .album-memory__description {
+          margin: -10px 0 0;
+        }
+      }
+
+      dialog.sidebar {
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+        border: none;
+        background: transparent;
+        position: fixed;
+        z-index: 50;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        max-height: none;
+        max-width: none;
+        transition: all 0.4s linear allow-discrete;
+
+        &::backdrop {
+          backdrop-filter: blur(3px);
+        }
+
+        .panel {
+          background: black;
+          color: white;
+          box-shadow: 0 0 50px #fff;
+          position: absolute;
+          top: 0;
+          width: calc(50% + 100px);
+          min-width: min(600px, 100% + 100px);
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+
+          .close-button {
+            position: absolute;
+            top: 20px;
+          }
+        }
+
+        &.right {
+          .panel {
+            right: 0;
+            margin: 0 -100px 0 0;
+            padding: 0 100px 0 0;
+            animation: slide-out-right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+            .close-button {
+              right: 120px;
+            }
+          }
+
+          &[open] .panel {
+            /* Opacity and delay hack needed to get slide in from right animation to work */
+            opacity: 0;
+            animation: slide-in-from-right 0.4s 0.001s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+          }
+        }
+
+        &.left {
+          .panel {
+            left: 0;
+            margin: 0 0 0 -100px;
+            padding: 0 0 0 100px;
+            animation: slide-out-left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+            .close-button {
+              right: 20px;
+            }
+          }
+
+          &[open] .panel {
+            opacity: 0;
+            animation: slide-in-from-left 0.4s 0.001s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+          }
+        }
+      }
+
+      @keyframes slide-in-from-right {
+        from {
+          translate: 100% 0;
+          opacity: 0.999;
+        }
+
+        to {
+          translate: 0 0;
+          opacity: 1;
+        }
+      }
+
+      @keyframes slide-out-right {
+        from {
+          translate: 0 0;
+        }
+
+        to {
+          translate: 100% 0;
+        }
+      }
+
+      @keyframes slide-in-from-left {
+        from {
+          translate: -100% 0;
+          opacity: 0.999;
+        }
+
+        to {
+          translate: 0 0;
+          opacity: 1;
+        }
+      }
+
+      @keyframes slide-out-left {
+        from {
+          translate: 0 0;
+        }
+
+        to {
+          translate: -100% 0;
+        }
+      }
+
+      #path {
+        margin: 10px auto 0;
+        min-width: 50%;
+        width: 500px;
+        max-width: 100%;
+        display: grid;
+        grid-template-columns: repeat(var(--path-size), 1fr);
+        grid-template-rows: repeat(var(--path-visibility), 1fr);
+        gap: 10px;
+        transform: scaleY(1.5) perspective(300px) rotateX(20deg);
+        transform-origin: bottom;
+      }
+
+      #path-arrows {
+        margin-top: 5px;
+        min-width: 52%;
+        width: 520px;
+        max-width: calc(100% + 20px);
+        font-size: 2rem;
+        display: flex;
+        justify-content: space-around;
+
+        > span {
+          transform: scaleX(6);
+          opacity: 0.5;
+          line-height: 1;
+        }
+      }
+
+      #player-display {
+        width: 100%;
+        margin-top: 20px;
+        padding: 0 20px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+      }
+
+      #held-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        align-items: stretch;
+        /* align-items: flex-start; */
+      }
+
+      button#restart-button, button#start-button {
+        padding: 10px 20px;
+        border: 1px solid white;
+        border-radius: 6px;
+        background: black;
+        color: white;
+        font-size: 1.25rem;
+        transition: transform 50ms ease-in-out;
+
+        &:hover:not(:disabled), &:focus-visible {
+          background: white;
+          border-color: white;
+          color: black;
+          font-weight: bold;
+          transform: scale(1.1);
+        }
+
+        &:active:not(:disabled) {
+          background: #666;
+        }
+
+        &:disabled {
+          background: 333;
+          opacity: 0.5;
+        }
+      }
+
+      button.path-option {
+        letter-spacing: 1px;
+        font-size: 1.25rem;
+        padding: 16px 8px;
+        border: 1px solid white;
+        border-radius: 6px;
+        background: black;
+        color: white;
+        min-height: 95px;
+
+        &:hover:not(:disabled), &:focus-visible {
+          background: white;
+          color: black;
+          font-weight: bold;
+          padding: 16px 6px; /* Reducing the horizontal padding is a hack to prevent bolding from causing wrapping */
+        }
+
+        &:active:not(:disabled) {
+          background: #666;
+        }
+
+        &:disabled {
+          background: #333;
+          opacity: 0.75;
+        }
+      }
+
+      .held-item {
+        padding: 10px;
+        border: 1px solid white;
+        border-radius: 6px;
+        background: black;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 150px;
+        max-width: 205px;
+
+        > .item-description {
+          width: 100%;
+          font-size: 0.875rem;
+          flex-grow: 1;
+          white-space-collapse: preserve;
+        }
+
+        > .item-buttons {
+          margin-top: 4px;
+          display: flex;
+          gap: 4px;
+
+          > button {
+            flex: 1;
+            padding: 4px;
+            border: 1px solid #999;
+            border-radius: 4px;
+            background: #262626;
+            color: white;
+
+            &:hover:not(:disabled), &:focus-visible {
+              background: white;
+              border-color: white;
+              color: black;
+              font-weight: bold;
+            }
+
+            &:active:not(:disabled) {
+              background: #666;
+            }
+
+            &:disabled {
+              background: black;
+              opacity: 0.5;
+            }
+          }
+        }
+      }
+
+      #status-bar {
+        margin: 10px 0;
+        padding: 10px 0;
+        background: linear-gradient(to right, transparent, #ffffff40, transparent);
+        font-size: 1.25rem;
+        width: 100%;
+
+        > div {
+          margin: auto;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 1rem;
+          min-width: 55%;
+          width: 500px;
+          max-width: 100%;
+
+          > * {
+            flex: 1;
+            white-space: nowrap;
+          }
+
+          #stamina-display.low {
+            color: #ff7c7c;
+          }
+
+        }
+      }
+
+      .shadowed-text, .shadowed-button {
+        white-space-collapse: preserve;
+        background: #0008;
+        color: white;
+        padding: 0.5rem 12px;
+        border-radius: 6px;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid transparent;
+
+        &:empty {
+          display: none;
+        }
+      }
+
+      .shadowed-button {
+        border-color: #999;
+
+        &:hover:not(:disabled), &:focus-visible {
+          background: white;
+          border-color: white;
+          color: black;
+          font-weight: bold;
+        }
+
+        &:active:not(:disabled) {
+          background: #666;
+        }
+
+        &:disabled {
+          background: black;
+          opacity: 0.5;
+        }
+
+        &.notify {
+          position: relative;
+          box-shadow: 0px 0px 8px 1px #ffd700;
+
+          &::after {
+            content: '✨';
+            position: absolute;
+            top: -1em;
+            right: 0.5em;
+            transform: scale(1.5);
+          }
+        }
+      }
+
+      .badge {
+        display: inline-block;
+        margin: 0 1px;
+        padding: 2px 4px;
+        line-height: 1.5;
+        background: #222;
+        border: 1px solid #555;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="fog-back"></div>
+    <div id="fog-front"></div>
+    <div id="title-screen">
+      <h1 id="title">Take a Hike</h1>
+      <h5 id="author">A game by Alec Mitnik</h5>
+      <div class="shadowed-text">
+        <p>Just like with any hike, the goal is ultimately whatever you make of it.  Explore, keep your stamina up, and make some nice memories!  :)</p>
+        <p>Please note that data does not persist once you leave the page.  The game may continue to be updated as I work on it.</p>
+      </div>
+      <button type="button" id="start-button" onClick="game.startGame();">Embark</button>
+    </div>
+    <div id="hike-wrapper">
+      <dialog id="album-display" class="sidebar left">
+        <div class="backdrop" onclick="album.hide();"></div>
+        <div class="panel">
+          <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Memories Album" onClick="album.hide();"><span>X</span></button>
+          <h1 class="panel-title">Memories Album</h1>
+          <div id="album-content" class="panel-content"></div>
+        </div>
+      </dialog>
+      <dialog id="guidebook-display" class="sidebar right">
+        <div class="backdrop" onclick="guidebook.hide();"></div>
+        <div class="panel">
+          <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Guidebook" onClick="guidebook.hide();"><span>X</span></button>
+          <h1 class="panel-title">Guidebook</h1>
+          <div id="guidebook-content" class="panel-content"></div>
+        </div>
+      </dialog>
+      <div id="path"></div>
+      <div id="path-arrows">
+        <span>▲</span>
+        <span>▲</span>
+        <span>▲</span>
+      </div>
+      <div id="player-display">
+        <div id="status-bar">
+          <div>
+            <button type="button" id="memories-button" class="shadowed-button" aria-label="Open Memories Album" onClick="album.show();"><span>📷 Memories</span></button>
+            <div class="shadowed-text"><p><span id="stamina-status">💗</span> Stamina: <span id="stamina-display"></span></p></div>
+            <button type="button" class="shadowed-button" aria-label="Open Guidebook" onClick="guidebook.show();"><span>📒 Guidebook</span></button>
+            <!-- TODO - history log -->
+          </div>
+        </div>
+        <p id="messages" class="shadowed-text"></p>
+        <button type="button" id="restart-button" onclick="game.startGame();">Go Again</button>
+        <div id="held-items"></div>
+      </div>
+    </div>
+  </body>
+</html>
