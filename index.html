@@ -2360,7 +2360,17 @@
         font-size: 1.25rem;
         transition: transform 50ms ease-in-out;
 
-        &:hover:not(:disabled), &:focus-visible {
+        @media (hover: hover) {
+          &:hover:not(:disabled) {
+            background: white;
+            border-color: white;
+            color: black;
+            font-weight: bold;
+            transform: scale(1.1);
+          }
+        }
+
+        &:focus-visible {
           background: white;
           border-color: white;
           color: black;
@@ -2445,7 +2455,16 @@
             background: #262626;
             color: white;
 
-            &:hover:not(:disabled), &:focus-visible {
+            @media (hover: hover) {
+              &:hover:not(:disabled) {
+                background: white;
+                border-color: white;
+                color: black;
+                font-weight: bold;
+              }
+            }
+
+            &:focus-visible {
               background: white;
               border-color: white;
               color: black;
@@ -2513,7 +2532,16 @@
       .shadowed-button {
         border-color: #999;
 
-        &:hover:not(:disabled), &:focus-visible {
+        @media (hover: hover) {
+          &:hover:not(:disabled) {
+            background: white;
+            border-color: white;
+            color: black;
+            font-weight: bold;
+          }
+        }
+
+        &:focus-visible {
           background: white;
           border-color: white;
           color: black;
