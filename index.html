@@ -894,10 +894,16 @@
         }
 
         show() {
-          const guidebookContent = document.getElementById("guidebook-content");
-          guidebookContent.innerHTML = "";
+          // Recreate the entire scroll container just to reset the scroll position, since scrollTo is inconsistent in Safari
+          const oldGuidebookContent = document.getElementById("guidebook-content");
+          const guidebookContentParent = oldGuidebookContent.parentElement;
+          guidebookContentParent.removeChild(oldGuidebookContent);
 
-          setTimeout(() => guidebookContent.scrollTo(0, 0), 1000);
+          // <div id="guidebook-content" class="panel-content"></div>
+          const guidebookContent = document.createElement("div");
+          guidebookContent.id = "guidebook-content";
+          guidebookContent.classList.add("panel-content");
+          guidebookContentParent.appendChild(guidebookContent);
 
           const sortedNotes = this.getSortedNotes();
 
@@ -1399,10 +1405,16 @@
           const memoriesButton = document.getElementById("memories-button");
           memoriesButton.classList.remove("notify");
 
-          const albumContent = document.getElementById("album-content");
-          albumContent.innerHTML = "";
+          // Recreate the entire scroll container just to reset the scroll position, since scrollTo is inconsistent in Safari
+          const oldAlbumContent = document.getElementById("album-content");
+          const albumContentParent = oldAlbumContent.parentElement;
+          albumContentParent.removeChild(oldAlbumContent);
 
-          setTimeout(() => albumContent.scrollTo(0, 0), 50);
+          // <div id="album-content" class="panel-content"></div>
+          const albumContent = document.createElement("div");
+          albumContent.id = "album-content";
+          albumContent.classList.add("panel-content");
+          albumContentParent.appendChild(albumContent);
 
           const sortedMemories = this.getSortedMemories();
 
