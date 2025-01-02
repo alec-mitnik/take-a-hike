@@ -897,8 +897,6 @@
           const guidebookContent = document.getElementById("guidebook-content");
           guidebookContent.innerHTML = "";
 
-          setTimeout(() => guidebookContent.scrollTo(0, 0));
-
           const sortedNotes = this.getSortedNotes();
 
           for (const note of sortedNotes) {
@@ -938,6 +936,9 @@
         hide() {
           const guidebookDisplay = document.getElementById("guidebook-display");
           guidebookDisplay.close();
+
+          const guidebookContent = document.getElementById("guidebook-content");
+          guidebookContent.scrollTo(0, 0);
         }
       }
 
@@ -1402,8 +1403,6 @@
           const albumContent = document.getElementById("album-content");
           albumContent.innerHTML = "";
 
-          setTimeout(() => albumContent.scrollTo(0, 0));
-
           const sortedMemories = this.getSortedMemories();
 
           for (const memory of sortedMemories) {
@@ -1457,6 +1456,9 @@
         hide() {
           const albumDisplay = document.getElementById("album-display");
           albumDisplay.close();
+
+          const albumContent = document.getElementById("album-content");
+          albumContent.scrollTo(0, 0);
         }
       }
 
@@ -1936,7 +1938,7 @@
       }
     </script>
 
-    <!-- Preload the font so that it's immediately applied when first used -->
+    <!-- Preload the font so that it's immediately applied when first used (gives CORS error when local) -->
     <link rel="preload" href="./Symbola.ttf" as="font" crossorigin>
 
     <style>
