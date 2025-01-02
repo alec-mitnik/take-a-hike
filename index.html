@@ -1937,6 +1937,12 @@
     </script>
 
     <style>
+      /* Font that can render the decorative unicode characters (which otherwise don't display on iOS Safari) */
+      @font-face {
+        font-family: "Symbola";
+        src: url("./Symbola.ttf");
+      }
+
       *, ::before, ::after {
         box-sizing: border-box;
       }
@@ -2058,14 +2064,18 @@
         margin: 0;
         text-align: center;
 
+        &::before, &::after {
+          white-space-collapse: preserve;
+          font-family: Symbola, Parkinsans, sans-serif;
+          font-weight: 500;
+        }
+
         &::before {
           content: '🙞🙟  ';
-          white-space-collapse: preserve;
         }
 
         &::after {
           content: '  🙝🙜';
-          white-space-collapse: preserve;
         }
       }
 
@@ -2183,7 +2193,7 @@
           position: absolute;
           top: 0;
           width: calc(50% + 100px);
-          min-width: min(600px, 100% + 100px);
+          min-width: min(600px, 100% + 101px);
           height: 100%;
           display: flex;
           flex-direction: column;
@@ -2363,7 +2373,16 @@
         color: white;
         min-height: 95px;
 
-        &:hover:not(:disabled), &:focus-visible {
+        @media (hover: hover) {
+          &:hover:not(:disabled) {
+            background: white;
+            color: black;
+            font-weight: bold;
+            padding: 16px 6px; /* Reducing the horizontal padding is a hack to prevent bolding from causing wrapping */
+          }
+        }
+
+        &:focus-visible {
           background: white;
           color: black;
           font-weight: bold;
