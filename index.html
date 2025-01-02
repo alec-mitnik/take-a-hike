@@ -897,6 +897,8 @@
           const guidebookContent = document.getElementById("guidebook-content");
           guidebookContent.innerHTML = "";
 
+          setTimeout(() => guidebookContent.scrollTo(0, 0), 1000);
+
           const sortedNotes = this.getSortedNotes();
 
           for (const note of sortedNotes) {
@@ -934,11 +936,8 @@
         }
 
         hide() {
-          const guidebookContent = document.getElementById("guidebook-content");
-          guidebookContent.scrollTo(0, 0);
-
           const guidebookDisplay = document.getElementById("guidebook-display");
-          setTimeout(() => guidebookDisplay.close(), 10);
+          guidebookDisplay.close();
         }
       }
 
@@ -1403,6 +1402,8 @@
           const albumContent = document.getElementById("album-content");
           albumContent.innerHTML = "";
 
+          setTimeout(() => albumContent.scrollTo(0, 0), 50);
+
           const sortedMemories = this.getSortedMemories();
 
           for (const memory of sortedMemories) {
@@ -1454,11 +1455,8 @@
         }
 
         hide() {
-          const albumContent = document.getElementById("album-content");
-          albumContent.scrollTo(0, 0);
-
           const albumDisplay = document.getElementById("album-display");
-          setTimeout(() => albumDisplay.close(), 1000);
+          albumDisplay.close();
         }
       }
 
