@@ -9,4 +9,6 @@ The game itself was inspired by other games like Sushi Go! and Backpack Hero, wh
 
 I'm not remotely outdoorsy, but I felt the theme had lots of potential, and I particularly wanted to try to avoid common, overused tropes of battling monsters or racking up currency.  This did leave the game a bit aimless, however, so I tried to lean further into the theming by capturing special moments/encounters into a memories album as a sort of achievement system.  I found nice, free-to-use photos for these on Pixabay, that I feel do a good job of making the experience rewarding.
 
+I utilized emojis as an easy way to add icons to the game.  It introduces some constraints, but that often just serves as an interesting challenge to help motivate me, by coming up with ways to work within them.  It's probably not a viable option for any serious project, but it works well for the purposes of this one.
+
 This is just an initial version, and I have plenty of ideas for more that I can add in the future.
