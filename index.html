@@ -84,7 +84,7 @@
           description: "I feel a little queasy...",
           chance: 6,
           onEffect(player) {
-            player.queasyCounter += 5;
+            player.setQueasyCounter(player.queasyCounter + 5);
             game.updateStaminaDisplay();
           },
         },
@@ -304,7 +304,7 @@
                 album.memoriesMap.get("wild-remedy").checkAchieved(player);
               }
 
-              player.queasyCounter = 0;
+              player.setQueasyCounter(0);
               player.actionMessage = `I got to feed a ${wrapInBadge(berryItem.name)} to the ${wrapInBadge(this.name)}!  Feeling great.  :D`;
             } else {
               player.actionMessage = "Aw, the bird flew away.  :(";
@@ -346,7 +346,7 @@
                 album.memoriesMap.get("wild-remedy").checkAchieved(player);
               }
 
-              player.queasyCounter = 0;
+              player.setQueasyCounter(0);
               player.actionMessage = `I got to feed a ${wrapInBadge(nutItem.name)} to the ${wrapInBadge(this.name)}!  Feeling great.  :D`;
             } else {
               player.actionMessage = "Aw, the bird flew away.  :(";
@@ -499,7 +499,8 @@
           name: "🍊 Fruit",
           tags: ["consumable"],
           description: "Eat to recover 7 stamina, but takes a while to peel.",
-          stepsLeftToPeel: 15,
+          startingStepsLeftToPeel: 14,
+          stepsLeftToPeel: 15, // Add one for initial step on pickup
           chance: 2,
           onConsume(player) {
             if (this.stepsLeftToPeel <= 0) {
@@ -708,7 +709,7 @@
             album.memoriesMap.get("special-sighting").checkAchieved(player);
 
             if (player.queasyCounter > 0) {
-              player.queasyCounter = 0;
+              player.setQueasyCounter(0);
               guidebook.notesMap.get(this.id).specialConditions.get("cure").encountered = true;
               album.memoriesMap.get("wild-remedy").checkAchieved(player);
             }
@@ -724,7 +725,7 @@
           chance: -1,
           onPick(player) {
             // Counts down immediately after pick
-            player.queasyCounter += 2 * player.trackPathLength;
+            player.setQueasyCounter(player.queasyCounter + 2 * player.trackPathLength);
             player.trackPathLength = 0;
             player.actionMessage = "Ew, something defecated here!  I lost my appetite...";
 
@@ -952,7 +953,7 @@
         // setTimeout(() => alert(`Achieved '${achievement.name}'!`));
       }
 
-      // TODO - make an even number so that you don't end up with one large photo at the bottom of the album
+      // Keep as an even number so that you don't end up with one large photo at the bottom of the album
       const achievements = [
         {
           id: "bonus-bag",
@@ -1330,7 +1331,7 @@
           difficulty: 3,
           name: "Flower Power",
           imageName: "flower-power.jpg",
-          description: "Held a total of 7 or more flowers at once",
+          description: "Held a total of 7 flowers at once",
           achieved: false,
           checkAchieved(player) {
             if (this.achieved === false) {
@@ -1356,7 +1357,7 @@
           difficulty: 5,
           name: "Flower Frenzy",
           imageName: "flower-frenzy.jpg",
-          description: "Held a total of 11 or more flowers at once",
+          description: "Held a total of 11 flowers at once",
           achieved: false,
           checkAchieved(player) {
             if (this.achieved === false) {
@@ -1499,6 +1500,11 @@
           // Pick a random flower to become allergic to, causing low visibility or dropping an item?
         }
 
+        setQueasyCounter(queasyCounter) {
+          this.queasyCounter = queasyCounter;
+          updateCssVar('--queasy-count-dashes', `"${'_ '.repeat(this.queasyCounter).trim()}"`);
+        }
+
         gainMaxStamina(amount) {
           this.maxStamina += amount;
           game.updateStaminaDisplay();
@@ -1619,18 +1625,24 @@
         }
 
         updateStaminaDisplay() {
-          const staminaDisplay = document.getElementById('stamina-display');
+          const staminaCountDisplay = document.getElementById('stamina-count');
           const staminaStatus = document.getElementById('stamina-status');
-          staminaDisplay.innerText = `${this.player.stamina}/${this.player.maxStamina}`;
+          staminaCountDisplay.innerText = `${this.player.stamina}/${this.player.maxStamina}`;
+
+          if (this.player.queasyCounter > 0) {
+            staminaStatus.classList.add('queasy');
+          } else {
+            staminaStatus.classList.remove('queasy');
+          }
 
           if (this.player.stamina === 0) {
-            staminaDisplay.classList.add('low');
+            staminaCountDisplay.classList.add('low');
             staminaStatus.innerHTML = '😩';
           } else if (this.player.stamina <= 5) {
-            staminaDisplay.classList.add('low');
+            staminaCountDisplay.classList.add('low');
             staminaStatus.innerHTML = this.player.queasyCounter > 0 ? '🤢' : '🥵'; // 😰
           } else {
-            staminaDisplay.classList.remove('low');
+            staminaCountDisplay.classList.remove('low');
 
             if (this.player.queasyCounter > 0) {
               staminaStatus.innerHTML = '🤢';
@@ -1694,7 +1706,7 @@
         }
 
         updateHeldItemsDisplay() {
-          const heldItemsDisplay = document.querySelector('#held-items');
+          const heldItemsDisplay = document.getElementById('held-items');
           heldItemsDisplay.innerHTML = "";
 
           for (let i = 0; i < this.player.heldItems.length; i++) {
@@ -1708,6 +1720,22 @@
             itemDescription.classList.add('item-description');
             itemDescription.innerText = heldItem.getDescription ? heldItem.getDescription() : heldItem.description;
             itemDisplay.appendChild(itemDescription);
+
+            if (heldItem.id === "tangerine") {
+              const progressBar = document.createElement('div');
+              progressBar.classList.add('item-progress-bar');
+              const progressBarFill = document.createElement('div');
+              progressBar.appendChild(progressBarFill);
+
+              const progressValue = Math.min(100, Math.max(0, Math.round(100 * (heldItem.startingStepsLeftToPeel - heldItem.stepsLeftToPeel) / heldItem.startingStepsLeftToPeel)));
+              progressBarFill.style.width = `${progressValue}%`;
+
+              if (progressValue >= 100) {
+                progressBarFill.classList.add('filled');
+              }
+
+              itemDisplay.appendChild(progressBar);
+            }
 
             const itemButtons = document.createElement('div');
             itemButtons.classList.add('item-buttons');
@@ -1736,11 +1764,19 @@
               disposeButton.onclick = () => {
                 this.player.disposeItem(i);
               };
+
               itemButtons.appendChild(disposeButton);
             }
 
-
             heldItemsDisplay.appendChild(itemDisplay);
+          }
+
+          for (let i = this.player.heldItems.length; i < this.player.capacity; i++) {
+            const emptyCapacitySpace = document.createElement('div');
+            emptyCapacitySpace.classList.add('empty-capacity-space');
+            emptyCapacitySpace.innerHTML = "✋";
+
+            heldItemsDisplay.appendChild(emptyCapacitySpace);
           }
         }
 
@@ -1802,20 +1838,16 @@
           this.pathStepOptions.splice(0, 1);
           this.addToPathStepOptions();
           this.updatePathDisplay();
-          this.updateMessagesDisplay();
-          this.updateHeldItemsDisplay();
-          this.player.loseStamina(1);
           // this.player.berryStreak = 0;
 
           this.stepCount++;
 
           if (this.player.queasyCounter > 0) {
-            this.player.queasyCounter--;
-
-            if (this.player.queasyCounter === 0) {
-              this.updateStaminaDisplay();
-            }
+            this.player.setQueasyCounter(this.player.queasyCounter - 1);
           }
+
+          // Updates the stamina display
+          this.player.loseStamina(1);
 
           const heldFruit = this.player.heldItems.filter(item => item.id === "tangerine");
 
@@ -1824,6 +1856,9 @@
               fruit.stepsLeftToPeel--;
             }
           }
+
+          this.updateMessagesDisplay();
+          this.updateHeldItemsDisplay();
         }
 
         addToPathStepOptions() {
@@ -1941,11 +1976,6 @@
       let album = new Album();
       const guidebook = new Guidebook();
       const game = new Game();
-
-      function main() {
-        // TODO - title screen
-        game.startGame();
-      }
     </script>
 
     <!-- Preload the font so that it's immediately applied when first used (gives CORS error when local) -->
@@ -1963,8 +1993,10 @@
       }
 
       :root {
+        --gold: #ffd700;
         --path-visibility: 3;
         --path-size: 3;
+        --queasy-count-dashes: '';
         font-size: clamp(50%, 0.5vw + 0.5rem, 100%);
       }
 
@@ -2324,7 +2356,7 @@
         justify-content: space-around;
 
         > span {
-          transform: scaleX(6);
+          transform: scaleX(5);
           opacity: 0.5;
           line-height: 1;
         }
@@ -2442,6 +2474,23 @@
           white-space-collapse: preserve;
         }
 
+        > .item-progress-bar {
+          margin: 0 15px 2px;
+          height: 6px;
+          border: 1px solid #bbb;
+          border-radius: 999999px;
+
+          > div {
+            background: white;
+            border-radius: 999999px;
+            height: 100%;
+
+            &.filled {
+              background: var(--gold);
+            }
+          }
+        }
+
         > .item-buttons {
           margin-top: 4px;
           display: flex;
@@ -2483,6 +2532,13 @@
         }
       }
 
+      .empty-capacity-space {
+        opacity: 0.5;
+        font-size: 6rem;
+        align-self: center;
+        pointer-events: none;
+      }
+
       #status-bar {
         margin: 10px 0;
         padding: 10px 0;
@@ -2505,10 +2561,26 @@
             white-space: nowrap;
           }
 
-          #stamina-display.low {
-            color: #ff7c7c;
-          }
+          #stamina-display {
+            position: relative;
 
+            #stamina-count.low {
+              color: #ff7c7c;
+            }
+
+            #stamina-status {
+              &.queasy::before {
+                content: var(--queasy-count-dashes);
+                color: #44dd70;
+                position: absolute;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 0.875rem;
+                font-weight: bold;
+              }
+            }
+          }
         }
       }
 
@@ -2559,7 +2631,7 @@
 
         &.notify {
           position: relative;
-          box-shadow: 0px 0px 8px 1px #ffd700;
+          box-shadow: 0px 0px 8px 1px var(--gold);
 
           &::after {
             content: '✨';
@@ -2622,12 +2694,13 @@
         <div id="status-bar">
           <div>
             <button type="button" id="memories-button" class="shadowed-button" aria-label="Open Memories Album" onClick="album.show();"><span>📷 Memories</span></button>
-            <div class="shadowed-text"><p><span id="stamina-status">💗</span> Stamina: <span id="stamina-display"></span></p></div>
+            <div id="stamina-display" class="shadowed-text"><p><span id="stamina-status">💗</span> Stamina: <span id="stamina-count"></span></p></div>
             <button type="button" class="shadowed-button" aria-label="Open Guidebook" onClick="guidebook.show();"><span>📒 Guidebook</span></button>
             <!-- TODO - history log -->
           </div>
         </div>
         <p id="messages" class="shadowed-text"></p>
+        <!-- TODO - button to "Call It a Day"? -->
         <button type="button" id="restart-button" onclick="game.startGame();">Go Again</button>
         <div id="held-items"></div>
       </div>
