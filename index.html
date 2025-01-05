@@ -134,7 +134,8 @@
       }
 
       // TODO - 🪦🥀↔️🧺☘️🍀🐚🪶🍃🍂🍁🐌🐞🪲🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦉🦎🐍🐢
-      // Clover - small chance to be four-leafed when picked up, which increases the likelihood of favorable outcomes
+      // Clover - small chance to be four-leafed when picked up, which increases the likelihood of favorable outcomes?
+      // Sound effects?
 
       const pathOptions = [
         {
@@ -895,6 +896,8 @@
         }
 
         show() {
+          openedGuidebook = true;
+
           // Recreate the entire scroll container just to reset the scroll position, since scrollTo is inconsistent in Safari
           const oldGuidebookContent = document.getElementById("guidebook-content");
           const guidebookContentParent = oldGuidebookContent.parentElement;
@@ -1403,6 +1406,8 @@
         }
 
         show() {
+          openedAlbum = true;
+
           const memoriesButton = document.getElementById("memories-button");
           memoriesButton.classList.remove("notify");
 
@@ -1657,6 +1662,9 @@
         }
 
         updateMessagesDisplay() {
+          const endButtonWrapper = document.getElementById('end-button-wrapper');
+          endButtonWrapper.classList.remove('confirm');
+
           const messagesDisplay = document.querySelector('#messages');
 
           if (this.gameActive === false) {
@@ -1666,21 +1674,35 @@
 
             const achievedMemories = album.getAchievedMemories();
             const totalAchievementDifficulty = achievedMemories.reduce((total, memory) => total + memory.difficulty, 0);
+            const starsMessage = totalAchievementDifficulty === 0 ? "" : `\n${
+                "⭐".repeat(totalAchievementDifficulty).split("⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐").map(tenStars => tenStars.length ? tenStars : "⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐").join("\n")
+            }`;
+
+            let didNotOpenMessage = "";
+
+            if (openedGuidebook === false) {
+              if (openedAlbum === false) {
+                didNotOpenMessage = `<p>I should really take a look at that ${wrapInBadge("📷 Memories")} album,\nand it might be worth using the ${
+                    wrapInBadge("📒 Guidebook")} next time, too.</p>`;
+              } else {
+                didNotOpenMessage = `<p>It might be worth using the ${wrapInBadge("📒 Guidebook")} next time.</p>`;
+              }
+            } else if (openedAlbum === false) {
+              didNotOpenMessage = `<p>I should really take a look at that ${wrapInBadge("📷 Memories")} album.</p>`;
+            }
 
             let finalMessage = "That was a nice hike.  :)";
 
             if (totalAchievementDifficulty <= 5) {
-              finalMessage = "I should try to make things more memorable next time.";
+              finalMessage = "I didn't do much of note.  There's still more to try!";
             } else if (totalAchievementDifficulty >= 15) {
               finalMessage = "Wow, that was a hike to remember!  :D";
             } else if (this.iterationsCount < 2) {
               finalMessage = "I didn't walk very far.  There's still more to see!";
             }
 
-            // Track litter disposal (but probably shouldn't count from own items)?  Bird encounters?
-
             messagesDisplay.innerHTML = `<p>I'm beat.  Time to go home.</p><p>I took a total of ${this.stepCount} steps and made ${
-                achievedMemories.length} special memor${achievedMemories.length !== 1 ? "ies" : "y"}.</p><p>${finalMessage}</p>`;
+                achievedMemories.length} special memor${achievedMemories.length !== 1 ? "ies" : "y"}.${starsMessage}</p><p>${finalMessage}</p>${didNotOpenMessage}`;
             return;
           }
 
@@ -1959,6 +1981,9 @@
 
           const restartButton = document.getElementById('restart-button');
           restartButton.style.display = "none";
+
+          const endButtonWrapper = document.getElementById('end-button-wrapper');
+          endButtonWrapper.style.display = null;
         }
 
         gameOver() {
@@ -1969,10 +1994,15 @@
 
           const restartButton = document.getElementById('restart-button');
           restartButton.style.display = null;
+
+          const endButtonWrapper = document.getElementById('end-button-wrapper');
+          endButtonWrapper.style.display = "none";
         }
       }
 
       // TODO - save and load?
+      let openedGuidebook = false;
+      let openedAlbum = false;
       let album = new Album();
       const guidebook = new Guidebook();
       const game = new Game();
@@ -2383,7 +2413,7 @@
         /* align-items: flex-start; */
       }
 
-      button#restart-button, button#start-button {
+      .main-button {
         padding: 10px 20px;
         border: 1px solid white;
         border-radius: 6px;
@@ -2391,6 +2421,11 @@
         color: white;
         font-size: 1.25rem;
         transition: transform 50ms ease-in-out;
+
+        &.confirm-button {
+          border-style: dashed;
+          border-width: 3px;
+        }
 
         @media (hover: hover) {
           &:hover:not(:disabled) {
@@ -2537,6 +2572,8 @@
         font-size: 6rem;
         align-self: center;
         pointer-events: none;
+        border: 2px dashed white;
+        border-radius: 6px;
       }
 
       #status-bar {
@@ -2652,6 +2689,23 @@
         border: 1px solid #555;
         border-radius: 4px;
       }
+
+      #end-button-wrapper {
+        margin-top: 100px;
+        transform: scale(0.75);
+
+        &.confirm {
+          > :not(.confirm-button) {
+            display: none;
+          }
+        }
+
+        &:not(.confirm) {
+          .confirm-button {
+            display: none;
+          }
+        }
+      }
     </style>
   </head>
 
@@ -2665,7 +2719,7 @@
         <p>Just like with any hike, the goal is ultimately whatever you make of it.  Explore, keep your stamina up, and make some nice memories!  :)</p>
         <p>Please note that data does not persist once you leave the page.  The game may continue to be updated as I work on it.</p>
       </div>
-      <button type="button" id="start-button" onClick="game.startGame();">Embark</button>
+      <button type="button" id="start-button" class="main-button" onClick="game.startGame();">Embark</button>
     </div>
     <div id="hike-wrapper">
       <dialog id="album-display" class="sidebar left">
@@ -2700,9 +2754,12 @@
           </div>
         </div>
         <p id="messages" class="shadowed-text"></p>
-        <!-- TODO - button to "Call It a Day"? -->
-        <button type="button" id="restart-button" onclick="game.startGame();">Go Again</button>
+        <button type="button" id="restart-button" class="main-button" onclick="game.startGame();">Go Again</button>
         <div id="held-items"></div>
+        <span id="end-button-wrapper">
+          <button type="button" class="main-button" onclick="document.getElementById('end-button-wrapper').classList.add('confirm')">Call It a Day</button>
+          <button type="button" class="main-button confirm-button" onclick="game.player.loseStamina(game.player.stamina);">⚠️ Really End the Hike ⚠️</button>
+        </span>
       </div>
     </div>
   </body>
