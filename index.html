@@ -29,6 +29,14 @@
         root.style.setProperty(varName, value);
       }
 
+      function callItADay() {
+        const endButtonWrapper = document.getElementById('end-button-wrapper');
+        endButtonWrapper.classList.add('confirm');
+
+        const confirmEndButton = document.getElementById('confirm-end-button');
+        confirmEndButton.focus();
+      }
+
       const parcelOptions = [
         {
           id: "litter",
@@ -230,11 +238,11 @@
           },
           onDispose(player) {
             if (player.environment === "receptacle") {
-              player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  &lt;/3`;
+              player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  <span class="no-wrap">&lt;/3</span>`;
               return true;
             }
 
-            player.actionMessage += "  &lt;/3";
+            player.actionMessage += '  <span class="no-wrap">&lt;/3</span>';
             return false;
           },
         },
@@ -276,7 +284,7 @@
           id: "robin",
           name: "🐦 Bright Bird",
           tags: ["bird"],
-          description: "Normally just flies away...  :(",
+          description: 'Normally just flies away...  <span class="no-wrap">:(</span>',
           chance: 1,
           specialConditions: [
             {
@@ -308,7 +316,7 @@
               player.setQueasyCounter(0);
               player.actionMessage = `I got to feed a ${wrapInBadge(berryItem.name)} to the ${wrapInBadge(this.name)}!  Feeling great.  :D`;
             } else {
-              player.actionMessage = "Aw, the bird flew away.  :(";
+              player.actionMessage = 'Aw, the bird flew away.  <span class="no-wrap">:(</span>';
             }
 
             return true;
@@ -318,7 +326,7 @@
           id: "blackbird",
           name: "🐦‍⬛ Dark Bird",
           tags: ["bird"],
-          description: "Normally just flies away...  :(",
+          description: 'Normally just flies away...  <span class="no-wrap">:(</span>',
           chance: 1,
           specialConditions: [
             {
@@ -350,7 +358,7 @@
               player.setQueasyCounter(0);
               player.actionMessage = `I got to feed a ${wrapInBadge(nutItem.name)} to the ${wrapInBadge(this.name)}!  Feeling great.  :D`;
             } else {
-              player.actionMessage = "Aw, the bird flew away.  :(";
+              player.actionMessage = 'Aw, the bird flew away.  <span class="no-wrap">:(</span>';
             }
 
             return true;
@@ -367,7 +375,7 @@
               pathOptionsMap.get(this.id).negativeModifier++;
               pathOptionsMap.get("blank").positiveModifier++;
               guidebook.notesMap.get("receptacle").specialConditions.get("clean").encountered = true;
-              player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  :)`;
+              player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  <span class="no-wrap">:)</span>`;
 
               album.memoriesMap.get("good-samaritan").checkAchieved(player);
               return true;
@@ -387,7 +395,7 @@
               pathOptionsMap.get(this.id).negativeModifier++;
               pathOptionsMap.get("blank").positiveModifier++;
               guidebook.notesMap.get("receptacle").specialConditions.get("clean").encountered = true;
-              player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  :)`;
+              player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  <span class="no-wrap">:)</span>`;
 
               album.memoriesMap.get("good-samaritan").checkAchieved(player);
               return true;
@@ -491,7 +499,7 @@
               return true;
             }
 
-            player.actionMessage = `I need another ${wrapInBadge(this.name)} to eat with this.  It's the rules!  >:(`;
+            player.actionMessage = `I need another ${wrapInBadge(this.name)} to eat with this.  It's the rules!  <span class="no-wrap">>:(</span>`;
             return false;
           },
         },
@@ -506,7 +514,7 @@
           onConsume(player) {
             if (this.stepsLeftToPeel <= 0) {
               player.recoverStamina(7);
-              player.actionMessage = `Ate the ${wrapInBadge(this.name)}.  It took some work, but it was worth it.  :P`;
+              player.actionMessage = `Ate the ${wrapInBadge(this.name)}.  It took some work, but it was worth it.  <span class="no-wrap">:P</span>`;
               return true;
             }
 
@@ -540,7 +548,7 @@
 
             const withText = player.heldItems.some(heldItem => heldItem.id === "bottle") ? `nothing but a flimsy ${wrapInBadge(pathOptionsMap.get("bottle").name)}` : "my bare hands";
 
-            player.actionMessage = `I can't crack open the ${wrapInBadge(this.name)} with ${withText}.  :(`;
+            player.actionMessage = `I can't crack open the ${wrapInBadge(this.name)} with ${withText}.  <span class="no-wrap">:(</span>`;
             return false;
           },
         },
@@ -678,13 +686,13 @@
             {
               id: "sighting",
               get description() {
-                return `Possibility: ${wrapInBadge(pathOptionsMap.get("bunny").name)}!  &lt;3`;
+                return `Possibility: ${wrapInBadge(pathOptionsMap.get("bunny").name)}!  <span class="no-wrap">&lt;3</span>`;
               },
             },
             {
               id: "bust",
               get description() {
-                return `Possibility: ${wrapInBadge(pathOptionsMap.get("turd").name)}.  :/`;
+                return `Possibility: ${wrapInBadge(pathOptionsMap.get("turd").name)}.  <span class="no-wrap">:/</span>`;
               },
             },
           ],
@@ -693,7 +701,7 @@
           id: "bunny",
           name: "🐇 Bunny",
           tags: ["tracking"],
-          description: `So cute.  Makes my day!  &lt;3`,
+          description: `So cute.  Makes my day!  <span class="no-wrap">&lt;3</span>`,
           chance: -1,
           specialConditions: [
             {
@@ -704,7 +712,7 @@
             },
           ],
           onPick(player) {
-            player.actionMessage = `Whoa, a ${wrapInBadge(this.name)}!  So cute.  My day is made!  &lt;3`;
+            player.actionMessage = `Whoa, a ${wrapInBadge(this.name)}!  So cute.  My day is made!  <span class="no-wrap">&lt;3</span>`;
             player.recoverStamina(2 * player.trackPathLength);
             player.trackPathLength = 0;
             album.memoriesMap.get("special-sighting").checkAchieved(player);
@@ -782,7 +790,7 @@
               bouquet.flowers = heldFlowers.map(heldItem => heldItem.id);
               player.encounterPathOption(bouquet);
 
-              player.actionMessage = `Used the ${wrapInBadge(this.name)} to make a ${wrapInBadge(pathOptionsMap.get("bouquet").name)} out of all my flowers.  :)`;
+              player.actionMessage = `Used the ${wrapInBadge(this.name)} to make a ${wrapInBadge(pathOptionsMap.get("bouquet").name)} out of all my flowers.  <span class="no-wrap">:)</span>`;
               player.loseStamina(heldFlowers.length);
               return true;
             }
@@ -856,6 +864,41 @@
 
       // ID -> path option
       const pathOptionsMap = new Map(pathOptions.map(pathOption => [pathOption.id, pathOption]));
+
+      class HistoryLog {
+        log;
+
+        constructor() {
+          this.log = [];
+        }
+
+        addLogEntry(message) {
+          this.log.push(message);
+        }
+
+        show() {
+          const historyLogList = document.getElementById("history-log-list");
+          historyLogList.innerHTML = "";
+
+          for (const logEntry of this.log) {
+            const entryListItem = document.createElement("li");
+            entryListItem.innerHTML = `<span>${logEntry}</span>`;
+            historyLogList.appendChild(entryListItem);
+          }
+
+          const historyLogDisplay = document.getElementById("history-log-display");
+          historyLogDisplay.showModal();
+
+          // Might not work on mobile, but better than nothing
+          const historyLogContent = document.getElementById("history-log-content");
+          historyLogContent.scrollTop = historyLogContent.scrollHeight;
+        }
+
+        hide() {
+          const historyLogDisplay = document.getElementById("history-log-display");
+          historyLogDisplay.close();
+        }
+      }
 
       class Guidebook {
         notesMap;
@@ -951,9 +994,9 @@
         }
       }
 
-      function notifyAchievement(achievement) {
+      function notifyAchievement(achievement, player) {
         document.getElementById("memories-button").classList.add("notify");
-        // setTimeout(() => alert(`Achieved '${achievement.name}'!`));
+        player.actionMessage += `${player.actionMessage.length ? "\n\n" : ""}Made a special memory: ${achievement.name}!`;
       }
 
       // Keep as an even number so that you don't end up with one large photo at the bottom of the album
@@ -969,7 +1012,7 @@
           checkAchieved(player) {
             if (this.achieved === false) {
               this.achieved = true;
-              notifyAchievement(this);
+              notifyAchievement(this, player);
 
               return true;
             }
@@ -990,7 +1033,7 @@
               if (player.berryStreak === 0) {
                 this.achieved = true;
                 guidebook.notesMap.get("berry").specialConditions.get("fill").encountered = true;
-                notifyAchievement(this);
+                notifyAchievement(this, player);
 
                 return true;
               }
@@ -1012,7 +1055,7 @@
             if (this.achieved === false) {
               if (player.maxStamina >= 25) {
                 this.achieved = true;
-                notifyAchievement(this);
+                notifyAchievement(this, player);
 
                 return true;
               }
@@ -1033,7 +1076,7 @@
             if (this.achieved === false) {
               if (player.maxStamina >= 30) {
                 this.achieved = true;
-                notifyAchievement(this);
+                notifyAchievement(this, player);
 
                 return true;
               }
@@ -1053,7 +1096,7 @@
           checkAchieved(player) {
             if (this.achieved === false) {
               this.achieved = true;
-              notifyAchievement(this);
+              notifyAchievement(this, player);
 
               return true;
             }
@@ -1072,7 +1115,7 @@
           checkAchieved(player) {
             if (this.achieved === false) {
               this.achieved = true;
-              notifyAchievement(this);
+              notifyAchievement(this, player);
 
               return true;
             }
@@ -1091,7 +1134,7 @@
           checkAchieved(player) {
             if (this.achieved === false) {
               this.achieved = true;
-              notifyAchievement(this);
+              notifyAchievement(this, player);
 
               return true;
             }
@@ -1110,7 +1153,7 @@
           checkAchieved(player) {
             if (this.achieved === false) {
               this.achieved = true;
-              notifyAchievement(this);
+              notifyAchievement(this, player);
 
               return true;
             }
@@ -1130,7 +1173,7 @@
             if (this.achieved === false) {
               if (player.heldItems.filter(item => item.id === "rock").length >= 3) {
                 this.achieved = true;
-                notifyAchievement(this);
+                notifyAchievement(this, player);
 
                 return true;
               }
@@ -1151,7 +1194,7 @@
             if (this.achieved === false) {
               if (player.heldItems.filter(item => item.id === "rock").length >= 4) {
                 this.achieved = true;
-                notifyAchievement(this);
+                notifyAchievement(this, player);
 
                 return true;
               }
@@ -1175,7 +1218,7 @@
 
               if (wrapperModifier + bottleModifier >= 6) {
                 this.achieved = true;
-                notifyAchievement(this);
+                notifyAchievement(this, player);
 
                 return true;
               }
@@ -1199,7 +1242,7 @@
 
               if (roachModifier + mosquitoModifier >= 3) {
                 this.achieved = true;
-                notifyAchievement(this);
+                notifyAchievement(this, player);
 
                 return true;
               }
@@ -1229,7 +1272,7 @@
 
               if (heldFlowerTypes.size >= totalPossibleFlowerTypes) {
                 this.achieved = true;
-                notifyAchievement(this);
+                notifyAchievement(this, player);
 
                 return true;
               }
@@ -1263,7 +1306,7 @@
                     }
 
                     this.achieved = true;
-                    notifyAchievement(this);
+                    notifyAchievement(this, player);
 
                     return true;
                   }
@@ -1291,7 +1334,7 @@
 
                 if (bouquet.flowers.length >= 3 && bouquetFlowerTypes.size === 1) {
                   this.achieved = true;
-                  notifyAchievement(this);
+                  notifyAchievement(this, player);
 
                   return true;
                 }
@@ -1318,7 +1361,7 @@
 
                 if (bouquet.flowers.length >= 5 && bouquetFlowerTypes.size === 1) {
                   this.achieved = true;
-                  notifyAchievement(this);
+                  notifyAchievement(this, player);
 
                   return true;
                 }
@@ -1345,7 +1388,7 @@
 
               if (totalFlowers >= 7) {
                 this.achieved = true;
-                notifyAchievement(this);
+                notifyAchievement(this, player);
 
                 return true;
               }
@@ -1371,7 +1414,7 @@
 
               if (totalFlowers >= 11) {
                 this.achieved = true;
-                notifyAchievement(this);
+                notifyAchievement(this, player);
 
                 return true;
               }
@@ -1665,7 +1708,7 @@
           const endButtonWrapper = document.getElementById('end-button-wrapper');
           endButtonWrapper.classList.remove('confirm');
 
-          const messagesDisplay = document.querySelector('#messages');
+          const messagesDisplay = document.getElementById('messages');
 
           if (this.gameActive === false) {
             let totalFlowers = this.player.heldItems.filter(item => item.tags.includes("flower")).length;
@@ -1691,7 +1734,7 @@
               didNotOpenMessage = `<p>I should really take a look at that ${wrapInBadge("📷 Memories")} album.</p>`;
             }
 
-            let finalMessage = "That was a nice hike.  :)";
+            let finalMessage = 'That was a nice hike.  <span class="no-wrap">:)</span>';
 
             if (totalAchievementDifficulty <= 5) {
               finalMessage = "I didn't do much of note.  There's still more to try!";
@@ -1701,30 +1744,33 @@
               finalMessage = "I didn't walk very far.  There's still more to see!";
             }
 
-            messagesDisplay.innerHTML = `<p>I'm beat.  Time to go home.</p><p>I took a total of ${this.stepCount} steps and made ${
+            messagesDisplay.innerHTML = `<p>I'm beat.  Time to go home.</p><p>I took a total of ${this.stepCount} step${this.stepCount !== 1 ? "s" : ""} and made ${
                 achievedMemories.length} special memor${achievedMemories.length !== 1 ? "ies" : "y"}.${starsMessage}</p><p>${finalMessage}</p>${didNotOpenMessage}`;
-            return;
-          }
+          } else {
+            const messages = [];
 
-          const messages = [];
-
-          if (this.player.actionMessage) {
-            messages.push(this.player.actionMessage);
-          }
-
-          if (this.player.environment) {
-            const environmentOption = pathOptionsMap.get(this.player.environment);
-
-            if (environmentOption) {
-              messages.push(environmentOption.description);
+            if (this.player.actionMessage) {
+              messages.push(this.player.actionMessage);
             }
+
+            if (this.player.environment) {
+              const environmentOption = pathOptionsMap.get(this.player.environment);
+
+              if (environmentOption) {
+                messages.push(environmentOption.description);
+              }
+            }
+
+            if (this.player.heldItems.length > this.player.capacity) {
+              messages.push("I have too many things to carry with me.")
+            }
+
+            messagesDisplay.innerHTML = messages.map(message => `<p>${message}</p>`).join('');
           }
 
-          if (this.player.heldItems.length > this.player.capacity) {
-            messages.push("I have too many things to carry with me.")
+          if (messagesDisplay.innerHTML.length) {
+            historyLog.addLogEntry(messagesDisplay.innerHTML);
           }
-
-          messagesDisplay.innerHTML = messages.map(message => `<p>${message}</p>`).join('');
         }
 
         updateHeldItemsDisplay() {
@@ -1935,8 +1981,9 @@
         }
 
         startGame() {
-          // TODO - needs to reset so long as it's used for assessing the hike, but would be nice for it to persist...
+          // TODO - album needs to reset so long as it's used for assessing the hike, but would be nice for it to persist...
           album = new Album();
+          historyLog = new HistoryLog();
 
           this.player = new Player();
           this.player.encounterPathOptionById("lunch");
@@ -1966,7 +2013,7 @@
             this.addToPathStepOptions();
           }
 
-          this.player.actionMessage = "Time to take a hike!  :)";
+          this.player.actionMessage = 'Time to take a hike!  <span class="no-wrap">:)</span>';
 
           this.updateMessagesDisplay();
           this.updatePathDisplay();
@@ -2004,6 +2051,7 @@
       let openedGuidebook = false;
       let openedAlbum = false;
       let album = new Album();
+      let historyLog = new HistoryLog();
       const guidebook = new Guidebook();
       const game = new Game();
     </script>
@@ -2040,7 +2088,7 @@
         margin: 0;
       }
 
-      h1, h2, h3, h4, h5, h6, p {
+      h1, h2, h3, h4, h5, h6, p, ul, ol {
         margin: 0;
       }
 
@@ -2163,7 +2211,29 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 1rem;
+      }
+
+      #history-log-display {
+        ul#history-log-list {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+
+          li {
+            white-space-collapse: preserve;
+
+            > span {
+              display: inline-flex;
+              flex-direction: column;
+              gap: 1rem;
+            }
+
+            &:last-of-type {
+              font-weight: bold;
+            }
+          }
+        }
       }
 
       #guidebook-display {
@@ -2177,10 +2247,6 @@
           .guidebook-note-name {
             font-size: 1.5rem;
             font-weight: bold;
-            margin: 0;
-          }
-
-          ul {
             margin: 0;
           }
         }
@@ -2706,6 +2772,10 @@
           }
         }
       }
+
+      .no-wrap {
+        white-space: nowrap;
+      }
     </style>
   </head>
 
@@ -2716,7 +2786,7 @@
       <h1 id="title">Take a Hike</h1>
       <h5 id="author">A game by Alec Mitnik</h5>
       <div class="shadowed-text">
-        <p>Just like with any hike, the goal is ultimately whatever you make of it.  Explore, keep your stamina up, and make some nice memories!  :)</p>
+        <p>Just like with any hike, the goal is ultimately whatever you make of it.  Explore, keep your stamina up, and make some nice memories!  <span class="no-wrap">:)</span></p>
         <p>Please note that data does not persist once you leave the page.  The game may continue to be updated as I work on it.</p>
       </div>
       <button type="button" id="start-button" class="main-button" onClick="game.startGame();">Embark</button>
@@ -2738,6 +2808,16 @@
           <div id="guidebook-content" class="panel-content"></div>
         </div>
       </dialog>
+      <dialog id="history-log-display" class="sidebar right">
+        <div class="backdrop" onclick="historyLog.hide();"></div>
+        <div class="panel">
+          <button autofocus type="button" class="close-button shadowed-button" aria-label="Close History Log" onClick="historyLog.hide();"><span>X</span></button>
+          <h1 class="panel-title">History Log</h1>
+          <div id="history-log-content" class="panel-content">
+            <ul id="history-log-list"></ul>
+          </div>
+        </div>
+      </dialog>
       <div id="path"></div>
       <div id="path-arrows">
         <span>▲</span>
@@ -2753,12 +2833,13 @@
             <!-- TODO - history log -->
           </div>
         </div>
+        <button type="button" class="shadowed-button" aria-label="Open History Log" onClick="historyLog.show();"><span>🪶 History Log</span></button>
         <p id="messages" class="shadowed-text"></p>
         <button type="button" id="restart-button" class="main-button" onclick="game.startGame();">Go Again</button>
         <div id="held-items"></div>
         <span id="end-button-wrapper">
-          <button type="button" class="main-button" onclick="document.getElementById('end-button-wrapper').classList.add('confirm')">Call It a Day</button>
-          <button type="button" class="main-button confirm-button" onclick="game.player.loseStamina(game.player.stamina);">⚠️ Really End the Hike ⚠️</button>
+          <button type="button" class="main-button" onclick="callItADay();">Call It a Day</button>
+          <button type="button" id="confirm-end-button" class="main-button confirm-button" onclick="game.player.loseStamina(game.player.stamina);">⚠️ Really End the Hike ⚠️</button>
         </span>
       </div>
     </div>
