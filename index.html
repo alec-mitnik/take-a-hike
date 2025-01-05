@@ -889,7 +889,6 @@
           const historyLogDisplay = document.getElementById("history-log-display");
           historyLogDisplay.showModal();
 
-          // Might not work on mobile, but better than nothing
           const historyLogContent = document.getElementById("history-log-content");
           historyLogContent.scrollTop = historyLogContent.scrollHeight;
         }
@@ -2830,7 +2829,6 @@
             <button type="button" id="memories-button" class="shadowed-button" aria-label="Open Memories Album" onClick="album.show();"><span>📷 Memories</span></button>
             <div id="stamina-display" class="shadowed-text"><p><span id="stamina-status">💗</span> Stamina: <span id="stamina-count"></span></p></div>
             <button type="button" class="shadowed-button" aria-label="Open Guidebook" onClick="guidebook.show();"><span>📒 Guidebook</span></button>
-            <!-- TODO - history log -->
           </div>
         </div>
         <button type="button" class="shadowed-button" aria-label="Open History Log" onClick="historyLog.show();"><span>🪶 History Log</span></button>
