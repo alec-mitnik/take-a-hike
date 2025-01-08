@@ -13,6 +13,38 @@
     <script>
       "use strict";
 
+      const supportsLatestEmojis = (function() {
+        let checked = false;
+        let supports = false;
+
+        return function() {
+          if (checked === false) {
+              checked = true;
+
+              // Create an element to test rendering
+              const canvas = document.createElement('canvas');
+              const context = canvas.getContext('2d');
+              context.font = '16px Arial';
+
+              // Combo emoji rendering as a brown mushroom only supported since 2023
+              const brownMushroomWidth = context.measureText('🍄‍🟫').width;
+              const mushroomWidth = context.measureText('🍄').width;
+
+              supports = brownMushroomWidth < mushroomWidth * 1.5;
+          }
+
+          return supports;
+        };
+      })();
+
+      const MUSHROOM_EMOJI = supportsLatestEmojis() ? '🍄‍🟫' : '🍄';
+      const BERRY_EMOJI = supportsLatestEmojis() ? '🫐' : '🍓';
+      const DARK_BIRD_EMOJI = supportsLatestEmojis() ? '🐦‍⬛' : '🦉';
+      const ROCK_EMOJI = supportsLatestEmojis() ? '🪨' : '🗿';
+      const CREEPY_CRAWLY_EMOJI = supportsLatestEmojis() ? '🪳' : '🕷️';
+      const PURPLE_FLOWER_EMOJI = supportsLatestEmojis() ? '🪻' : '🍇';
+      const HISTORY_LOG_EMOJI = supportsLatestEmojis() ? '🪶' : '📜';
+
       function randomDraw(deck, removesFromDeck) {
         const randomIndex = Math.floor(Math.random() * deck.length);
         const drawResult = removesFromDeck ? deck.splice(randomIndex, 1)[0] : deck[randomIndex];
@@ -141,10 +173,11 @@
         }
       }
 
-      // TODO - 🪦🥀↔️🧺☘️🍀🐚🪶🍃🍂🍁🐌🐞🪲🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦉🦎🐍🐢
+      // TODO - 🪦(fallback: ⚰️)🥀↔️🧺☘️🍀🐚🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢
       // Clover - small chance to be four-leafed when picked up, which increases the likelihood of favorable outcomes?
       // Sound effects?
 
+      // Emojis dated after 2019 need fallbacks
       const pathOptions = [
         {
           id: "blank",
@@ -324,7 +357,7 @@
         },
         {
           id: "blackbird",
-          name: "🐦‍⬛ Dark Bird",
+          name: `${DARK_BIRD_EMOJI} Dark Bird`,
           tags: ["bird"],
           description: 'Normally just flies away...  <span class="no-wrap">:(</span>',
           chance: 1,
@@ -425,7 +458,7 @@
         },
         {
           id: "mushroom",
-          name: "🍄‍🟫 Mushroom",
+          name: `${MUSHROOM_EMOJI} Mushroom`,
           tags: ["consumable"],
           description: "Eat to recover 4 stamina, but may have side effects.",
           chance: 6,
@@ -456,7 +489,7 @@
         },
         {
           id: "berry",
-          name: "🫐 Berry",
+          name: `${BERRY_EMOJI} Berry`,
           tags: ["consumable"],
           description: "Eat to recover stamina.  The more in one go, the better!",
           chance: 12,
@@ -554,7 +587,7 @@
         },
         {
           id: "rock",
-          name: "🪨 Rock",
+          name: `${ROCK_EMOJI} Rock`,
           tags: ["tool"],
           description: "A nice hefty rock.  Hard to carry, though...",
           chance: 3,
@@ -628,7 +661,7 @@
         },
         {
           id: "roach",
-          name: "🪳 Creepy Crawly",
+          name: `${CREEPY_CRAWLY_EMOJI} Creepy Crawly`,
           tags: ["obstacle", "bug"],
           description: "Nope!  No thanks.  I'll just run past it until I can't see it anymore.",
           chance: 0,
@@ -823,7 +856,7 @@
         },
         {
           id: "hyacinth",
-          name: "🪻 Purple Flower",
+          name: `${PURPLE_FLOWER_EMOJI} Purple Flower`,
           tags: ["flower"],
           description: "Collectable.  So vibrant!",
           chance: 2,
@@ -995,7 +1028,8 @@
 
       function notifyAchievement(achievement, player) {
         document.getElementById("memories-button").classList.add("notify");
-        player.actionMessage += `${player.actionMessage.length ? "\n\n" : ""}Made a special memory: ${achievement.name}!`;
+        // Doesn't work if message already updated, and don't want to update again because that would cause a repeated history log entry
+        // player.actionMessage += `${player.actionMessage.length ? "\n\n" : ""}Made a special memory: ${achievement.name}!`;
       }
 
       // Keep as an even number so that you don't end up with one large photo at the bottom of the album
@@ -1021,7 +1055,7 @@
         },
         {
           id: "berry-bonanza",
-          emojiHint: "🫐🫐🫐🫐🫐🫐",
+          emojiHint: `${BERRY_EMOJI}${BERRY_EMOJI}${BERRY_EMOJI}${BERRY_EMOJI}${BERRY_EMOJI}${BERRY_EMOJI}`,
           difficulty: 2,
           name: "Berry Bonanza",
           imageName: "berry-bonanza.jpg",
@@ -1086,7 +1120,7 @@
         },
         {
           id: "bird-feeder",
-          emojiHint: "🐦🫐🌰🐦‍⬛",
+          emojiHint: `🐦${BERRY_EMOJI}🌰${DARK_BIRD_EMOJI}`,
           difficulty: 1,
           name: "Bird Feeder",
           imageName: "bird-feeder.jpg",
@@ -1162,7 +1196,7 @@
         },
         {
           id: "rock-collector",
-          emojiHint: "🪨🪨🪨",
+          emojiHint: `${ROCK_EMOJI}${ROCK_EMOJI}${ROCK_EMOJI}`,
           difficulty: 3,
           name: "Rock Collector",
           imageName: "rock-collector.jpg",
@@ -1183,7 +1217,7 @@
         },
         {
           id: "rock-maniac",
-          emojiHint: "🪨🪨🪨🪨",
+          emojiHint: `${ROCK_EMOJI}${ROCK_EMOJI}${ROCK_EMOJI}${ROCK_EMOJI}`,
           difficulty: 5,
           name: "Rock Maniac",
           imageName: "rock-maniac.jpg",
@@ -1228,7 +1262,7 @@
         },
         {
           id: "bug-banisher",
-          emojiHint: "🪨🪳🪨🦟🪨🪳",
+          emojiHint: `${ROCK_EMOJI}${CREEPY_CRAWLY_EMOJI}${ROCK_EMOJI}🦟${ROCK_EMOJI}${CREEPY_CRAWLY_EMOJI}`,
           difficulty: 4,
           name: "Bug Banisher",
           imageName: "bug-banisher.jpg",
@@ -1252,7 +1286,7 @@
         },
         {
           id: "flower-finder",
-          emojiHint: "🌹🪻🌷🌼",
+          emojiHint: `🌹${PURPLE_FLOWER_EMOJI}🌷🌼`,
           difficulty: 1,
           name: "Flower Finder",
           imageName: "flower-finder.jpg",
@@ -1282,7 +1316,7 @@
         },
         {
           id: "balanced-bouquet",
-          emojiHint: "💐🌹🪻🌷🌼",
+          emojiHint: `💐🌹${PURPLE_FLOWER_EMOJI}🌷🌼`,
           difficulty: 2,
           name: "Balanced Bouquet",
           imageName: "balanced-bouquet.jpg",
@@ -1372,7 +1406,7 @@
         },
         {
           id: "flower-power",
-          emojiHint: "🌹🌹🪻🌷🪻🌼🌹",
+          emojiHint: `🌹🌹${PURPLE_FLOWER_EMOJI}🌷${PURPLE_FLOWER_EMOJI}🌼🌹`,
           difficulty: 3,
           name: "Flower Power",
           imageName: "flower-power.jpg",
@@ -1398,7 +1432,7 @@
         },
         {
           id: "flower-frenzy",
-          emojiHint: "🌹🌹🪻🌷🪻🌼🌹🌼🌼🌷🪻",
+          emojiHint: `🌹🌹${PURPLE_FLOWER_EMOJI}🌷${PURPLE_FLOWER_EMOJI}🌼🌹🌼🌼🌷${PURPLE_FLOWER_EMOJI}`,
           difficulty: 5,
           name: "Flower Frenzy",
           imageName: "flower-frenzy.jpg",
@@ -1538,7 +1572,7 @@
           this.capacity = 6;
           this.heldItems = [];
           this.environment = null;
-          this.actionMessage = null;
+          this.actionMessage = "";
           this.berryStreak = 0;
           this.queasyCounter = 0;
           this.trackCounter = 0;
@@ -1586,7 +1620,7 @@
 
         selectPathOption(pathOptionId) {
           this.environment = null;
-          this.actionMessage = null;
+          this.actionMessage = "";
 
           this.encounterPathOptionById(pathOptionId);
 
@@ -2778,7 +2812,7 @@
     </style>
   </head>
 
-  <body>
+  <body onload="document.getElementById('history-log-emoji').innerHTML = HISTORY_LOG_EMOJI;">
     <div id="fog-back"></div>
     <div id="fog-front"></div>
     <div id="title-screen">
@@ -2831,7 +2865,7 @@
             <button type="button" class="shadowed-button" aria-label="Open Guidebook" onClick="guidebook.show();"><span>📒 Guidebook</span></button>
           </div>
         </div>
-        <button type="button" class="shadowed-button" aria-label="Open History Log" onClick="historyLog.show();"><span>🪶 History Log</span></button>
+        <button type="button" class="shadowed-button" aria-label="Open History Log" onClick="historyLog.show();"><span><span id="history-log-emoji">🪶</span> History Log</span></button>
         <p id="messages" class="shadowed-text"></p>
         <button type="button" id="restart-button" class="main-button" onclick="game.startGame();">Go Again</button>
         <div id="held-items"></div>
