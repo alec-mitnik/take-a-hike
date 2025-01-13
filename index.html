@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="./favicon.png">
 
     <title>Take a Hike</title>
 
@@ -176,6 +177,9 @@
       // TODO - 🪦(fallback: ⚰️)🥀↔️🧺☘️🍀🐚🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢
       // Clover - small chance to be four-leafed when picked up, which increases the likelihood of favorable outcomes?
       // Sound effects?
+      // Special interaction for fruit - if you ever hold three at once, you try to juggle them.  Failure means you drop them all,
+      // but success gives you the energy to instantly peel and eat them all.  When picking up the second, show message:
+      // "If I pick up a third fruit, I might try juggling them, ha!" - add achievement for success.
 
       // Emojis dated after 2019 need fallbacks
       const pathOptions = [
@@ -778,7 +782,7 @@
         {
           id: "bouquet",
           name: "💐 Bouquet",
-          tags: ["treasure"],
+          tags: [],
           // Use a regular function rather than a getter so that it recalculates on each access
           // and survives copying the object with the spread operator
           getDescription() {
@@ -1330,14 +1334,19 @@
               for (const bouquet of heldBouquets) {
                 const bouquetFlowerTypes = new Set(bouquet.flowers);
 
-                if (bouquet.flowers.length % bouquetFlowerTypes.size === 0) {
+                if (bouquetFlowerTypes.size === possibleFlowerTypes.length
+                    && bouquet.flowers.length % bouquetFlowerTypes.size === 0) {
                   const flowersPerType = bouquet.flowers.length / bouquetFlowerTypes.size;
+                  let bouquetAchieves = true;
 
                   for (const flowerType of possibleFlowerTypes) {
                     if (bouquet.flowers.filter(flowerId => flowerId === flowerType.id).length !== flowersPerType) {
+                      bouquetAchieves = false;
                       break;
                     }
+                  }
 
+                  if (bouquetAchieves) {
                     this.achieved = true;
                     notifyAchievement(this, player);
 
@@ -1854,7 +1863,6 @@
               itemButtons.appendChild(consumeButton);
             }
 
-            // TODO - consider still allowing with a warning, maybe as an unlock after demonstrating a good handle of the game?
             if (heldItem.tags.includes("treasure") === false) {
               const disposeButton = document.createElement('button');
               disposeButton.type = "button";
@@ -2768,6 +2776,7 @@
         &.notify {
           position: relative;
           box-shadow: 0px 0px 8px 1px var(--gold);
+          animation: shadowFlare 2s ease-in-out infinite;
 
           &::after {
             content: '✨';
@@ -2775,7 +2784,26 @@
             top: -1em;
             right: 0.5em;
             transform: scale(1.5);
+            animation: scaleFlare 2s ease-in-out infinite;
           }
+        }
+      }
+
+      @keyframes shadowFlare {
+        0%, 100% {
+          box-shadow: 0px 0px 8px 1px var(--gold);
+        }
+        50% {
+          box-shadow: 0px 0px 24px 3px var(--gold);
+        }
+      }
+
+      @keyframes scaleFlare {
+        0%, 100% {
+          transform: scale(1.5);
+        }
+        50% {
+          transform: scale(2);
         }
       }
 
@@ -2790,7 +2818,7 @@
       }
 
       #end-button-wrapper {
-        margin-top: 100px;
+        margin-top: 200px;
         transform: scale(0.75);
 
         &.confirm {
