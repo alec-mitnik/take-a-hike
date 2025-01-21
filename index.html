@@ -73,30 +73,42 @@
       const parcelOptions = [
         {
           id: "litter",
+          emoji: "🍾🍬",
           description: "Blech, it's just trash!",
           content: ["bottle", "wrapper"],
-          chance: 6,
+          chance: 5,
         },
         {
           id: "snack",
+          emoji: `🌰${BERRY_EMOJI}`,
           description: "Was this someone's snack?",
           content: ["nut", "berry"],
           chance: 4,
         },
         {
+          id: "zilch",
+          emoji: "",
+          description: "Empty.",
+          content: [],
+          chance: 2,
+        },
+        {
           id: "material",
+          emoji: "🎗️",
           description: "Got a nice ribbon.  :O",
           content: ["ribbon"],
           chance: 2,
         },
         {
           id: "bar",
+          emoji: "🍫",
           description: "Score!",
           content: ["snackbar"],
-          chance: 1,
+          chance: 2,
         },
         {
           id: "capacity",
+          emoji: "👜",
           description: "An empty but usable bag, sweet!",
           content: ["bag"],
           chance: 1,
@@ -117,11 +129,13 @@
       const mushroomSideEffects = [
         {
           id: "nothing",
+          emoji: "😊",
           description: "Tastes nice!",
           chance: 8,
         },
         {
           id: "queasy",
+          emoji: "🤢",
           description: "I feel a little queasy...",
           chance: 6,
           onEffect(player) {
@@ -131,6 +145,7 @@
         },
         {
           id: "yucky",
+          emoji: "😖",
           description: "Yuck, nasty!",
           chance: 4,
           onEffect(player) {
@@ -139,8 +154,9 @@
         },
         {
           id: "toxic",
+          emoji: "😰",
           description: "I feel weaker...",
-          chance: 3,
+          chance: 2,
           onEffect(player) {
             player.loseMaxStamina(2);
           },
@@ -174,8 +190,7 @@
         }
       }
 
-      // TODO - 🪦(fallback: ⚰️)🥀↔️🧺☘️🍀🐚🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢
-      // Clover - small chance to be four-leafed when picked up, which increases the likelihood of favorable outcomes?
+      // TODO - 🪦(fallback: ⚰️)🥀↔️🧺🐚🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢
       // Sound effects?
       // Special interaction for fruit - if you ever hold three at once, you try to juggle them.  Failure means you drop them all,
       // but success gives you the energy to instantly peel and eat them all.  When picking up the second, show message:
@@ -217,9 +232,30 @@
           },
         },
         {
+          id: "clover",
+          name: "🍀 Lucky Clover",
+          tags: ["grows"],
+          description: "A serendipitous find!",
+          chance: 0,
+          specialConditions: [
+            {
+              id: "reroll",
+              description: "Grants me another chance when trying my luck.",
+            }
+          ],
+          onPick(player) {
+            setTimeout(() => album.memoriesMap.get("hoarder-of-fortune").checkAchieved(player));
+            return false;
+          },
+          onDispose(player) {
+            player.actionMessage += "  Guess I'll make my own luck...";
+            return false;
+          },
+        },
+        {
           id: "snackbar",
           name: "🍫 Snack Bar",
-          tags: ["consumable"],
+          tags: ["consumable", "trashable"],
           description: "Eat to recover 5 stamina.",
           chance: 0,
           specialConditions: [
@@ -294,25 +330,37 @@
               return {
                 ...parcelOption,
                 get description() {
-                  return `Possibility: ${parcelOption.content.map(contentId => wrapInBadge(pathOptionsMap.get(contentId).name)).join(", ")}.`;
+                  return `Possibility: ${parcelOption.content.length ?
+                      `${parcelOption.content.map(contentId => wrapInBadge(pathOptionsMap.get(contentId).name)).join(", ")}.`
+                      : parcelOption.description}`;
                 }
               }
             });
           },
           onPick(player) {
-            const parcelResultId = randomDraw(parcelDeck, false);
-            const parcelContents = parcelOptionsMap.get(parcelResultId);
-            player.actionMessage = `Checked the parcel...  ${parcelContents.description}`;
+            const actionMessage = "Ooh, what could be inside the parcel?\n...";
+            player.actionMessage = actionMessage;
 
-            for (const resultId of parcelContents.content) {
-              player.encounterPathOptionById(resultId);
-            }
+            chanceTime.initiate(`Discover what's inside the ${wrapInBadge(this.name)}!`, 4, 1,
+                parcelDeck.map(optionId => parcelOptionsMap.get(optionId).emoji), (selections) => {
+              const parcelContents = parcelOptions.find(option => option.emoji === selections[0]);
+              player.actionMessage = `${actionMessage}\n${parcelContents.description}`;
 
-            guidebook.notesMap.get(this.id).specialConditions.get(parcelResultId).encountered = true;
+              for (const resultId of parcelContents.content) {
+                player.encounterPathOptionById(resultId);
+              }
 
-            if (parcelResultId === "capacity") {
-              album.memoriesMap.get("bonus-bag").checkAchieved(player);
-            }
+              guidebook.notesMap.get(this.id).specialConditions.get(parcelContents.id).encountered = true;
+
+              if (parcelContents.id === "capacity") {
+                album.memoriesMap.get("bonus-bag").checkAchieved(player);
+              }
+
+              game.updateMessagesDisplay(true);
+            }, true, option => {
+              const parcelContents = parcelOptions.find(parcelOption => parcelOption.emoji === option);
+              return guidebook.notesMap.get(this.id).specialConditions.get(parcelContents.id).encountered !== true;
+            });
 
             return true;
           },
@@ -404,7 +452,7 @@
         {
           id: "bottle",
           name: "🍾 Discarded Bottle",
-          tags: ["obstacle", "trash"],
+          tags: ["obstacle", "trash", "trashable"],
           description: "Ugh.  Bring it to a receptacle to dispose of it properly.",
           chance: 4,
           onDispose(player) {
@@ -424,7 +472,7 @@
         {
           id: "wrapper",
           name: "🍬 Discarded Wrapper",
-          tags: ["obstacle", "trash"],
+          tags: ["obstacle", "trash", "trashable"],
           description: "Gross.  Bring it to a receptacle to dispose of it properly.",
           chance: 4,
           onDispose(player) {
@@ -477,17 +525,27 @@
             });
           },
           onConsume(player) {
-            player.recoverStamina(4);
-            const sideEffectId = randomDraw(mushroomSideEffectsDeck, false);
-            const sideEffect = mushroomSideEffectsMap.get(sideEffectId);
+            const actionMessage = `Ate the ${wrapInBadge(this.name)}...`;
+            player.actionMessage = actionMessage;
 
-            if (sideEffect.onEffect) {
-              sideEffect.onEffect(player);
-            }
+            chanceTime.initiate(`Discover the effects of the ${wrapInBadge(this.name)}!`, 4, 1,
+                mushroomSideEffectsDeck.map(sideEffectId => mushroomSideEffectsMap.get(sideEffectId).emoji), (selections) => {
+              const sideEffectData = mushroomSideEffects.find(sideEffect => sideEffect.emoji === selections[0]);
+              player.actionMessage = `${actionMessage}  ${sideEffectData.description}`;
 
-            guidebook.notesMap.get(this.id).specialConditions.get(sideEffectId).encountered = true;
+              player.recoverStamina(4);
 
-            player.actionMessage = `Ate the ${wrapInBadge(this.name)}...  ${sideEffect.description}`;
+              if (sideEffectData.onEffect) {
+                sideEffectData.onEffect(player);
+              }
+
+              guidebook.notesMap.get(this.id).specialConditions.get(sideEffectData.id).encountered = true;
+              game.updateMessagesDisplay(true);
+            }, false, option => {
+              const sideEffectData = mushroomSideEffects.find(sideEffect => sideEffect.emoji === option);
+              return guidebook.notesMap.get(this.id).specialConditions.get(sideEffectData.id).encountered !== true;
+            });
+
             return true;
           },
         },
@@ -548,6 +606,72 @@
           startingStepsLeftToPeel: 14,
           stepsLeftToPeel: 15, // Add one for initial step on pickup
           chance: 2,
+          specialConditions: [
+            {
+              id: "juggle",
+              description: `If I ever hold three at once, I'll attempt to juggle them.  <span class="no-wrap">>:D</span>`,
+            },
+            {
+              id: "drop",
+              description: 'Possibility: I drop any that I fail to catch...  <span class="no-wrap">:(</span>',
+            },
+            {
+              id: "success",
+              description: `Possibility: If I catch all three, I get so pumped that I instantly peel and eat them!  <span class="no-wrap">>:P</span>`,
+            },
+          ],
+          onPick(player) {
+            const heldNonFruit = player.heldItems.filter(item => item.id !== "tangerine");
+            const numHeldFruit = 1 + player.heldItems.length - heldNonFruit.length;
+
+            if (numHeldFruit >= 3) {
+              const actionMessage = `That's three ${wrapInBadge(this.name)}!  Commencing juggle attempt...`;
+              player.actionMessage = actionMessage;
+              guidebook.notesMap.get(this.id).specialConditions.get("juggle").encountered = true;
+
+              chanceTime.initiate(`Attempt to juggle by catching all three ${wrapInBadge(this.name)}!`, 3, 3,
+                  ["🍊","🍊","🍊","🍊","🍊","🍊","❌","❌","❌"], (selections) => {
+                const nonFruitSelections = selections.filter(selection => selection !== "🍊");
+
+                if (nonFruitSelections.length === 0) {
+                  // Success
+                  player.actionMessage = `${actionMessage}\nI did it!  That got me so pumped that I instantly peeled and ate them all.  <span class="no-wrap">>:P</span>`;
+                  player.recoverStamina(7 * 3);
+                  guidebook.notesMap.get(this.id).specialConditions.get("success").encountered = true;
+                  album.memoriesMap.get("fruitful-finesse").checkAchieved(player);
+
+                  const heldNonFruit = player.heldItems.filter(item => item.id !== "tangerine");
+                  player.heldItems = heldNonFruit;
+                } else {
+                  // Failure
+                  let amount = "some";
+                  if (nonFruitSelections.length === 1) {
+                    amount = "one";
+                  } else if (nonFruitSelections.length >= 3) {
+                    amount = "them all";
+                  }
+
+                  player.actionMessage = `${actionMessage}\nOh shoot, I dropped ${amount}!  <span class="no-wrap">:(</span>`;
+                  guidebook.notesMap.get(this.id).specialConditions.get("drop").encountered = true;
+
+                  const heldFruit = player.heldItems.filter(item => item.id === "tangerine");
+
+                  for (let i = 0; i < nonFruitSelections.length; i++) {
+                    const randomFruit = randomDraw(heldFruit, true);
+                    player.heldItems.splice(player.heldItems.indexOf(randomFruit), 1);
+                  }
+                }
+
+                game.updateMessagesDisplay(true);
+              });
+
+              return false;
+            } else if (numHeldFruit === 2) {
+              player.actionMessage = `All I need is a third ${wrapInBadge(this.name)} and I can try to juggle them!  <span class="no-wrap">>:D</span>`;
+            }
+
+            return false;
+          },
           onConsume(player) {
             if (this.stepsLeftToPeel <= 0) {
               player.recoverStamina(7);
@@ -604,17 +728,14 @@
             },
             {
               id: "bug",
-              description: "More and more bugs will appear in the woods over time, but I can reduce the amount whenever I use this to shoo some away.",
-              get description() {
-                return "I'll use this to shoo away a bug if I run into one.  Good riddance!";
-              }
+              description: "More and more bugs will appear in the woods over time, but I can reduce the amount whenever I use this to shoo one away.",
             },
           ],
           onPick(player) {
             player.capacity--;
 
-            setTimeout(() => album.memoriesMap.get("rock-collector").checkAchieved(player), 0);
-            setTimeout(() => album.memoriesMap.get("rock-maniac").checkAchieved(player), 0);
+            setTimeout(() => album.memoriesMap.get("rock-collector").checkAchieved(player));
+            setTimeout(() => album.memoriesMap.get("rock-maniac").checkAchieved(player));
 
             return false;
           },
@@ -711,10 +832,46 @@
           onPick(player) {
             player.trackCounter = -player.trackCounter;
             player.trackCounter++;
-            player.actionMessage = "Ooh, animal tracks!  I wonder what they'll lead to if I keep following them...";
+            let actionMessage = "Ooh, animal tracks!  I wonder what they'll lead to if I keep following them...";
+            player.actionMessage = actionMessage;
 
             if (player.trackCounter >= player.trackPathLength) {
-              player.actionMessage += "  Oh!";
+              actionMessage += "  Oh!";
+              player.actionMessage = actionMessage;
+
+              const chanceOptions = ["🐾","🐾","🐾","🐾","🐾","❌","❌","❌","❌"];
+              chanceTime.initiate(`Attempt to follow at least three ${wrapInBadge(this.name)}!`, 3, 5, chanceOptions, (selections) => {
+                const tracksSelections = selections.filter(selection => selection === "🐾");
+                let tracksOptionId;
+
+                if (tracksSelections.length >= 3) {
+                  // Success
+                  player.trackPathLength = tracksSelections.length - 1;
+                  player.actionMessage = `${actionMessage}\nI see it in the distance, wow!`;
+                  tracksOptionId = "bunny";
+                  guidebook.notesMap.get(this.id).specialConditions.get("sighting").encountered = true;
+                } else {
+                  // Failure
+                  player.trackPathLength = 5 - tracksSelections.length;
+                  player.actionMessage = `${actionMessage}\nI see it in the distance, ew...`;
+                  tracksOptionId = "turd";
+                  guidebook.notesMap.get(this.id).specialConditions.get("bust").encountered = true;
+                }
+
+                player.trackCounter = 0;
+                let replacedTracks = false;
+
+                for (let i = 0; i < game.pathStepOptions[0].length && replacedTracks !== true; i++) {
+                  for (let j = 0; j < game.pathStepOptions[i][0].length && replacedTracks !== true; j++) {
+                    if (game.pathStepOptions[i][j] === this.id) {
+                      game.pathStepOptions[i][j] = tracksOptionId;
+                      replacedTracks = true;
+                    }
+                  }
+                }
+
+                game.updateMessagesDisplay(true);
+              });
             }
 
             return true;
@@ -782,7 +939,7 @@
         {
           id: "bouquet",
           name: "💐 Bouquet",
-          tags: [],
+          tags: ["trashable"],
           // Use a regular function rather than a getter so that it recalculates on each access
           // and survives copying the object with the spread operator
           getDescription() {
@@ -813,7 +970,7 @@
         {
           id: "ribbon",
           name: "🎗️ Ribbon",
-          tags: ["tool"],
+          tags: ["tool", "trashable"],
           description: "With some effort, I can use this to turn all my flowers into a bouquet.",
           chance: 1,
           onConsume(player) {
@@ -848,7 +1005,7 @@
         {
           id: "rose",
           name: "🌹 Red Flower",
-          tags: ["flower"],
+          tags: ["flower", "grows"],
           description: "Collectable.  Smells nice!",
           chance: 2,
           onPick(player) {
@@ -861,7 +1018,7 @@
         {
           id: "hyacinth",
           name: `${PURPLE_FLOWER_EMOJI} Purple Flower`,
-          tags: ["flower"],
+          tags: ["flower", "grows"],
           description: "Collectable.  So vibrant!",
           chance: 2,
           onPick(player) {
@@ -874,7 +1031,7 @@
         {
           id: "tulip",
           name: "🌷 Pink Flower",
-          tags: ["flower"],
+          tags: ["flower", "grows"],
           description: "Collectable.  Soft petals!",
           chance: 2,
           onPick(player) {
@@ -887,7 +1044,7 @@
         {
           id: "daisy",
           name: "🌼 Pale Flower",
-          tags: ["flower"],
+          tags: ["flower", "grows"],
           description: "Collectable.  Cheerful!",
           chance: 2,
           onPick(player) {
@@ -902,11 +1059,177 @@
       // ID -> path option
       const pathOptionsMap = new Map(pathOptions.map(pathOption => [pathOption.id, pathOption]));
 
+      class ChanceTime {
+        awaitingSelection;
+        message;
+        startingOptions;
+        selectedOptions;
+        selectionsToMake;
+        cols;
+        callback;
+        smallIcons;
+
+        constructor() {
+          this.awaitingSelection = false;
+          this.message = "";
+          this.startingOptions = [];
+          this.selectedOptions = [];
+          this.selectionsToMake = 1;
+          this.cols = 3;
+          this.callback = () => {};
+          this.smallIcons = false;
+          this.shroudedFunction = () => false;
+        }
+
+        show() {
+          const chanceTimeDisplay = document.getElementById("chance-time-display");
+          chanceTimeDisplay.showModal();
+
+          const chanceTimeContent = document.getElementById("chance-time-content");
+          chanceTimeContent.scrollTop = 0;
+        }
+
+        hide() {
+          const chanceTimeDisplay = document.getElementById("chance-time-display");
+          chanceTimeDisplay.close();
+        }
+
+        // Cols should not exceed 5
+        initiate(message, cols, selectionsToMake, startingOptions, callback, smallIcons = false, shroudedFunction = () => false) {
+          if (game.gameActive !== true) {
+            return;
+          }
+
+          this.shroudedFunction = shroudedFunction;
+          this.smallIcons = smallIcons;
+          this.callback = callback;
+          this.cols = cols;
+          updateCssVar('--chance-time-cols', cols);
+          this.selectionsToMake = selectionsToMake;
+          this.startingOptions = startingOptions;
+          this.selectedOptions = [];
+
+          const chanceTimeMessage = document.getElementById("chance-time-message");
+          chanceTimeMessage.innerHTML = message;
+          this.message = message;
+
+          this.updateChanceTimeProgress(selectionsToMake === 1);
+
+          const chanceTimeDoneButton = document.getElementById("chance-time-done");
+          chanceTimeDoneButton.style.display = "none";
+          const chanceTimeTryAgain = document.getElementById("chance-time-try-again");
+          chanceTimeTryAgain.style.display = "none";
+
+          const chanceTimeGrid = document.getElementById("chance-time-grid");
+          chanceTimeGrid.innerHTML = "";
+
+          let optionsToPopulate = [...this.startingOptions];
+
+          while (optionsToPopulate.length) {
+            const option = randomDraw(optionsToPopulate, true);
+
+            const optionElement = document.createElement("label");
+            optionElement.classList.add("checkbox-button");
+
+            const optionCheckbox = document.createElement("input");
+            optionCheckbox.type = "checkbox";
+            optionCheckbox.onclick = () => {
+              optionCheckbox.disabled = true;
+              this.selectedOptions.push(option);
+
+              const allSelectionsMade = this.selectedOptions.length >= this.selectionsToMake;
+              this.updateChanceTimeProgress(allSelectionsMade);
+
+              if (allSelectionsMade) {
+                chanceTimeDoneButton.style.display = null;
+
+                if (game.player.heldItems.some(heldItem => heldItem.id === "clover")) {
+                  chanceTimeTryAgain.style.display = null;
+                }
+
+                for (const checkboxButton of chanceTimeGrid.querySelectorAll(".checkbox-button")) {
+                  const checkbox = checkboxButton.querySelector("input");
+                  checkbox.disabled = true;
+
+                  const nestedSpan = checkboxButton.querySelector(".nested");
+
+                  if (this.selectedOptions.some(selectedOption => selectedOption === nestedSpan.innerHTML)) {
+                    nestedSpan.classList.remove("shrouded");
+                  }
+                }
+              }
+            };
+            optionElement.appendChild(optionCheckbox);
+
+            const optionSpan = document.createElement("span");
+            const nestedSpan = document.createElement("span");
+            nestedSpan.innerHTML = option;
+            nestedSpan.classList.add("nested");
+
+            if (shroudedFunction(option)) {
+              nestedSpan.classList.add("shrouded");
+            }
+
+            if (smallIcons) {
+              nestedSpan.style.fontSize = "50%";
+            }
+
+            optionSpan.appendChild(nestedSpan)
+            optionElement.appendChild(optionSpan);
+
+            chanceTimeGrid.appendChild(optionElement);
+          }
+
+          const chanceTimeButton = document.getElementById("chance-time-button");
+          chanceTimeButton.style.display = "inline-flex";
+          this.awaitingSelection = true;
+          game.updateHeldItemsDisplay();
+        }
+
+        done() {
+          const chanceTimeButton = document.getElementById("chance-time-button");
+          chanceTimeButton.style.display = null;
+          this.awaitingSelection = false;
+
+          this.hide();
+          this.callback(this.selectedOptions);
+
+          game.updatePathDisplay()
+          game.updateHeldItemsDisplay();
+        }
+
+        tryAgain() {
+          const cloverIndex = game.player.heldItems.findIndex(heldItem => heldItem.id === "clover");
+          game.player.heldItems.splice(cloverIndex, 1);
+          guidebook.notesMap.get("clover").specialConditions.get("reroll").encountered = true;
+          game.updateHeldItemsDisplay();
+          this.initiate(this.message, this.cols, this.selectionsToMake, this.startingOptions, this.callback, this.smallIcons, this.shroudedFunction);
+        }
+
+        updateChanceTimeProgress(hide) {
+          const chanceTimeProgress = document.getElementById("chance-time-progress");
+          chanceTimeProgress.style.display = hide ? "none" : null;
+
+          if (hide !== true) {
+            document.getElementById("chance-time-progress__total").innerText = this.selectedOptions.length;
+            document.getElementById("chance-time-progress__goal").innerText = this.selectionsToMake;
+          }
+        }
+      }
+
       class HistoryLog {
         log;
 
         constructor() {
           this.log = [];
+        }
+
+        replaceLastLogEntry(message) {
+          if (this.log.length) {
+            this.log[this.log.length - 1] = message;
+          } else {
+            this.addLogEntry(message);
+          }
         }
 
         addLogEntry(message) {
@@ -1036,7 +1359,7 @@
         // player.actionMessage += `${player.actionMessage.length ? "\n\n" : ""}Made a special memory: ${achievement.name}!`;
       }
 
-      // Keep as an even number so that you don't end up with one large photo at the bottom of the album
+      // Keep divisible by 6 so that you always have a full row at the end
       const achievements = [
         {
           id: "bonus-bag",
@@ -1074,6 +1397,46 @@
 
                 return true;
               }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "hoarder-of-fortune",
+          emojiHint: `🍀🍀🍀🍀`,
+          difficulty: 4,
+          name: "Hoarder of Fortune",
+          imageName: "hoarder-of-fortune.jpg",
+          description: "Held 4 lucky clovers at once",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              if (player.heldItems.filter(item => item.id === "clover").length >= 4) {
+                this.achieved = true;
+                notifyAchievement(this, player);
+
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "fruitful-finesse",
+          emojiHint: `🍊🍊🍊`,
+          difficulty: 3,
+          name: "Fruitful Finesse",
+          imageName: "fruitful-finesse.jpg",
+          description: "Successfully juggled some fruit",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              this.achieved = true;
+              notifyAchievement(this, player);
+
+              return true;
             }
 
             return false;
@@ -1746,7 +2109,7 @@
           }
         }
 
-        updateMessagesDisplay() {
+        updateMessagesDisplay(replaceLastLogEntry = false) {
           const endButtonWrapper = document.getElementById('end-button-wrapper');
           endButtonWrapper.classList.remove('confirm');
 
@@ -1795,7 +2158,7 @@
               messages.push(this.player.actionMessage);
             }
 
-            if (this.player.environment) {
+            if (this.player.environment && chanceTime.awaitingSelection !== true) {
               const environmentOption = pathOptionsMap.get(this.player.environment);
 
               if (environmentOption) {
@@ -1803,7 +2166,7 @@
               }
             }
 
-            if (this.player.heldItems.length > this.player.capacity) {
+            if (this.player.heldItems.length > this.player.capacity && chanceTime.awaitingSelection !== true) {
               messages.push("I have too many things to carry with me.")
             }
 
@@ -1811,7 +2174,11 @@
           }
 
           if (messagesDisplay.innerHTML.length) {
-            historyLog.addLogEntry(messagesDisplay.innerHTML);
+            if (replaceLastLogEntry) {
+              historyLog.replaceLastLogEntry(messagesDisplay.innerHTML);
+            } else {
+              historyLog.addLogEntry(messagesDisplay.innerHTML);
+            }
           }
         }
 
@@ -1854,7 +2221,7 @@
             if (heldItem.onConsume) {
               const consumeButton = document.createElement('button');
               consumeButton.type = "button";
-              consumeButton.disabled = this.gameActive === false;
+              consumeButton.disabled = this.gameActive === false || chanceTime.awaitingSelection;
               consumeButton.innerText = heldItem.tags.includes("consumable") ? "Consume" : "Use";
               consumeButton.style.flexGrow = 3;
               consumeButton.onclick = () => {
@@ -1866,9 +2233,9 @@
             if (heldItem.tags.includes("treasure") === false) {
               const disposeButton = document.createElement('button');
               disposeButton.type = "button";
-              disposeButton.disabled = this.gameActive === false;
+              disposeButton.disabled = this.gameActive === false || chanceTime.awaitingSelection;
               // Need to keep track of exceptions
-              disposeButton.innerText = this.player.environment === "receptacle" && heldItem.onDispose && heldItem.id !== "rock" ? "🚮" : "X";
+              disposeButton.innerText = this.player.environment === "receptacle" && heldItem.tags.includes("trashable") ? "🚮" : "X";
               disposeButton.ariaLabel = "Dispose";
               disposeButton.onclick = () => {
                 this.player.disposeItem(i);
@@ -1899,9 +2266,14 @@
               const optionDisplay = document.createElement('button');
               optionDisplay.type = "button";
               optionDisplay.innerHTML = stepOption.name;
+
+              if (stepOptionId === "tracks" && -this.player.trackCounter >= this.player.trackPathLength) {
+                optionDisplay.innerHTML = "❔❔❔";
+              }
+
               optionDisplay.classList.add('path-option');
               optionDisplay.style.gridRow = this.pathStepOptions.length - i;
-              optionDisplay.disabled = this.player.heldItems.length > this.player.capacity || i > 0 || this.gameActive === false;
+              optionDisplay.disabled = this.player.heldItems.length > this.player.capacity || i > 0 || this.gameActive === false || chanceTime.awaitingSelection;
               optionDisplay.onclick = () => {
                 this.player.selectPathOption(stepOption.id);
               };
@@ -1931,7 +2303,7 @@
               if (pathOption.tags.includes("obstacle")) {
                 pathOption.positiveModifier += game.iterationsCount;
                 pathOptionsMap.get("blank").negativeModifier += game.iterationsCount;
-              } else if (pathOption.tags.includes("flower")) {
+              } else if (pathOption.tags.includes("grows")) {
                 pathOption.positiveModifier++;
               }
             }
@@ -1981,25 +2353,8 @@
 
           for (let i = 0; i < this.pathSize; i++) {
             if (randomIndex === i) {
-              let tracksOptionId;
-
-              if (this.player.trackCounter >= this.player.trackPathLength) {
-                if (Math.random() < 0.5) {
-                  tracksOptionId = "bunny";
-                  guidebook.notesMap.get("tracks").specialConditions.get("sighting").encountered = true;
-                } else {
-                  tracksOptionId = "turd";
-                  guidebook.notesMap.get("tracks").specialConditions.get("bust").encountered = true;
-                }
-
-                this.player.trackCounter = 0;
-              } else {
-                tracksOptionId = "tracks";
-                this.player.trackCounter = -this.player.trackCounter;
-              }
-
-              stepOptions.push(tracksOptionId);
-
+              this.player.trackCounter = -this.player.trackCounter;
+              stepOptions.push("tracks");
               continue;
             }
 
@@ -2094,6 +2449,7 @@
       let album = new Album();
       let historyLog = new HistoryLog();
       const guidebook = new Guidebook();
+      const chanceTime = new ChanceTime();
       const game = new Game();
     </script>
 
@@ -2116,6 +2472,7 @@
         --path-visibility: 3;
         --path-size: 3;
         --queasy-count-dashes: '';
+        --chance-time-cols: 3;
         font-size: clamp(50%, 0.5vw + 0.5rem, 100%);
       }
 
@@ -2184,7 +2541,8 @@
         align-items: center;
       }
 
-      button {
+      button, input[type="checkbox"] {
+        user-select: none;
         cursor: pointer;
         font-family: inherit;
         font-size: inherit;
@@ -2192,6 +2550,71 @@
 
         &:disabled {
           cursor: default;
+        }
+      }
+
+      .checkbox-button {
+        user-select: none;
+        display: inline-flex;
+        position: relative;
+        text-align: center;
+
+        input[type="checkbox"] {
+          /* Using appearance: none keeps the input visible for focus styles
+          but removes the default checkbox appearance */
+          appearance: none;
+          margin: 0;
+
+          /* Make the input fill the full size of the button */
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+        }
+
+        > span {
+          border: 3px solid white;
+          border-radius: 16px;
+          background: black;
+          padding: 1rem;
+
+          &, span.nested {
+            width: 100%;
+            height: 100%;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+          }
+
+          &, * {
+            /* Ensures clicks pass through to the input */
+            pointer-events: none;
+          }
+        }
+
+        input:checked + span {
+          border-color: var(--gold);
+        }
+
+        @media (hover: hover) {
+          input:not(:disabled):hover + span {
+            background: white;
+            color: black;
+          }
+        }
+
+        input:not(:disabled):focus-visible + span {
+          background: white;
+          color: black;
+        }
+
+        input:not(:disabled):active + span {
+          background: #666;
+        }
+
+        input:disabled:not(:checked) + span {
+          background: #333;
+          opacity: 0.75;
         }
       }
 
@@ -2253,6 +2676,81 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
+      }
+
+      #chance-time-button {
+        display: none;
+        font-size: 1.25rem;
+      }
+
+      #chance-time-display {
+        .panel-content {
+          align-items: center;
+          overflow-x: hidden;
+        }
+
+        #chance-time-message {
+          text-align: center;
+          margin-bottom: 20px;
+          font-size: 1.25rem;
+        }
+
+        #chance-time-grid-wrapper {
+          width: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+
+          #chance-time-grid {
+            width: calc(167px * var(--chance-time-cols));
+            max-width: 100%;
+            min-width: min-content;
+            display: grid;
+            grid-template-columns: repeat(var(--chance-time-cols), 1fr);
+            gap: 1rem;
+            margin-bottom: 20px;
+
+            .checkbox-button {
+              border-width: 3px;
+              aspect-ratio: 1;
+              font-size: 4rem;
+
+              > span {
+                padding: 0;
+              }
+
+              input:not(:checked) {
+                + span > span.nested.shrouded {
+                  filter: contrast(0);
+                }
+
+                &:not(:disabled) {
+                  + span > span.nested {
+                    visibility: hidden;
+                  }
+
+                  + span::after {
+                    content: '❔';
+                    position: absolute;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        #chance-time-progress {
+          text-align: center;
+          font-size: 3rem;
+          font-weight: 500;
+          opacity: 0.85;
+
+          #chance-time-progress__total,
+          #chance-time-progress__goal {
+            display: inline-block;
+            width: 1ch;
+          }
+        }
       }
 
       #history-log-display {
@@ -2484,6 +2982,7 @@
       }
 
       #path-arrows {
+        user-select: none;
         margin-top: 5px;
         min-width: 52%;
         width: 520px;
@@ -2675,6 +3174,7 @@
       }
 
       .empty-capacity-space {
+        user-select: none;
         opacity: 0.5;
         font-size: 6rem;
         align-self: center;
@@ -2847,7 +3347,7 @@
       <h1 id="title">Take a Hike</h1>
       <h5 id="author">A game by Alec Mitnik</h5>
       <div class="shadowed-text">
-        <p>Just like with any hike, the goal is ultimately whatever you make of it.  Explore, keep your stamina up, and make some nice memories!  <span class="no-wrap">:)</span></p>
+        <p>Explore, keep your stamina up, and make some nice memories!  <span class="no-wrap">:)</span></p>
         <p>Please note that data does not persist once you leave the page.  The game may continue to be updated as I work on it.</p>
       </div>
       <button type="button" id="start-button" class="main-button" onClick="game.startGame();">Embark</button>
@@ -2867,6 +3367,22 @@
           <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Guidebook" onClick="guidebook.hide();"><span>X</span></button>
           <h1 class="panel-title">Guidebook</h1>
           <div id="guidebook-content" class="panel-content"></div>
+        </div>
+      </dialog>
+      <dialog id="chance-time-display" class="sidebar left">
+        <div class="backdrop" onclick="chanceTime.hide();"></div>
+        <div class="panel">
+          <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Chance Time" onClick="chanceTime.hide();"><span>X</span></button>
+          <h1 class="panel-title">Chance Time</h1>
+          <div id="chance-time-content" class="panel-content">
+            <p id="chance-time-message"></p>
+            <div id="chance-time-grid-wrapper">
+              <div id="chance-time-grid"></div>
+            </div>
+            <p id="chance-time-progress"><span id="chance-time-progress__total">0</span>/<span id="chance-time-progress__goal">0</span></p>
+            <button type="button" id="chance-time-try-again" class="main-button" onClick="chanceTime.tryAgain();">🍀 Try Again</button>
+            <button type="button" id="chance-time-done" class="main-button" onClick="chanceTime.done();">Done</button>
+          </div>
         </div>
       </dialog>
       <dialog id="history-log-display" class="sidebar right">
@@ -2895,6 +3411,7 @@
         </div>
         <button type="button" class="shadowed-button" aria-label="Open History Log" onClick="historyLog.show();"><span><span id="history-log-emoji">🪶</span> History Log</span></button>
         <p id="messages" class="shadowed-text"></p>
+        <button type="button" id="chance-time-button" class="shadowed-button notify" aria-label="Open Chance Time" onClick="chanceTime.show();"><span>🎲 Chance Time</span></button>
         <button type="button" id="restart-button" class="main-button" onclick="game.startGame();">Go Again</button>
         <div id="held-items"></div>
         <span id="end-button-wrapper">
