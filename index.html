@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -45,6 +45,7 @@
       const CREEPY_CRAWLY_EMOJI = supportsLatestEmojis() ? '🪳' : '🕷️';
       const PURPLE_FLOWER_EMOJI = supportsLatestEmojis() ? '🪻' : '🍇';
       const HISTORY_LOG_EMOJI = supportsLatestEmojis() ? '🪶' : '📜';
+      const TRADING_POST_EMOJI = supportsLatestEmojis() ? '🪧' : '🚩';
 
       function randomDraw(deck, removesFromDeck) {
         const randomIndex = Math.floor(Math.random() * deck.length);
@@ -191,10 +192,16 @@
       }
 
       // TODO - 🪦(fallback: ⚰️)🥀↔️🧺🐚🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢
+      // Move scripts into separate module files
       // Sound effects?
-      // Special interaction for fruit - if you ever hold three at once, you try to juggle them.  Failure means you drop them all,
-      // but success gives you the energy to instantly peel and eat them all.  When picking up the second, show message:
-      // "If I pick up a third fruit, I might try juggling them, ha!" - add achievement for success.
+      // Beach/mountain locales?
+
+      // Refer to stars as "inspiration," which lets you "buy" blank or templated canvases for creating art based on Color Bloom app,
+      // with sliders for hue/variation, and add share API for the created artwork and to promote the app.
+      // Blank canvas offers option to draw freehand outline at 3 different thicknesses.  Or maybe you always trace over a template,
+      // making it more personal/customizable, and letting any image be used, not just outlined ones.
+      // Can also let user upload their own template.
+      // Shared artwork hosting?  Artwork screenshot file generation?
 
       // Emojis dated after 2019 need fallbacks
       const pathOptions = [
@@ -269,7 +276,7 @@
           onConsume(player) {
             player.recoverStamina(5);
             player.encounterPathOptionById("wrapper");
-            player.actionMessage = `Ate the ${wrapInBadge(this.name)}.  That hit the spot!`;
+            player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  That hit the spot!`;
 
             guidebook.notesMap.get(this.id).specialConditions.get("waste").encountered = true;
             return true;
@@ -294,8 +301,9 @@
             {
               id: "waste",
               get description() {
-                return `Leaves me with ${wrapInBadge(pathOptionsMap.get("bag").name)}, ${wrapInBadge(pathOptionsMap.get("wrapper").name)
-                    }, ${wrapInBadge(pathOptionsMap.get("bottle").name)} when consumed.`;
+                return `Leaves me with <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("bag").name)
+                    },</span> <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("wrapper").name)
+                    },</span> and ${wrapInBadge(pathOptionsMap.get("bottle").name)} when consumed.`;
               },
             },
           ],
@@ -304,7 +312,7 @@
             player.encounterPathOptionById("bag");
             player.encounterPathOptionById("wrapper");
             player.encounterPathOptionById("bottle");
-            player.actionMessage = `Ate the ${wrapInBadge(this.name)}.  Delicious!`;
+            player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  Delicious!`;
 
             guidebook.notesMap.get(this.id).specialConditions.get("waste").encountered = true;
             return true;
@@ -331,7 +339,12 @@
                 ...parcelOption,
                 get description() {
                   return `Possibility: ${parcelOption.content.length ?
-                      `${parcelOption.content.map(contentId => wrapInBadge(pathOptionsMap.get(contentId).name)).join(", ")}.`
+                      `${parcelOption.content.map((contentId, index) => {
+                        return `<span class="no-wrap">${wrapInBadge(pathOptionsMap.get(contentId).name)}${
+                            index < parcelOption.content.length - 1 && parcelOption.content.length > 2 ? "," : ""}</span>${
+                            index < parcelOption.content.length - 1 ? " " : ""}${
+                            index === parcelOption.content.length - 2 ? "and " : ""}`;
+                      }).join("")}.`
                       : parcelOption.description}`;
                 }
               }
@@ -341,7 +354,7 @@
             const actionMessage = "Ooh, what could be inside the parcel?\n...";
             player.actionMessage = actionMessage;
 
-            chanceTime.initiate(`Discover what's inside the ${wrapInBadge(this.name)}!`, 4, 1,
+            chanceTime.initiate(`Discover what's inside the <span class="no-wrap">${wrapInBadge(this.name)}!</span>`, 4, 1,
                 parcelDeck.map(optionId => parcelOptionsMap.get(optionId).emoji), (selections) => {
               const parcelContents = parcelOptions.find(option => option.emoji === selections[0]);
               player.actionMessage = `${actionMessage}\n${parcelContents.description}`;
@@ -399,7 +412,7 @@
               }
 
               player.setQueasyCounter(0);
-              player.actionMessage = `I got to feed a ${wrapInBadge(berryItem.name)} to the ${wrapInBadge(this.name)}!  Feeling great.  :D`;
+              player.actionMessage = `I got to feed a ${wrapInBadge(berryItem.name)} to the <span class="no-wrap">${wrapInBadge(this.name)}!</span>  Feeling great.  :D`;
             } else {
               player.actionMessage = 'Aw, the bird flew away.  <span class="no-wrap">:(</span>';
             }
@@ -441,7 +454,7 @@
               }
 
               player.setQueasyCounter(0);
-              player.actionMessage = `I got to feed a ${wrapInBadge(nutItem.name)} to the ${wrapInBadge(this.name)}!  Feeling great.  :D`;
+              player.actionMessage = `I got to feed a ${wrapInBadge(nutItem.name)} to the <span class="no-wrap">${wrapInBadge(this.name)}!</span>  Feeling great.  :D`;
             } else {
               player.actionMessage = 'Aw, the bird flew away.  <span class="no-wrap">:(</span>';
             }
@@ -504,7 +517,6 @@
             },
           ],
           onPick(player) {
-            player.environment = "receptacle";
             return true;
           },
         },
@@ -525,10 +537,10 @@
             });
           },
           onConsume(player) {
-            const actionMessage = `Ate the ${wrapInBadge(this.name)}...`;
+            const actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}...</span>`;
             player.actionMessage = actionMessage;
 
-            chanceTime.initiate(`Discover the effects of the ${wrapInBadge(this.name)}!`, 4, 1,
+            chanceTime.initiate(`Discover the effects of the <span class="no-wrap">${wrapInBadge(this.name)}!</span>`, 5, 1,
                 mushroomSideEffectsDeck.map(sideEffectId => mushroomSideEffectsMap.get(sideEffectId).emoji), (selections) => {
               const sideEffectData = mushroomSideEffects.find(sideEffect => sideEffect.emoji === selections[0]);
               player.actionMessage = `${actionMessage}  ${sideEffectData.description}`;
@@ -566,7 +578,7 @@
 
             player.berryStreak = (player.berryStreak + 1) % 6;
 
-            player.actionMessage = `Ate the ${wrapInBadge(this.name)}.  ${
+            player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  ${
                 (player.berryStreak > 0) ? `I crave more!` : `Yummy!`}`;
 
             album.memoriesMap.get("berry-bonanza").checkAchieved(player);
@@ -625,11 +637,11 @@
             const numHeldFruit = 1 + player.heldItems.length - heldNonFruit.length;
 
             if (numHeldFruit >= 3) {
-              const actionMessage = `That's three ${wrapInBadge(this.name)}!  Commencing juggle attempt...`;
+              const actionMessage = `That's three <span class="no-wrap">${wrapInBadge(this.name)}!</span>  Commencing juggle attempt...`;
               player.actionMessage = actionMessage;
               guidebook.notesMap.get(this.id).specialConditions.get("juggle").encountered = true;
 
-              chanceTime.initiate(`Attempt to juggle by catching all three ${wrapInBadge(this.name)}!`, 3, 3,
+              chanceTime.initiate(`Attempt to juggle by catching all three <span class="no-wrap">${wrapInBadge(this.name)}!</span>`, 3, 3,
                   ["🍊","🍊","🍊","🍊","🍊","🍊","❌","❌","❌"], (selections) => {
                 const nonFruitSelections = selections.filter(selection => selection !== "🍊");
 
@@ -675,7 +687,7 @@
           onConsume(player) {
             if (this.stepsLeftToPeel <= 0) {
               player.recoverStamina(7);
-              player.actionMessage = `Ate the ${wrapInBadge(this.name)}.  It took some work, but it was worth it.  <span class="no-wrap">:P</span>`;
+              player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  It took some work, but it was worth it.  <span class="no-wrap">:P</span>`;
               return true;
             }
 
@@ -700,7 +712,7 @@
           onConsume(player) {
             if (player.heldItems.some(heldItem => heldItem.id === "rock")) {
               player.gainMaxStamina(1);
-              player.actionMessage = `Ate the ${wrapInBadge(this.name)} by breaking the shell with a ${wrapInBadge(pathOptionsMap.get("rock").name)}.  I feel stronger!`;
+              player.actionMessage = `Ate the ${wrapInBadge(this.name)} by breaking the shell with a <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("rock").name)}.</span>  I feel stronger!`;
 
               guidebook.notesMap.get(this.id).specialConditions.get("rock").encountered = true;
               guidebook.notesMap.get("rock").specialConditions.get("nut").encountered = true;
@@ -709,7 +721,7 @@
 
             const withText = player.heldItems.some(heldItem => heldItem.id === "bottle") ? `nothing but a flimsy ${wrapInBadge(pathOptionsMap.get("bottle").name)}` : "my bare hands";
 
-            player.actionMessage = `I can't crack open the ${wrapInBadge(this.name)} with ${withText}.  <span class="no-wrap">:(</span>`;
+            player.actionMessage = `I can't crack open the ${wrapInBadge(this.name)} with <span class="no-wrap">${withText}.</span>  <span class="no-wrap">:(</span>`;
             return false;
           },
         },
@@ -723,7 +735,7 @@
             {
               id: "nut",
               get description() {
-                return `Holding this allows me to break the shell of a ${wrapInBadge(pathOptionsMap.get("nut").name)}.`;
+                return `Holding this allows me to break the shell of a <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("nut").name)}.</span>`;
               }
             },
             {
@@ -766,7 +778,7 @@
               const rockItem = player.heldItems[rockIndex];
               rockItem.onDispose(player);
               player.heldItems.splice(rockIndex, 1);
-              player.actionMessage = `Shooed the ${wrapInBadge(this.name)} away with a ${wrapInBadge(rockItem.name)}.  Good riddance!`;
+              player.actionMessage = `Shooed the ${wrapInBadge(this.name)} away with a <span class="no-wrap">${wrapInBadge(rockItem.name)}.</span>  Good riddance!`;
 
               pathOptionsMap.get(this.id).negativeModifier++;
               pathOptionsMap.get("blank").positiveModifier++;
@@ -805,7 +817,7 @@
               const rockItem = player.heldItems[rockIndex];
               rockItem.onDispose(player);
               player.heldItems.splice(rockIndex, 1);
-              player.actionMessage = `Shooed the ${wrapInBadge(this.name)} away with a ${wrapInBadge(rockItem.name)}.  Good riddance!`;
+              player.actionMessage = `Shooed the ${wrapInBadge(this.name)} away with a <span class="no-wrap">${wrapInBadge(rockItem.name)}.</span>  Good riddance!`;
 
               pathOptionsMap.get(this.id).negativeModifier++;
               pathOptionsMap.get("blank").positiveModifier++;
@@ -840,7 +852,7 @@
               player.actionMessage = actionMessage;
 
               const chanceOptions = ["🐾","🐾","🐾","🐾","🐾","❌","❌","❌","❌"];
-              chanceTime.initiate(`Attempt to follow at least three ${wrapInBadge(this.name)}!`, 3, 5, chanceOptions, (selections) => {
+              chanceTime.initiate(`Attempt to follow at least three <span class="no-wrap">${wrapInBadge(this.name)}!</span>`, 3, 5, chanceOptions, (selections) => {
                 const tracksSelections = selections.filter(selection => selection === "🐾");
                 let tracksOptionId;
 
@@ -880,13 +892,13 @@
             {
               id: "sighting",
               get description() {
-                return `Possibility: ${wrapInBadge(pathOptionsMap.get("bunny").name)}!  <span class="no-wrap">&lt;3</span>`;
+                return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("bunny").name)}!</span>  <span class="no-wrap">&lt;3</span>`;
               },
             },
             {
               id: "bust",
               get description() {
-                return `Possibility: ${wrapInBadge(pathOptionsMap.get("turd").name)}.  <span class="no-wrap">:/</span>`;
+                return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("turd").name)}.</span>  <span class="no-wrap">:/</span>`;
               },
             },
           ],
@@ -906,7 +918,7 @@
             },
           ],
           onPick(player) {
-            player.actionMessage = `Whoa, a ${wrapInBadge(this.name)}!  So cute.  My day is made!  <span class="no-wrap">&lt;3</span>`;
+            player.actionMessage = `Whoa, a <span class="no-wrap">${wrapInBadge(this.name)}!</span>  So cute.  My day is made!  <span class="no-wrap">&lt;3</span>`;
             player.recoverStamina(2 * player.trackPathLength);
             player.trackPathLength = 0;
             album.memoriesMap.get("special-sighting").checkAchieved(player);
@@ -942,8 +954,8 @@
           tags: ["trashable"],
           // Use a regular function rather than a getter so that it recalculates on each access
           // and survives copying the object with the spread operator
-          getDescription() {
-            return `A lovely bouquet of ${this.flowers.length ? `${this.flowers.length} flowers:\n${
+          getDescription(forGuidebook = false) {
+            return `A lovely bouquet of ${forGuidebook === false && this.flowers.length ? `${this.flowers.length} flowers:\n${
             this.flowers.map(flower => pathOptionsMap.get(flower).name.substring(0, 2)).join("")
             }\n\n` : "flowers.  "}Much easier to carry.`
           },
@@ -1054,10 +1066,129 @@
             return false;
           },
         },
+        {
+          id: "trading-post",
+          name: `${TRADING_POST_EMOJI} Trading Post`,
+          tags: ["environment", "trading"],
+          getDescription(forGuidebook = false) {
+            return forGuidebook ? `A spot for trading items.` : `There is a ${wrapInBadge(this.name)} available, offering ${
+                wrapInBadge(tradeOffersMap.get(game.nextTradeOfferId)?.emojis)} in exchange for <span class="no-wrap">${
+                wrapInBadge(tradeRequestsMap.get(game.nextTradeRequestId)?.emojis)}.</span>`;
+          },
+          chance: 1,
+          onPick(player) {
+            guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeRequestId).encountered = true;
+            guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeOfferId).encountered = true;
+            return true;
+          },
+          get specialConditions() {
+            return [...tradeRequests.map(tradeRequest => {
+              return {
+                ...tradeRequest,
+                get description() {
+                  return `Possible request: <span class="no-wrap">${wrapInBadge(tradeRequest.emojis)}.</span>`;
+                }
+              }
+            }), ...tradeOffers.map(tradeOffer => {
+              return {
+                ...tradeOffer,
+                get description() {
+                  return `Possible offer: <span class="no-wrap">${wrapInBadge(tradeOffer.emojis)}.</span>`;
+                }
+              }
+            })]
+          },
+        },
+        {
+          id: "flyer",
+          name: "📰 Flyer",
+          tags: ["environment", "trading"],
+          getDescription(forGuidebook = false) {
+            return forGuidebook === false ? `There is a ${wrapInBadge(this.name)
+                } showing that someone wants to trade up ahead, offering ${
+                wrapInBadge(tradeOffersMap.get(game.nextTradeOfferId)?.emojis)} in exchange for <span class="no-wrap">${
+                wrapInBadge(tradeRequestsMap.get(game.nextTradeRequestId)?.emojis)}.</span>`
+                : `Shows what someone wants to trade at the next <span class="no-wrap">${
+                wrapInBadge(pathOptionsMap.get("trading-post").name)}.</span>`;
+          },
+          chance: 2,
+          onPick(player) {
+            guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeRequestId).encountered = true;
+            guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeOfferId).encountered = true;
+            return true;
+          },
+        },
       ];
 
       // ID -> path option
       const pathOptionsMap = new Map(pathOptions.map(pathOption => [pathOption.id, pathOption]));
+
+      const tradeRequests = [
+        {
+          id: "fruit-salad",
+          emojis: `${BERRY_EMOJI}🍒🍊`,
+          items: ["berry", "cherry", "tangerine"],
+        },
+        {
+          id: "mushroom-feast",
+          emojis: `${MUSHROOM_EMOJI}${MUSHROOM_EMOJI}${MUSHROOM_EMOJI}`,
+          items: ["mushroom", "mushroom", "mushroom"],
+        },
+        {
+          id: "ribbons",
+          emojis: `🎗️🎗️`,
+          items: ["ribbon", "ribbon"],
+        },
+        {
+          id: "rocks",
+          emojis: `🪨🪨`,
+          items: ["rock", "rock"],
+        },
+        {
+          id: "trash",
+          emojis: `🍬🍾🍬🍾`,
+          items: ["wrapper", "bottle", "wrapper", "bottle"],
+        },
+      ];
+
+      // ID -> trade request
+      const tradeRequestsMap = new Map(tradeRequests.map(tradeRequest => [tradeRequest.id, tradeRequest]));
+
+      const tradeOffers = [
+        {
+          id: "clover-bunch",
+          emojis: `🍀🍀🍀`,
+          items: ["clover", "clover", "clover"],
+        },
+        {
+          id: "extra-lunch",
+          emojis: `🧰`,
+          items: ["lunch"],
+        },
+        {
+          id: "pale-flowers",
+          emojis: `🌼🌼🌼🌼`,
+          items: ["daisy", "daisy", "daisy", "daisy"],
+        },
+        {
+          id: "red-flowers",
+          emojis: `🌹🌹🌹🌹`,
+          items: ["rose", "rose", "rose", "rose"],
+        },
+        {
+          id: "pink-flowers",
+          emojis: `🌷🌷🌷🌷`,
+          items: ["tulip", "tulip", "tulip", "tulip"],
+        },
+        {
+          id: "purple-flowers",
+          emojis: `${PURPLE_FLOWER_EMOJI}${PURPLE_FLOWER_EMOJI}${PURPLE_FLOWER_EMOJI}${PURPLE_FLOWER_EMOJI}`,
+          items: ["hyacinth", "hyacinth", "hyacinth", "hyacinth"],
+        },
+      ];
+
+      // ID -> trade offer
+      const tradeOffersMap = new Map(tradeOffers.map(tradeOffer => [tradeOffer.id, tradeOffer]));
 
       class ChanceTime {
         awaitingSelection;
@@ -1130,6 +1261,7 @@
 
             const optionElement = document.createElement("label");
             optionElement.classList.add("checkbox-button");
+            optionElement.ariaLabel = "Chance Time option";
 
             const optionCheckbox = document.createElement("input");
             optionCheckbox.type = "checkbox";
@@ -1330,7 +1462,7 @@
             const noteList = document.createElement("ul");
 
             const noteDescription = document.createElement("li");
-            noteDescription.innerHTML = note.encountered ? (note.getDescription ? note.getDescription() : note.description) : "???";
+            noteDescription.innerHTML = note.encountered ? (note.getDescription ? note.getDescription(true) : note.description) : "???";
             noteList.appendChild(noteDescription);
 
             for (const specialCondition of note.specialConditions.values()) {
@@ -1355,6 +1487,8 @@
 
       function notifyAchievement(achievement, player) {
         document.getElementById("memories-button").classList.add("notify");
+        album.memoriesMap.get("memory-maker").checkAchieved(player);
+
         // Doesn't work if message already updated, and don't want to update again because that would cause a repeated history log entry
         // player.actionMessage += `${player.actionMessage.length ? "\n\n" : ""}Made a special memory: ${achievement.name}!`;
       }
@@ -1828,6 +1962,45 @@
             return false;
           },
         },
+        {
+          id: "trusty-trader",
+          emojiHint: `📰${TRADING_POST_EMOJI}`,
+          difficulty: 2,
+          name: "Trusty Trader",
+          imageName: "trusty-trader.jpg",
+          description: "Successfully completed a trade",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              this.achieved = true;
+              notifyAchievement(this, player);
+
+              return true;
+            }
+
+            return false;
+          },
+        },
+        {
+          id: "memory-maker",
+          emojiHint: `📷📷📷📷📷📷📷📷`,
+          difficulty: 5,
+          name: "Memory Maker",
+          imageName: "memory-maker.jpg",
+          description: "Made 8+ special memories",
+          achieved: false,
+          checkAchieved(player) {
+            if (this.achieved === false) {
+              if (album.getAchievedMemories().length >= 8) {
+                this.achieved = true;
+                notifyAchievement(this, player);
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
       ];
 
       class Album {
@@ -1886,7 +2059,7 @@
 
             if (memory.achieved && memory.imageName) {
               const memoryImage = document.createElement("img");
-              memoryImage.src = `images/${memory.imageName}`;
+              memoryImage.src = `images/memories/${memory.imageName}`;
               memoryImage.draggable = false;
               memoryContent.appendChild(memoryImage);
             } else {
@@ -1991,6 +2164,11 @@
         }
 
         selectPathOption(pathOptionId) {
+          // If passing a trading post, determine the next trade
+          if (this.environment === "trading-post") {
+            game.determineNextTrade();
+          }
+
           this.environment = null;
           this.actionMessage = "";
 
@@ -2008,6 +2186,10 @@
             return;
           }
 
+          if (option.tags.includes("environment")) {
+            this.environment = option.id;
+          }
+
           // Returns true if replacing default behavior
           if (option.onPick == null || !option.onPick(this)) {
             this.heldItems.push(option);
@@ -2018,7 +2200,7 @@
 
         disposeItem(heldItemIndex) {
           const heldItem = this.heldItems.splice(heldItemIndex, 1)[0];
-          this.actionMessage = `Tossed the ${wrapInBadge(heldItem.name)}!`;
+          this.actionMessage = `Tossed the <span class="no-wrap">${wrapInBadge(heldItem.name)}!</span>`;
 
           // Returns true if replacing default behavior
           if (heldItem.onDispose == null || !heldItem.onDispose(this)) {
@@ -2065,6 +2247,8 @@
         pathVisibility;
         stepCount;
         iterationsCount;
+        nextTradeRequestId;
+        nextTradeOfferId;
 
         constructor() {
           this.player = new Player();
@@ -2075,6 +2259,45 @@
           this.pathVisibility = 3;
           this.iterationsCount = 0;
           this.stepCount = 0;
+        }
+
+        determineNextTrade() {
+          this.nextTradeRequestId = randomDraw(tradeRequests, false).id;
+          this.nextTradeOfferId = randomDraw(tradeOffers, false).id;
+        }
+
+        tradeItems() {
+          const tradeRequest = tradeRequestsMap.get(this.nextTradeRequestId);
+          const tradeOffer = tradeOffersMap.get(this.nextTradeOfferId);
+
+          const originalHeldItems = [...this.player.heldItems];
+
+          for (const requestedItemId of tradeRequest.items) {
+            const heldItemIndex = this.player.heldItems.findIndex(heldItem => heldItem.id === requestedItemId);
+
+            if (heldItemIndex === -1) {
+              this.player.heldItems = originalHeldItems;
+              this.player.actionMessage = "I don't have all the requested items for the trade, unfortunately.";
+              this.updateMessagesDisplay();
+              return;
+            }
+
+            this.player.heldItems.splice(heldItemIndex, 1);
+          }
+
+          for (const offeredItemId of tradeOffer.items) {
+            this.player.encounterPathOptionById(offeredItemId);
+          }
+
+          this.player.actionMessage =
+              `Traded ${wrapInBadge(tradeRequest.emojis)} for <span class="no-wrap">${wrapInBadge(tradeOffer.emojis)}!</span>`;
+          this.player.environment = null;
+
+          album.memoriesMap.get("trusty-trader").checkAchieved(this.player);
+
+          this.determineNextTrade();
+          this.updateHeldItemsDisplay();
+          this.updateMessagesDisplay();
         }
 
         updateStaminaDisplay() {
@@ -2162,7 +2385,7 @@
               const environmentOption = pathOptionsMap.get(this.player.environment);
 
               if (environmentOption) {
-                messages.push(environmentOption.description);
+                messages.push(environmentOption.getDescription ? environmentOption.getDescription() : environmentOption.description);
               }
             }
 
@@ -2217,6 +2440,40 @@
             const itemButtons = document.createElement('div');
             itemButtons.classList.add('item-buttons');
             itemDisplay.appendChild(itemButtons);
+
+            if (this.player.environment === "trading-post") {
+              const tradeRequest = tradeRequestsMap.get(game.nextTradeRequestId);
+
+              if (tradeRequest.items.includes(heldItem.id)) {
+                // const heldItemIds = this.player.heldItems.map(heldItem => heldItem.id);
+                // const requiredItemIds = [...tradeRequest.items];
+                // let canTrade = true;
+
+                // while (canTrade && requiredItemIds.length) {
+                //   const itemIndex = heldItemIds.indexOf(requiredItemIds[0]);
+
+                //   if (itemIndex > -1) {
+                //     heldItemIds.splice(itemIndex, 1);
+                //     requiredItemIds.splice(0, 1);
+                //   } else {
+                //     canTrade = false;
+                //   }
+                // }
+
+                // if (canTrade) {
+                  const tradeButton = document.createElement('button');
+                  tradeButton.type = "button";
+                  tradeButton.disabled = this.gameActive === false || chanceTime.awaitingSelection;
+                  tradeButton.innerText = TRADING_POST_EMOJI;
+                  tradeButton.ariaLabel = "Trade";
+                  tradeButton.onclick = () => {
+                    game.tradeItems();
+                  };
+
+                  itemButtons.appendChild(tradeButton);
+                // }
+              }
+            }
 
             if (heldItem.onConsume) {
               const consumeButton = document.createElement('button');
@@ -2316,6 +2573,12 @@
         }
 
         takePathStep() {
+          // If passing a trading post, determine the next trade
+          if (this.player.environment !== "trading-post"
+              && this.pathStepOptions[0].some(pathOptionId => pathOptionId === "trading-post")) {
+            game.determineNextTrade();
+          }
+
           this.pathStepOptions.splice(0, 1);
           this.addToPathStepOptions();
           this.updatePathDisplay();
@@ -2345,25 +2608,35 @@
         addToPathStepOptions() {
           const stepOptions = [];
 
-          let randomIndex = -1;
+          let randomIndexForTracks = -1;
 
           if (this.player.trackCounter > 0) {
-            randomIndex = Math.floor(Math.random() * this.pathSize);
+            randomIndexForTracks = Math.floor(Math.random() * this.pathSize);
           }
 
           for (let i = 0; i < this.pathSize; i++) {
-            if (randomIndex === i) {
+            if (randomIndexForTracks === i) {
               this.player.trackCounter = -this.player.trackCounter;
               stepOptions.push("tracks");
               continue;
             }
 
+            const shownPathOptions = [...stepOptions, ...this.pathStepOptions.flat()];
             let pathOptionId;
 
             do {
               pathOptionId = this.drawFromPathDeck();
-            } while (pathOptionId === "tracks" && (randomIndex >= 0 || [...stepOptions, ...this.pathStepOptions.flat()]
-                .some(optionId => pathOptionsMap.get(optionId).tags.includes("tracking"))));
+            } while (
+              (
+                // Prevent drawing new tracks if already tracking or showing any tracking options
+                pathOptionId === "tracks" && (randomIndexForTracks >= 0
+                    || shownPathOptions.some(optionId => pathOptionsMap.get(optionId).tags.includes("tracking")))
+              ) || (
+                // Prevent drawing new trading path options if trading or already showing any
+                pathOptionsMap.get(pathOptionId).tags.includes("trading") && (this.player.environment === "trading-post"
+                    || shownPathOptions.some(optionId => pathOptionsMap.get(optionId).tags.includes("trading")))
+              )
+            );
 
             if (pathOptionId === "tracks") {
               this.player.trackCounter = 0;
@@ -2395,6 +2668,7 @@
           this.pathVisibility = 3;
           updateCssVar('--path-visibility', 3);
 
+          this.determineNextTrade();
 
           for (const pathOption of pathOptions) {
             pathOption.negativeModifier = 0;
@@ -2563,6 +2837,8 @@
           /* Using appearance: none keeps the input visible for focus styles
           but removes the default checkbox appearance */
           appearance: none;
+          /* Needed for iOS */
+          background: transparent;
           margin: 0;
 
           /* Make the input fill the full size of the button */
@@ -3337,6 +3613,84 @@
       .no-wrap {
         white-space: nowrap;
       }
+
+      dialog#kofi-dialog {
+        margin: auto;
+        padding: 20px;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 50;
+        border: none;
+        background: transparent;
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      .close-button {
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.5);
+        border-radius: 999999px;
+        line-height: 1;
+        font-size: 14px;
+        position: absolute;
+        top: -8.5px;
+        right: -8.5px;
+        z-index: 10;
+        width: 32px;
+        height: 32px;
+        padding: 1px 0 0 1px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        @media (hover: hover) {
+          &:hover {
+            background: #ddd;
+          }
+        }
+
+        > span {
+          filter: brightness(0);
+        }
+      }
+
+      #kofi-button {
+        position: absolute;
+        bottom: 1.25rem;
+        padding: 6px 10px;
+        box-shadow: 0 0 4px 0 #f9b70f;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 0.875rem;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+
+        > img {
+          width: 1.375rem;
+          height: 0.9375rem;
+          margin-top: -2px;
+        }
+      }
     </style>
   </head>
 
@@ -3345,12 +3699,32 @@
     <div id="fog-front"></div>
     <div id="title-screen">
       <h1 id="title">Take a Hike</h1>
-      <h5 id="author">A game by Alec Mitnik</h5>
+      <h2 id="author">A game by Alec Mitnik</h2>
       <div class="shadowed-text">
         <p>Explore, keep your stamina up, and make some nice memories!  <span class="no-wrap">:)</span></p>
         <p>Please note that data does not persist once you leave the page.  The game may continue to be updated as I work on it.</p>
       </div>
       <button type="button" id="start-button" class="main-button" onClick="game.startGame();">Embark</button>
+
+      <!-- Ko-fi tipping button -->
+      <button id="kofi-button" class="main-button" onclick="document.getElementById('kofi-dialog').showModal()">
+        <img src="https://storage.ko-fi.com/cdn/cup-border.png" alt="Ko-fi donations">
+        Support my projects
+      </button>
+
+      <!-- Ko-fi tipping dialog -->
+      <dialog id="kofi-dialog" style="width: 350px; max-width: 100%; height: 675px; max-height: 100%;">
+        <div id="kofi-backdrop" class="modal-backdrop" onclick="document.getElementById('kofi-dialog').close();"></div>
+        <div class="modal">
+          <button autofocus class="close-button" aria-label="Close tipping dialog" onclick="document.getElementById('kofi-dialog').close();">
+            <span>❌&#65038;</span>
+          </button>
+          <iframe
+            src="https://ko-fi.com/alecmitnik/?hidefeed=true&widget=true&embed=true&preview=true"
+            style="border: none; border-radius: 8px; width: 100%; height: 100%;"
+          ></iframe>
+        </div>
+      </dialog>
     </div>
     <div id="hike-wrapper">
       <dialog id="album-display" class="sidebar left">
