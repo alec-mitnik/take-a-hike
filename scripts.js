@@ -197,7 +197,7 @@ const pathOptions = [
     tags: [],
     description: "Represents a path option with nothing on it.  If I see this description, it's a bug!",
     chance: 15,
-    onPick(player) {
+    onPick() {
       // Gain nothing
       return true;
     },
@@ -208,12 +208,13 @@ const pathOptions = [
     tags: ["treasure", "tool"],
     description: "Nice, I can carry more with this!",
     chance: 0,
+    capacityWeight: 0,
     onPick(player) {
-      player.capacity += 2;
+      player.capacity++;
       return false;
     },
     onDispose(player) {
-      player.capacity -= 2;
+      player.capacity--;
 
       if (player.environment === "receptacle") {
         player.actionMessage = `I put the ${wrapInBadge(this.name)} into the receptacle.  I Hope I know what I'm doing...`;
@@ -340,6 +341,7 @@ const pathOptions = [
     tags: ["treasure", "consumable"],
     description: "Eat to recover 10 stamina and free up the bag to carry something else.",
     chance: 0,
+    capacityWeight: 0,
     specialConditions: [
       {
         id: "waste",
@@ -774,6 +776,7 @@ const pathOptions = [
     tags: ["tool"],
     description: "A nice hefty rock.  Hard to carry, though...",
     chance: 3,
+    capacityWeight: 2,
     specialConditions: [
       {
         id: "nut",
@@ -787,15 +790,12 @@ const pathOptions = [
       },
     ],
     onPick(player) {
-      player.capacity--;
-
       setTimeout(() => album.memoriesMap.get("rock-collector").checkAchieved(player));
       setTimeout(() => album.memoriesMap.get("rock-maniac").checkAchieved(player));
 
       return false;
     },
     onDispose(player) {
-      player.capacity++;
       player.actionMessage += "  I feel lighter already.";
       return false;
     }
@@ -2183,6 +2183,10 @@ class Player {
     // Pick a random flower to become allergic to, causing low visibility or dropping an item?
   }
 
+  getHeldItemsCapacityWeight() {
+    return this.heldItems.reduce((totalWeight, heldItem) => totalWeight + (heldItem.capacityWeight ?? 1), 0);
+  }
+
   setQueasyCounter(queasyCounter) {
     this.queasyCounter = queasyCounter;
     updateCssVar('--queasy-count-dashes', `"${'_ '.repeat(this.queasyCounter).trim()}"`);
@@ -2449,7 +2453,7 @@ class Game {
         }
       }
 
-      if (this.player.heldItems.length > this.player.capacity && chanceTime.awaitingSelection !== true) {
+      if (this.player.getHeldItemsCapacityWeight() > this.player.capacity && chanceTime.awaitingSelection !== true) {
         messages.push("I have too many things to carry with me.")
       }
 
@@ -2468,7 +2472,8 @@ class Game {
   updateHeldItemsDisplay() {
     const heldItemsDisplay = document.getElementById('held-items');
     const scrollLeft = heldItemsDisplay.scrollLeft;
-    const scrolledToEnd = scrollLeft + heldItemsDisplay.clientWidth + 1 >= heldItemsDisplay.scrollWidth;
+    const scrolledToEnd = scrollLeft > 1 && scrollLeft + heldItemsDisplay.clientWidth + 1 >= heldItemsDisplay.scrollWidth;
+    let capacityCounter = 0;
 
     heldItemsDisplay.innerHTML = "";
 
@@ -2506,6 +2511,22 @@ class Game {
       const itemButtons = document.createElement('div');
       itemButtons.classList.add('item-buttons');
       itemDisplay.appendChild(itemButtons);
+
+      const capacityWeightDisplay = document.createElement('div');
+      capacityWeightDisplay.classList.add('item-capacity-weight');
+      itemDisplay.appendChild(capacityWeightDisplay);
+
+      for (let i = 0; i < (heldItem.capacityWeight ?? 1); i++) {
+        const capacityIcon = document.createElement('div');
+        capacityIcon.innerText = "✊";
+        capacityCounter++;
+
+        if (capacityCounter > this.player.capacity) {
+          capacityIcon.classList.add('notify');
+        }
+
+        capacityWeightDisplay.appendChild(capacityIcon);
+      }
 
       if (this.player.environment === "trading-post") {
         const tradeRequest = tradeRequestsMap.get(game.nextTradeRequestId);
@@ -2570,7 +2591,7 @@ class Game {
       heldItemsDisplay.appendChild(itemDisplay);
     }
 
-    for (let i = this.player.heldItems.length; i < this.player.capacity; i++) {
+    for (let i = this.player.getHeldItemsCapacityWeight(); i < this.player.capacity; i++) {
       const emptyCapacitySpace = document.createElement('div');
       emptyCapacitySpace.classList.add('empty-capacity-space');
       emptyCapacitySpace.innerHTML = "✋";
@@ -2599,7 +2620,7 @@ class Game {
 
         optionDisplay.classList.add('path-option');
         optionDisplay.style.gridRow = this.pathStepOptions.length - i;
-        optionDisplay.disabled = this.player.heldItems.length > this.player.capacity || i > 0 || this.gameActive === false || chanceTime.awaitingSelection;
+        optionDisplay.disabled = this.player.getHeldItemsCapacityWeight() > this.player.capacity || i > 0 || this.gameActive === false || chanceTime.awaitingSelection;
         optionDisplay.onclick = () => {
           this.player.selectPathOption(stepOption.id);
         };

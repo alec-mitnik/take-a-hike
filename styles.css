@@ -570,7 +570,7 @@ dialog.sidebar {
     overflow: auto;
     scrollbar-width: none;
     scroll-padding-inline: 200px;
-    padding: 10px;
+    padding: 30px 10px 10px;
   }
 
   #scroll-mode-toggle {
@@ -675,12 +675,12 @@ button.path-option {
 }
 
 .held-item {
-  padding: 10px;
+  padding: 20px 10px 10px;
   border: 1px solid white;
   background: black;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   position: relative;
 
   > * {
@@ -723,7 +723,7 @@ button.path-option {
   }
 
   > .item-buttons {
-    margin-top: 4px;
+    margin-top: 10px;
     display: flex;
     gap: 4px;
 
@@ -759,6 +759,22 @@ button.path-option {
         background: black;
         opacity: 0.5;
       }
+    }
+  }
+
+  > .item-capacity-weight {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -55%);
+    font-size: 2.5rem;
+    width: max-content;
+    display: flex;
+    gap: 1rem;
+
+    > .notify {
+      animation: scaleFlareSmall 2s ease-in-out infinite;
+      opacity: 0.5;
     }
   }
 }
@@ -909,6 +925,15 @@ button.path-option {
   }
   50% {
     transform: scale(2);
+  }
+}
+
+@keyframes scaleFlareSmall {
+  0%, 100% {
+    transform: scale(1.25);
+  }
+  50% {
+    transform: scale(1.75);
   }
 }
 
