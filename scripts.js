@@ -2796,7 +2796,7 @@ const chanceTime = new ChanceTime();
 const game = new Game();
 
 function onHeldItemsMouseMove(event) {
-  if (!game.scrollModeManual) {
+  if (!game.scrollModeManual && window.matchMedia('(hover: hover)').matches) {
     const rect = event.currentTarget.getBoundingClientRect();
 
     // Only scroll if in the top half of the container
