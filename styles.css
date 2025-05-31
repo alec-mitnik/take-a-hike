@@ -1,0 +1,1024 @@
+/* Font that can render the decorative unicode characters (which otherwise don't display on iOS Safari) */
+@font-face {
+  font-family: "Symbola";
+  src: url("./Symbola.ttf");
+}
+
+*, ::before, ::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --gold: #ffd700;
+  --path-visibility: 3;
+  --path-size: 3;
+  --queasy-count-dashes: '';
+  --chance-time-cols: 3;
+  font-size: clamp(50%, 0.5vw + 0.5rem, 100%);
+}
+
+html {
+  overflow: hidden;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6, p, ul, ol {
+  margin: 0;
+}
+
+/* TODO - light mode? */
+
+body {
+  background: black url(images/forest-path-edited.webp) bottom no-repeat fixed;
+  background-size: cover;
+  color: white;
+  line-height: 1.5;
+  font-family: Parkinsans, sans-serif;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 40px;
+}
+
+#title-screen {
+  margin: auto;
+  min-width: 40%;
+  width: 500px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  height: 100%;
+  padding: 0 20px;
+
+  #title {
+    font-size: 4rem;
+    line-height: 1;
+    font-weight: bold;
+  }
+
+  #author {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+
+  #start-button {
+    margin-top: 20px;
+  }
+}
+
+#hike-wrapper {
+  display: none;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+button, input[type="checkbox"] {
+  user-select: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.checkbox-button {
+  user-select: none;
+  display: inline-flex;
+  position: relative;
+  text-align: center;
+
+  input[type="checkbox"] {
+    /* Using appearance: none keeps the input visible for focus styles
+    but removes the default checkbox appearance */
+    appearance: none;
+    /* Needed for iOS */
+    background: transparent;
+    margin: 0;
+
+    /* Make the input fill the full size of the button */
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  > span {
+    border: 3px solid white;
+    border-radius: 16px;
+    background: black;
+    padding: 1rem;
+
+    &, span.nested {
+      width: 100%;
+      height: 100%;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    &, * {
+      /* Ensures clicks pass through to the input */
+      pointer-events: none;
+    }
+  }
+
+  input:checked + span {
+    border-color: var(--gold);
+  }
+
+  @media (hover: hover) {
+    input:not(:disabled):hover + span {
+      background: white;
+      color: black;
+    }
+  }
+
+  input:not(:disabled):focus-visible + span {
+    background: white;
+    color: black;
+  }
+
+  input:not(:disabled):active + span {
+    background: #666;
+  }
+
+  input:disabled:not(:checked) + span {
+    background: #333;
+    opacity: 0.75;
+  }
+}
+
+#fog-back {
+  position: absolute;
+  top: 0;
+  z-index: -10;
+  width: 100%;
+  height: 70%;
+  background: linear-gradient(to top, #8880, #8888);
+}
+
+#fog-front {
+  position: absolute;
+  top: 0;
+  z-index: 10;
+  pointer-events: none;
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(to top, #fff0, #fff8);
+}
+
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* backdrop-filter: blur(3px); */
+}
+
+.panel-title {
+  padding: 40px;
+  font-size: 1.75em;
+  font-weight: bold;
+  margin: 0;
+  text-align: center;
+
+  &::before, &::after {
+    white-space-collapse: preserve;
+    font-family: Symbola, Parkinsans, sans-serif;
+    font-weight: 500;
+  }
+
+  &::before {
+    content: '🙞🙟  ';
+  }
+
+  &::after {
+    content: '  🙝🙜';
+  }
+}
+
+.panel-content {
+  overflow: auto;
+  scroll-padding: 40px;
+  padding: 0 40px 40px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#chance-time-button {
+  display: none;
+  font-size: 1.25rem;
+}
+
+#chance-time-display {
+  .panel-content {
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  #chance-time-message {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.25rem;
+  }
+
+  #chance-time-grid-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    #chance-time-grid {
+      width: calc(167px * var(--chance-time-cols));
+      max-width: 100%;
+      min-width: min-content;
+      display: grid;
+      grid-template-columns: repeat(var(--chance-time-cols), 1fr);
+      gap: 1rem;
+      margin-bottom: 20px;
+
+      .checkbox-button {
+        border-width: 3px;
+        aspect-ratio: 1;
+        font-size: 4rem;
+
+        > span {
+          padding: 0;
+        }
+
+        input:not(:checked) {
+          + span > span.nested.shrouded {
+            filter: contrast(0);
+          }
+
+          &:not(:disabled) {
+            + span > span.nested {
+              visibility: hidden;
+            }
+
+            + span::after {
+              content: '❔';
+              position: absolute;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  #chance-time-progress {
+    text-align: center;
+    font-size: 3rem;
+    font-weight: 500;
+    opacity: 0.85;
+
+    #chance-time-progress__total,
+    #chance-time-progress__goal {
+      display: inline-block;
+      width: 1ch;
+    }
+  }
+}
+
+#history-log-display {
+  ul#history-log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    li {
+      white-space-collapse: preserve;
+
+      > span {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      &:last-of-type {
+        font-weight: bold;
+      }
+    }
+  }
+}
+
+#guidebook-display {
+  .guidebook-note {
+    white-space-collapse: preserve;
+
+    &.not-seen {
+      opacity: 0.75;
+    }
+
+    .guidebook-note-name {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin: 0;
+    }
+  }
+}
+
+#album-display {
+  #album-content {
+    display: flex;
+    flex-flow: row wrap;
+  }
+
+  .album-memory {
+    white-space-collapse: preserve;
+    background: white;
+    color: black;
+    padding: 10px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 275px;
+    aspect-ratio: 1;
+
+    &.not-achieved {
+      background: #ffffff80;
+    }
+  }
+
+  .album-memory__content {
+    flex: 1 1 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #111;
+    font-size: 1.75rem;
+
+    > span {
+      margin: 10px;
+      text-align: center;
+    }
+
+    > img {
+      border: 1px solid black;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .album-memory__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 2px;
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  .album-memory__description {
+    margin: -10px 0 0;
+  }
+}
+
+dialog.sidebar {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  max-width: none;
+  transition: all 0.4s linear allow-discrete;
+
+  &::backdrop {
+    backdrop-filter: blur(3px);
+  }
+
+  .panel {
+    background: black;
+    color: white;
+    box-shadow: 0 0 50px #fff;
+    position: absolute;
+    top: 0;
+    width: calc(50% + 100px);
+    min-width: min(600px, 100% + 101px);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .close-button {
+      position: absolute;
+      top: 20px;
+
+      > span {
+        transform: translateY(1px);
+      }
+    }
+  }
+
+  &.right {
+    .panel {
+      right: 0;
+      margin: 0 -100px 0 0;
+      padding: 0 100px 0 0;
+      animation: slide-out-right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+      .close-button {
+        right: 120px;
+      }
+    }
+
+    &[open] .panel {
+      /* Opacity and delay hack needed to get slide in from right animation to work */
+      opacity: 0;
+      animation: slide-in-from-right 0.4s 0.001s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+  }
+
+  &.left {
+    .panel {
+      left: 0;
+      margin: 0 0 0 -100px;
+      padding: 0 0 0 100px;
+      animation: slide-out-left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+      .close-button {
+        right: 20px;
+      }
+    }
+
+    &[open] .panel {
+      opacity: 0;
+      animation: slide-in-from-left 0.4s 0.001s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+  }
+}
+
+@keyframes slide-in-from-right {
+  from {
+    translate: 100% 0;
+    opacity: 0.999;
+  }
+
+  to {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out-right {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: 100% 0;
+  }
+}
+
+@keyframes slide-in-from-left {
+  from {
+    translate: -100% 0;
+    opacity: 0.999;
+  }
+
+  to {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out-left {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: -100% 0;
+  }
+}
+
+#path {
+  margin: 10px auto 0;
+  min-width: 50%;
+  width: 500px;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--path-size), 1fr);
+  grid-template-rows: repeat(var(--path-visibility), 1fr);
+  gap: 10px;
+  transform: scaleY(1.5) perspective(300px) rotateX(20deg);
+  transform-origin: bottom;
+}
+
+#path-arrows {
+  user-select: none;
+  margin-top: 5px;
+  min-width: 52%;
+  width: 520px;
+  max-width: calc(100% + 20px);
+  font-size: 2rem;
+  display: flex;
+  justify-content: space-around;
+
+  > span {
+    transform: scaleX(5);
+    opacity: 0.5;
+    line-height: 1;
+  }
+}
+
+#player-display {
+  width: 100%;
+  margin-top: 20px;
+  padding: 0 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+#held-items-wrapper {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+
+  #held-items {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+    max-width: 100%;
+    overflow: auto;
+    scrollbar-width: none;
+    scroll-padding-inline: 200px;
+    padding: 10px;
+  }
+
+  #scroll-mode-toggle {
+    border: 0;
+    align-self: flex-start;
+    padding: 0.25rem 9px;
+
+    > span {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    input[type="checkbox"] {
+      transform: translateY(-1px);
+      margin: 0 8px 0 0;
+      accent-color: black;
+    }
+
+    @media (hover: none) {
+      display: none;
+    }
+  }
+}
+
+
+.main-button {
+  padding: 10px 20px;
+  border: 1px solid white;
+  border-radius: 6px;
+  background: black;
+  color: white;
+  font-size: 1.25rem;
+  transition: transform 50ms ease-in-out;
+
+  &.confirm-button {
+    border-style: dashed;
+    border-width: 3px;
+  }
+
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: white;
+      border-color: white;
+      color: black;
+      font-weight: bold;
+      transform: scale(1.1);
+    }
+  }
+
+  &:focus-visible {
+    background: white;
+    border-color: white;
+    color: black;
+    font-weight: bold;
+    transform: scale(1.1);
+  }
+
+  &:active:not(:disabled) {
+    background: #666;
+  }
+
+  &:disabled {
+    background: 333;
+    opacity: 0.5;
+  }
+}
+
+button.path-option {
+  letter-spacing: 1px;
+  font-size: 1.25rem;
+  padding: 16px 8px;
+  border: 1px solid white;
+  border-radius: 6px;
+  background: black;
+  color: white;
+  min-height: 95px;
+
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: white;
+      color: black;
+      font-weight: bold;
+      padding: 16px 6px; /* Reducing the horizontal padding is a hack to prevent bolding from causing wrapping */
+    }
+  }
+
+  &:focus-visible {
+    background: white;
+    color: black;
+    font-weight: bold;
+    padding: 16px 6px; /* Reducing the horizontal padding is a hack to prevent bolding from causing wrapping */
+  }
+
+  &:active:not(:disabled) {
+    background: #666;
+  }
+
+  &:disabled {
+    background: #333;
+    opacity: 0.75;
+  }
+}
+
+.held-item {
+  padding: 10px;
+  border: 1px solid white;
+  background: black;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+
+  > * {
+    position: relative;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 50%;
+    border-radius: 6px 6px 0 0;
+    background: linear-gradient(to bottom, #fff2 0%, #fff1 95%, #fff0 100%);
+  }
+
+  > .item-description {
+    width: 100%;
+    font-size: 0.875rem;
+    flex-grow: 1;
+    white-space-collapse: preserve;
+  }
+
+  > .item-progress-bar {
+    margin: 0 15px 2px;
+    height: 6px;
+    border: 1px solid #bbb;
+    border-radius: 999999px;
+
+    > div {
+      background: white;
+      border-radius: 999999px;
+      height: 100%;
+
+      &.filled {
+        background: var(--gold);
+      }
+    }
+  }
+
+  > .item-buttons {
+    margin-top: 4px;
+    display: flex;
+    gap: 4px;
+
+    > button {
+      flex: 1;
+      padding: 4px;
+      border: 1px solid #999;
+      border-radius: 4px;
+      background: #262626;
+      color: white;
+
+      @media (hover: hover) {
+        &:hover:not(:disabled) {
+          background: white;
+          border-color: white;
+          color: black;
+          font-weight: bold;
+        }
+      }
+
+      &:focus-visible {
+        background: white;
+        border-color: white;
+        color: black;
+        font-weight: bold;
+      }
+
+      &:active:not(:disabled) {
+        background: #666;
+      }
+
+      &:disabled {
+        background: black;
+        opacity: 0.5;
+      }
+    }
+  }
+}
+
+.empty-capacity-space {
+  user-select: none;
+  opacity: 0.5;
+  font-size: 6rem;
+  pointer-events: none;
+  border: 2px dashed white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.held-item, .empty-capacity-space {
+  border-radius: 6px;
+  flex-shrink: 0;
+  width: 200px;
+
+  @media (width < 1200px) {
+    width: 150px;
+  }
+
+  @media (width < 600px) {
+    width: 115px;
+  }
+}
+
+#status-bar {
+  margin: 10px 0;
+  padding: 10px 0;
+  background: linear-gradient(to right, transparent, #ffffff40, transparent);
+  font-size: 1.25rem;
+  width: 100%;
+
+  > div {
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    min-width: 55%;
+    width: 500px;
+    max-width: 100%;
+
+    > * {
+      flex: 1;
+      white-space: nowrap;
+    }
+
+    #stamina-display {
+      position: relative;
+
+      #stamina-count.low {
+        color: #ff7c7c;
+      }
+
+      #stamina-status {
+        &.queasy::before {
+          content: var(--queasy-count-dashes);
+          color: #44dd70;
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 0.875rem;
+          font-weight: bold;
+        }
+      }
+    }
+  }
+}
+
+.shadowed-text, .shadowed-button {
+  white-space-collapse: preserve;
+  background: #0008;
+  color: white;
+  padding: 0.5rem 12px;
+  border-radius: 6px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid transparent;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.shadowed-button {
+  border-color: #999;
+
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: white;
+      border-color: white;
+      color: black;
+      font-weight: bold;
+    }
+  }
+
+  &:focus-visible {
+    background: white;
+    border-color: white;
+    color: black;
+    font-weight: bold;
+  }
+
+  &:active:not(:disabled) {
+    background: #666;
+  }
+
+  &:disabled {
+    background: black;
+    opacity: 0.5;
+  }
+
+  &.notify {
+    position: relative;
+    box-shadow: 0px 0px 8px 1px var(--gold);
+    animation: shadowFlare 2s ease-in-out infinite;
+
+    &::after {
+      content: '✨';
+      position: absolute;
+      top: -1em;
+      right: 0.5em;
+      transform: scale(1.5);
+      animation: scaleFlare 2s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes shadowFlare {
+  0%, 100% {
+    box-shadow: 0px 0px 8px 1px var(--gold);
+  }
+  50% {
+    box-shadow: 0px 0px 24px 3px var(--gold);
+  }
+}
+
+@keyframes scaleFlare {
+  0%, 100% {
+    transform: scale(1.5);
+  }
+  50% {
+    transform: scale(2);
+  }
+}
+
+.badge {
+  display: inline-block;
+  margin: 0 1px;
+  padding: 2px 4px;
+  line-height: 1.5;
+  background: #222;
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+
+#end-button-wrapper {
+  margin-top: 200px;
+  transform: scale(0.75);
+
+  &.confirm {
+    > :not(.confirm-button) {
+      display: none;
+    }
+  }
+
+  &:not(.confirm) {
+    .confirm-button {
+      display: none;
+    }
+  }
+}
+
+.no-wrap {
+  white-space: nowrap;
+}
+
+dialog#kofi-dialog {
+  margin: auto;
+  padding: 20px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  border: none;
+  background: transparent;
+  max-width: 100%;
+  max-height: 100%;
+
+  .modal-backdrop {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .modal {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .close-button {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.5);
+    border-radius: 999999px;
+    line-height: 1;
+    font-size: 14px;
+    position: absolute;
+    top: -8.5px;
+    right: -8.5px;
+    z-index: 10;
+    width: 32px;
+    height: 32px;
+    padding: 1px 0 0 1px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    @media (hover: hover) {
+      &:hover {
+        background: #ddd;
+      }
+    }
+
+    > span {
+      /* Make the emoji always appear black */
+      filter: brightness(0);
+    }
+  }
+}
+
+#kofi-button {
+  position: absolute;
+  bottom: 1.25rem;
+  padding: 6px 10px;
+  box-shadow: 0 0 4px 0 #f9b70f;
+  border-radius: 10px;
+  border-color: rgba(255, 255, 255, 0.5);
+  font-weight: bold;
+  font-size: 0.875rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+
+  > img {
+    width: 1.375rem;
+    height: 0.9375rem;
+    margin-top: -2px;
+  }
+}
