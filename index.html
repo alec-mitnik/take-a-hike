@@ -239,9 +239,66 @@
           },
         },
         {
+          id: "shamrock",
+          name: "☘️ Clover Patch",
+          tags: ["grows"],
+          getDescription() {
+            return `A great place to find a <span class="no-wrap">${wrapInBadge(pathOptionsMap.get('clover').name)}.</span>`;
+          },
+          chance: 0,
+          specialConditions: [
+            {
+              id: "keep-looking",
+              description: "I can keep trying to find one at the cost of stamina.",
+            },
+          ],
+          onPick(player) {
+            const actionMessage = `A patch of clovers!  Let's see if I can find any lucky ones...`;
+            player.actionMessage = actionMessage;
+
+            chanceTime.initiate(`Try to find a <span class="no-wrap">${wrapInBadge(pathOptionsMap.get('clover').name)}!</span>`, 4, 5,
+                ["🍀","🍀","🍀","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️"], (selections) => {
+              const foundLuckyClovers = selections.filter(emoji => emoji === "🍀").length;
+
+              switch (foundLuckyClovers) {
+                case 0: {
+                  player.actionMessage = `${actionMessage}\nMaybe next time.`;
+                  break;
+                }
+                case 1: {
+                  player.actionMessage = `${actionMessage}\nI found one, yay!`;
+                  break;
+                }
+                case 2: {
+                  player.actionMessage = `${actionMessage}\nAw yeah, double trouble!`;
+                  break;
+                }
+                case 3: {
+                  player.actionMessage = `${actionMessage}\nWow, three?  Jackpot!`;
+                  break;
+                }
+                default: {
+                  player.actionMessage = `${actionMessage}\nWow, ${foundLuckyClovers}?  Jackpot!`;
+                  break;
+                }
+              }
+
+              for (let i = 0; i < foundLuckyClovers; i++) {
+                player.encounterPathOptionById("clover");
+              }
+
+              game.updateMessagesDisplay(true);
+            });
+
+            guidebook.notesMap.get("clover").seen = true;
+
+            return true;
+          },
+        },
+        {
           id: "clover",
           name: "🍀 Lucky Clover",
-          tags: ["grows"],
+          tags: [],
           description: "A serendipitous find!",
           chance: 0,
           specialConditions: [
@@ -370,7 +427,7 @@
               }
 
               game.updateMessagesDisplay(true);
-            }, true, option => {
+            }, true, (option) => {
               const parcelContents = parcelOptions.find(parcelOption => parcelOption.emoji === option);
               return guidebook.notesMap.get(this.id).specialConditions.get(parcelContents.id).encountered !== true;
             });
@@ -553,7 +610,7 @@
 
               guidebook.notesMap.get(this.id).specialConditions.get(sideEffectData.id).encountered = true;
               game.updateMessagesDisplay(true);
-            }, false, option => {
+            }, false, (option) => {
               const sideEffectData = mushroomSideEffects.find(sideEffect => sideEffect.emoji === option);
               return guidebook.notesMap.get(this.id).specialConditions.get(sideEffectData.id).encountered !== true;
             });
@@ -1250,6 +1307,8 @@
           chanceTimeDoneButton.style.display = "none";
           const chanceTimeTryAgain = document.getElementById("chance-time-try-again");
           chanceTimeTryAgain.style.display = "none";
+          const chanceTimeKeepLooking = document.getElementById("chance-time-keep-looking");
+          chanceTimeKeepLooking.style.display = "none";
 
           const chanceTimeGrid = document.getElementById("chance-time-grid");
           chanceTimeGrid.innerHTML = "";
@@ -1275,8 +1334,14 @@
               if (allSelectionsMade) {
                 chanceTimeDoneButton.style.display = null;
 
-                if (game.player.heldItems.some(heldItem => heldItem.id === "clover")) {
-                  chanceTimeTryAgain.style.display = null;
+                if (startingOptions.includes("🍀")) {
+                  if (game.player.stamina > 1 && !this.selectedOptions.includes("🍀")) {
+                    chanceTimeKeepLooking.style.display = null;
+                  }
+                } else {
+                  if (game.player.heldItems.some(heldItem => heldItem.id === "clover")) {
+                    chanceTimeTryAgain.style.display = null;
+                  }
                 }
 
                 for (const checkboxButton of chanceTimeGrid.querySelectorAll(".checkbox-button")) {
@@ -1335,6 +1400,12 @@
           game.player.heldItems.splice(cloverIndex, 1);
           guidebook.notesMap.get("clover").specialConditions.get("reroll").encountered = true;
           game.updateHeldItemsDisplay();
+          this.initiate(this.message, this.cols, this.selectionsToMake, this.startingOptions, this.callback, this.smallIcons, this.shroudedFunction);
+        }
+
+        keepLooking() {
+          game.player.loseStamina(1);
+          guidebook.notesMap.get("shamrock").specialConditions.get("keep-looking").encountered = true;
           this.initiate(this.message, this.cols, this.selectionsToMake, this.startingOptions, this.callback, this.smallIcons, this.shroudedFunction);
         }
 
@@ -2273,7 +2344,8 @@
           const originalHeldItems = [...this.player.heldItems];
 
           for (const requestedItemId of tradeRequest.items) {
-            const heldItemIndex = this.player.heldItems.findIndex(heldItem => heldItem.id === requestedItemId);
+            // Use last index to trade away the least-peeled fruit
+            const heldItemIndex = this.player.heldItems.findLastIndex(heldItem => heldItem.id === requestedItemId);
 
             if (heldItemIndex === -1) {
               this.player.heldItems = originalHeldItems;
@@ -3761,6 +3833,7 @@
             </div>
             <p id="chance-time-progress"><span id="chance-time-progress__total">0</span>/<span id="chance-time-progress__goal">0</span></p>
             <button type="button" id="chance-time-try-again" class="main-button" onClick="chanceTime.tryAgain();">🍀 Try Again</button>
+            <button type="button" id="chance-time-keep-looking" class="main-button" onClick="chanceTime.keepLooking();">💪💦 Keep Looking</button>
             <button type="button" id="chance-time-done" class="main-button" onClick="chanceTime.done();">Done</button>
           </div>
         </div>
