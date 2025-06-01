@@ -651,7 +651,7 @@ const pathOptions = [
     name: "🍒 Cherry",
     tags: ["consumable"],
     description: "Eat to recover 3 stamina, but has to be done in pairs.",
-    chance: 5,
+    chance: 50,
     onConsume(player) {
       if (player.heldItems.filter(heldItem => heldItem.id === "cherry").length >= 2) {
         player.recoverStamina(6);
@@ -660,6 +660,7 @@ const pathOptions = [
           const cherryIndex = player.heldItems.findIndex(heldItem => heldItem.id === "cherry");
           player.heldItems.splice(cherryIndex, 1);
           game.updateHeldItemsDisplay();
+          game.updateMessagesDisplay(true);
         });
 
         player.actionMessage = `Ate the ${wrapInBadge(this.name)} along with another, just as it was meant to be.  Ah...`;
@@ -2955,26 +2956,26 @@ function onHeldItemsMouseWheel(event) {
   }
 }
 
-let smoothScrollIntervalId = null;
+let smoothScrollAnimationId = null;
 
 function smoothScrollX(element, targetX) {
-  clearInterval(smoothScrollIntervalId);
-  smoothScrollIntervalId = null;
-
   function scrollStep() {
+    cancelAnimationFrame(smoothScrollAnimationId);
+
     if (Math.abs(element.scrollLeft - targetX) < 5) {
       element.scrollLeft = targetX;
-      clearInterval(smoothScrollIntervalId);
-      smoothScrollIntervalId = null;
+      smoothScrollAnimationId = null;
       return;
     }
 
-    const delta = (targetX - element.scrollLeft) * 0.025;
+    const delta = (targetX - element.scrollLeft) * 0.25;
     const sign = Math.sign(delta);
     const absDelta = Math.ceil(Math.abs(delta));
 
     element.scrollLeft += sign * Math.max(absDelta, 4);
+    smoothScrollAnimationId = requestAnimationFrame(scrollStep);
   }
 
-  smoothScrollIntervalId = setInterval(scrollStep, 1);
+  cancelAnimationFrame(smoothScrollAnimationId);
+  smoothScrollAnimationId = requestAnimationFrame(scrollStep);
 }
