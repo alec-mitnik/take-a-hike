@@ -2396,13 +2396,17 @@ class Game {
     }
   }
 
-  updateMessagesDisplay(replaceLastLogEntry = false) {
+  updateMessagesDisplay(replaceLastLogEntry = false, gameOver = false) {
+    if (!this.gameActive) {
+      return;
+    }
+
     const endButtonWrapper = document.getElementById('end-button-wrapper');
     endButtonWrapper.classList.remove('confirm');
 
     const messagesDisplay = document.getElementById('messages');
 
-    if (this.gameActive === false) {
+    if (gameOver) {
       let totalFlowers = this.player.heldItems.filter(item => item.tags.includes("flower")).length;
       const bouquets = this.player.heldItems.filter(item => item.id === "bouquet");
       totalFlowers = bouquets.reduce((total, bouquet) => total + bouquet.flowers.length, totalFlowers);
@@ -2482,6 +2486,10 @@ class Game {
       const itemDisplay = document.createElement('div');
       itemDisplay.tabIndex = 0;
       itemDisplay.classList.add('held-item');
+
+      const itemBackgroundDecoration = document.createElement('div');
+      itemBackgroundDecoration.classList.add('item-background-decoration');
+      itemDisplay.appendChild(itemBackgroundDecoration);
 
       const itemName = document.createElement('span');
       itemName.innerText = heldItem.name;
@@ -2794,16 +2802,18 @@ class Game {
   }
 
   gameOver() {
-    this.gameActive = false;
-    this.updateMessagesDisplay();
-    this.updatePathDisplay();
-    this.updateHeldItemsDisplay();
+    if (this.gameActive) {
+      this.updateMessagesDisplay(false, true);
+      this.gameActive = false;
+      this.updatePathDisplay();
+      this.updateHeldItemsDisplay();
 
-    const restartButton = document.getElementById('restart-button');
-    restartButton.style.display = null;
+      const restartButton = document.getElementById('restart-button');
+      restartButton.style.display = null;
 
-    const endButtonWrapper = document.getElementById('end-button-wrapper');
-    endButtonWrapper.style.display = "none";
+      const endButtonWrapper = document.getElementById('end-button-wrapper');
+      endButtonWrapper.style.display = "none";
+    }
   }
 }
 
@@ -2820,8 +2830,12 @@ function onHeldItemsMouseMove(event) {
   if (!game.scrollModeManual && window.matchMedia('(hover: hover)').matches) {
     const rect = event.currentTarget.getBoundingClientRect();
 
-    // Only scroll if in the top half of the container
-    if (event.clientY - rect.top > event.currentTarget.clientHeight / 2) {
+    // Avoid scrolling for the bottom of the container where the item buttons are
+    const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const topPadding = rootFontSize * 2.5;
+    const bottomPadding = 10;
+
+    if (event.clientY - rect.top > (event.currentTarget.clientHeight - topPadding - bottomPadding) * 0.6 + topPadding) {
       return;
     }
 
@@ -2831,7 +2845,8 @@ function onHeldItemsMouseMove(event) {
     const mouseRatio = mouseX / rectWidth;
 
     const maxScrollLeft = event.currentTarget.scrollWidth - event.currentTarget.clientWidth;
-    event.currentTarget.scrollLeft = mouseRatio * maxScrollLeft;
+    // event.currentTarget.scrollLeft = mouseRatio * maxScrollLeft;
+    smoothScrollX(event.currentTarget, mouseRatio * maxScrollLeft);
   }
 }
 
@@ -2840,4 +2855,25 @@ function onHeldItemsMouseWheel(event) {
     event.currentTarget.scrollLeft += event.deltaY;
     event.preventDefault();
   }
+}
+
+let smoothScrollIntervalId = null;
+
+function smoothScrollX(element, targetX) {
+  clearInterval(smoothScrollIntervalId);
+  smoothScrollIntervalId = null;
+
+  function scrollStep() {
+    if (Math.abs(element.scrollLeft - targetX) < 4) {
+      element.scrollLeft = targetX;
+      clearInterval(smoothScrollIntervalId);
+      smoothScrollIntervalId = null;
+      return;
+    }
+
+    const delta = (targetX - element.scrollLeft) * 0.025;
+    element.scrollLeft += delta > 0 ? Math.ceil(delta) : Math.floor(delta);
+  }
+
+  smoothScrollIntervalId = setInterval(scrollStep, 1);
 }
