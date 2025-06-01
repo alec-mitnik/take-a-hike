@@ -1119,7 +1119,7 @@ const pathOptions = [
           wrapInBadge(tradeRequestsMap.get(game.nextTradeRequestId)?.emojis)}.</span>`;
     },
     chance: 1,
-    onPick(player) {
+    onPick() {
       guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeRequestId).encountered = true;
       guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeOfferId).encountered = true;
       return true;
@@ -2833,9 +2833,12 @@ function onHeldItemsMouseMove(event) {
     // Avoid scrolling for the bottom of the container where the item buttons are
     const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
     const topPadding = rootFontSize * 2.5;
+    const topMargin = rootFontSize * 1.25;
+    const topOffset = topPadding + topMargin;
     const bottomPadding = 10;
 
-    if (event.clientY - rect.top > (event.currentTarget.clientHeight - topPadding - bottomPadding) * 0.6 + topPadding) {
+    if (event.clientY - rect.top > (event.currentTarget.clientHeight - (topOffset + bottomPadding)) * 0.6 + topOffset
+        || event.clientY - rect.top < topMargin) {
       return;
     }
 
