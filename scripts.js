@@ -2872,6 +2872,10 @@ const guidebook = new Guidebook();
 const chanceTime = new ChanceTime();
 const game = new Game();
 
+function onHeldItemsThumbnailsClick(event) {
+  heldItemsThumbnailsMoveHandler(event.currentTarget, event.target);
+}
+
 function onHeldItemsThumbnailsTouchMove(event) {
   if (event.touches.length === 1) {
     const touch = event.touches[0];
@@ -2882,6 +2886,11 @@ function onHeldItemsThumbnailsTouchMove(event) {
 }
 
 function onHeldItemsThumbnailsMouseMove(event) {
+  if (game.scrollModeManual && event.buttons !== 1) {
+    // Require left mouse button
+    return;
+  }
+
   heldItemsThumbnailsMoveHandler(event.currentTarget, event.target);
 }
 
@@ -2952,7 +2961,7 @@ function smoothScrollX(element, targetX) {
   smoothScrollIntervalId = null;
 
   function scrollStep() {
-    if (Math.abs(element.scrollLeft - targetX) < 4) {
+    if (Math.abs(element.scrollLeft - targetX) < 5) {
       element.scrollLeft = targetX;
       clearInterval(smoothScrollIntervalId);
       smoothScrollIntervalId = null;
@@ -2960,7 +2969,10 @@ function smoothScrollX(element, targetX) {
     }
 
     const delta = (targetX - element.scrollLeft) * 0.025;
-    element.scrollLeft += delta > 0 ? Math.ceil(delta) : Math.floor(delta);
+    const sign = Math.sign(delta);
+    const absDelta = Math.ceil(Math.abs(delta));
+
+    element.scrollLeft += sign * Math.max(absDelta, 4);
   }
 
   smoothScrollIntervalId = setInterval(scrollStep, 1);
