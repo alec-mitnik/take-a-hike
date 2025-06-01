@@ -651,7 +651,7 @@ const pathOptions = [
     name: "🍒 Cherry",
     tags: ["consumable"],
     description: "Eat to recover 3 stamina, but has to be done in pairs.",
-    chance: 50,
+    chance: 5,
     onConsume(player) {
       if (player.heldItems.filter(heldItem => heldItem.id === "cherry").length >= 2) {
         player.recoverStamina(6);
@@ -660,6 +660,7 @@ const pathOptions = [
           const cherryIndex = player.heldItems.findIndex(heldItem => heldItem.id === "cherry");
           player.heldItems.splice(cherryIndex, 1);
           game.updateHeldItemsDisplay();
+          game.updatePathDisplay();
           game.updateMessagesDisplay(true);
         });
 
