@@ -2526,6 +2526,7 @@ class Game {
       itemDisplay.appendChild(itemBackgroundDecoration);
 
       const itemName = document.createElement('span');
+      itemName.classList.add('item-name');
       itemName.innerText = heldItem.name;
       itemDisplay.appendChild(itemName);
 
