@@ -628,6 +628,10 @@ dialog.sidebar {
       flex-wrap: wrap;
       justify-content: center;
 
+      > span {
+        padding: 1px;
+      }
+
       .empty-space {
         opacity: 0.35;
       }

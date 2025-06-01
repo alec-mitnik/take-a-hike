@@ -2873,10 +2873,11 @@ const chanceTime = new ChanceTime();
 const game = new Game();
 
 function onHeldItemsThumbnailsTouchMove(event) {
-  if (event.changedTouches.length === 1) {
-    const touch = event.changedTouches[0];
+  if (event.touches.length === 1) {
+    const touch = event.touches[0];
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
     heldItemsThumbnailsMoveHandler(event.currentTarget, target);
+    event.preventDefault();
   }
 }
 
