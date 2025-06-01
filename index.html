@@ -94,45 +94,54 @@
           </div>
         </div>
       </dialog>
-      <div id="path"></div>
-      <div id="path-arrows">
-        <span>▲</span>
-        <span>▲</span>
-        <span>▲</span>
-      </div>
-      <div id="player-display">
-        <div id="status-bar">
-          <div>
-            <button type="button" id="memories-button" class="shadowed-button" aria-label="Open Memories Album" onClick="album.show();"><span>📷 Memories</span></button>
-            <div id="stamina-display" class="shadowed-text"><p><span id="stamina-status">😊</span> Stamina: <span id="stamina-count"></span></p></div>
-            <button type="button" class="shadowed-button" aria-label="Open Guidebook" onClick="guidebook.show();"><span>📒 Guidebook</span></button>
+
+      <div id="viewport-display">
+        <div id="path"></div>
+        <div id="path-arrows">
+          <span>▲</span>
+          <span>▲</span>
+          <span>▲</span>
+        </div>
+        <div id="player-display">
+          <div id="status-bar">
+            <div>
+              <button type="button" id="memories-button" class="shadowed-button" aria-label="Open Memories Album" onClick="album.show();"><span>📷 Memories</span></button>
+              <div id="stamina-display" class="shadowed-text"><p><span id="stamina-status">😊</span> Stamina: <span id="stamina-count"></span></p></div>
+              <button type="button" class="shadowed-button" aria-label="Open Guidebook" onClick="guidebook.show();"><span>📒 Guidebook</span></button>
+            </div>
+          </div>
+
+          <button type="button" class="shadowed-button" aria-label="Open History Log" onClick="historyLog.show();"><span><span id="history-log-emoji">🪶</span> History Log</span></button>
+
+          <div id="messages-wrapper">
+            <p id="messages" class="shadowed-text"></p>
+          </div>
+
+          <button type="button" id="chance-time-button" class="shadowed-button notify" aria-label="Open Chance Time" onClick="chanceTime.show();"><span>🎲 Chance Time</span></button>
+          <button type="button" id="restart-button" class="main-button" onclick="game.startGame();">Go Again</button>
+
+          <div id="held-items-wrapper">
+            <div
+              id="held-items"
+              onwheel="onHeldItemsMouseWheel(event)"
+              onmousemove="onHeldItemsMouseMove(event)"
+            ></div>
+
+            <label id="scroll-mode-toggle" class="shadowed-text">
+              <span><input id="scroll-mode-checkbox" type="checkbox" onchange="game.scrollModeManual = this.checked;" />Scroll held items manually</span>
+            </label>
+
+            <div id="held-items-thumbnails" class="shadowed-text">
+              <span onmousemove="onHeldItemsThumbnailsMouseMove(event)" ontouchmove="onHeldItemsThumbnailsTouchMove(event)"></span>
+            </div>
           </div>
         </div>
-
-        <button type="button" class="shadowed-button" aria-label="Open History Log" onClick="historyLog.show();"><span><span id="history-log-emoji">🪶</span> History Log</span></button>
-
-        <p id="messages" class="shadowed-text"></p>
-
-        <button type="button" id="chance-time-button" class="shadowed-button notify" aria-label="Open Chance Time" onClick="chanceTime.show();"><span>🎲 Chance Time</span></button>
-        <button type="button" id="restart-button" class="main-button" onclick="game.startGame();">Go Again</button>
-
-        <div id="held-items-wrapper">
-          <div
-            id="held-items"
-            onwheel="onHeldItemsMouseWheel(event)"
-            onmousemove="onHeldItemsMouseMove(event)"
-          ></div>
-
-          <label id="scroll-mode-toggle" class="shadowed-text">
-            <span><input id="scroll-mode-checkbox" type="checkbox" onchange="game.scrollModeManual = this.checked;" />Scroll held items manually</span>
-          </label>
-        </div>
-
-        <span id="end-button-wrapper">
-          <button type="button" class="main-button" onclick="callItADay();">Call It a Day</button>
-          <button type="button" id="confirm-end-button" class="main-button confirm-button" onclick="game.player.loseStamina(game.player.stamina);">⚠️ Really End the Hike ⚠️</button>
-        </span>
       </div>
+
+      <span id="end-button-wrapper">
+        <button type="button" class="main-button" onclick="callItADay();">Call It a Day</button>
+        <button type="button" id="confirm-end-button" class="main-button confirm-button" onclick="game.player.loseStamina(game.player.stamina);">⚠️ Really End the Hike ⚠️</button>
+      </span>
     </div>
   </body>
 </html>

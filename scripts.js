@@ -193,6 +193,7 @@ for (const mushroomSideEffect of mushroomSideEffects) {
 const pathOptions = [
   {
     id: "blank",
+    emoji: "",
     name: "&#x200B;",
     tags: [],
     description: "Represents a path option with nothing on it.  If I see this description, it's a bug!",
@@ -204,6 +205,7 @@ const pathOptions = [
   },
   {
     id: "bag",
+    emoji: "👜",
     name: "👜 Bag",
     tags: ["treasure", "tool"],
     description: "Nice, I can carry more with this!",
@@ -227,6 +229,7 @@ const pathOptions = [
   },
   {
     id: "shamrock",
+    emoji: "☘️",
     name: "☘️ Clover Patch",
     tags: ["grows"],
     getDescription() {
@@ -284,6 +287,7 @@ const pathOptions = [
   },
   {
     id: "clover",
+    emoji: "🍀",
     name: "🍀 Lucky Clover",
     tags: [],
     description: "A serendipitous find!",
@@ -305,6 +309,7 @@ const pathOptions = [
   },
   {
     id: "snackbar",
+    emoji: "🍫",
     name: "🍫 Snack Bar",
     tags: ["consumable", "trashable"],
     description: "Eat to recover 5 stamina.",
@@ -337,6 +342,7 @@ const pathOptions = [
   },
   {
     id: "lunch",
+    emoji: "🧰",
     name: "🧰 Packed Lunch",
     tags: ["treasure", "consumable"],
     description: "Eat to recover 10 stamina and free up the bag to carry something else.",
@@ -374,6 +380,7 @@ const pathOptions = [
   },
   {
     id: "parcel",
+    emoji: "📦",
     name: "📦 Abandoned Parcel",
     tags: ["chest"],
     description: "Ooh, what could be inside?",
@@ -425,6 +432,7 @@ const pathOptions = [
   },
   {
     id: "robin",
+    emoji: "🐦",
     name: "🐦 Bright Bird",
     tags: ["bird"],
     description: 'Normally just flies away...  <span class="no-wrap">:(</span>',
@@ -467,6 +475,7 @@ const pathOptions = [
   },
   {
     id: "blackbird",
+    emoji: DARK_BIRD_EMOJI,
     name: `${DARK_BIRD_EMOJI} Dark Bird`,
     tags: ["bird"],
     description: 'Normally just flies away...  <span class="no-wrap">:(</span>',
@@ -509,6 +518,7 @@ const pathOptions = [
   },
   {
     id: "bottle",
+    emoji: "🍾",
     name: "🍾 Discarded Bottle",
     tags: ["obstacle", "trash", "trashable"],
     description: "Ugh.  Bring it to a receptacle to dispose of it properly.",
@@ -529,6 +539,7 @@ const pathOptions = [
   },
   {
     id: "wrapper",
+    emoji: "🍬",
     name: "🍬 Discarded Wrapper",
     tags: ["obstacle", "trash", "trashable"],
     description: "Gross.  Bring it to a receptacle to dispose of it properly.",
@@ -549,6 +560,7 @@ const pathOptions = [
   },
   {
     id: "receptacle",
+    emoji: "🚮",
     name: "🚮 Trash Receptacle",
     tags: ["environment"],
     get description() {
@@ -561,12 +573,13 @@ const pathOptions = [
         description: "More and more trash will appear in the woods over time, but I can reduce the amount whenever I use this to dispose of some.",
       },
     ],
-    onPick(player) {
+    onPick() {
       return true;
     },
   },
   {
     id: "mushroom",
+    emoji: MUSHROOM_EMOJI,
     name: `${MUSHROOM_EMOJI} Mushroom`,
     tags: ["consumable"],
     description: "Eat to recover 4 stamina, but may have side effects.",
@@ -608,6 +621,7 @@ const pathOptions = [
   },
   {
     id: "berry",
+    emoji: BERRY_EMOJI,
     name: `${BERRY_EMOJI} Berry`,
     tags: ["consumable"],
     description: "Eat to recover stamina.  The more in one go, the better!",
@@ -633,6 +647,7 @@ const pathOptions = [
   },
   {
     id: "cherry",
+    emoji: "🍒",
     name: "🍒 Cherry",
     tags: ["consumable"],
     description: "Eat to recover 3 stamina, but has to be done in pairs.",
@@ -657,6 +672,7 @@ const pathOptions = [
   },
   {
     id: "tangerine",
+    emoji: "🍊",
     name: "🍊 Fruit",
     tags: ["consumable"],
     description: "Eat to recover 7 stamina, but takes a while to peel.",
@@ -742,6 +758,7 @@ const pathOptions = [
   },
   {
     id: "nut",
+    emoji: "🌰",
     name: "🌰 Nut",
     tags: ["consumable"],
     description: "Eat to gain 1 max stamina.  Requires something to break the shell.",
@@ -772,6 +789,7 @@ const pathOptions = [
   },
   {
     id: "rock",
+    emoji: ROCK_EMOJI,
     name: `${ROCK_EMOJI} Rock`,
     tags: ["tool"],
     description: "A nice hefty rock.  Hard to carry, though...",
@@ -802,6 +820,7 @@ const pathOptions = [
   },
   {
     id: "mosquito",
+    emoji: "🦟",
     name: "🦟 Nasty Nuisance",
     tags: ["obstacle", "bug"],
     description: "Nope!  No thanks.  I'll just run past it until I can't see it anymore.",
@@ -841,6 +860,7 @@ const pathOptions = [
   },
   {
     id: "roach",
+    emoji: CREEPY_CRAWLY_EMOJI,
     name: `${CREEPY_CRAWLY_EMOJI} Creepy Crawly`,
     tags: ["obstacle", "bug"],
     description: "Nope!  No thanks.  I'll just run past it until I can't see it anymore.",
@@ -880,6 +900,7 @@ const pathOptions = [
   },
   {
     id: "tracks",
+    emoji: "🐾",
     name: "🐾 Animal Tracks",
     tags: ["tracking"],
     description: "Ooh, if I follow them all, what might they lead to?",
@@ -948,6 +969,7 @@ const pathOptions = [
   },
   {
     id: "bunny",
+    emoji: "🐇",
     name: "🐇 Bunny",
     tags: ["tracking"],
     description: `So cute.  Makes my day!  <span class="no-wrap">&lt;3</span>`,
@@ -977,6 +999,7 @@ const pathOptions = [
   },
   {
     id: "turd",
+    emoji: "💩",
     name: "💩 Turd",
     tags: ["tracking"],
     description: "Ew.  Makes me feel queasy...",
@@ -993,6 +1016,7 @@ const pathOptions = [
   },
   {
     id: "bouquet",
+    emoji: "💐",
     name: "💐 Bouquet",
     tags: ["trashable"],
     // Use a regular function rather than a getter so that it recalculates on each access
@@ -1024,6 +1048,7 @@ const pathOptions = [
   },
   {
     id: "ribbon",
+    emoji: "🎗️",
     name: "🎗️ Ribbon",
     tags: ["tool", "trashable"],
     description: "With some effort, I can use this to turn all my flowers into a bouquet.",
@@ -1059,6 +1084,7 @@ const pathOptions = [
   },
   {
     id: "rose",
+    emoji: "🌹",
     name: "🌹 Red Flower",
     tags: ["flower", "grows"],
     description: "Collectable.  Smells nice!",
@@ -1072,6 +1098,7 @@ const pathOptions = [
   },
   {
     id: "hyacinth",
+    emoji: `${PURPLE_FLOWER_EMOJI}`,
     name: `${PURPLE_FLOWER_EMOJI} Purple Flower`,
     tags: ["flower", "grows"],
     description: "Collectable.  So vibrant!",
@@ -1085,6 +1112,7 @@ const pathOptions = [
   },
   {
     id: "tulip",
+    emoji: "🌷",
     name: "🌷 Pink Flower",
     tags: ["flower", "grows"],
     description: "Collectable.  Soft petals!",
@@ -1098,6 +1126,7 @@ const pathOptions = [
   },
   {
     id: "daisy",
+    emoji: "🌼",
     name: "🌼 Pale Flower",
     tags: ["flower", "grows"],
     description: "Collectable.  Cheerful!",
@@ -1111,6 +1140,7 @@ const pathOptions = [
   },
   {
     id: "trading-post",
+    emoji: `${TRADING_POST_EMOJI}`,
     name: `${TRADING_POST_EMOJI} Trading Post`,
     tags: ["environment", "trading"],
     getDescription(forGuidebook = false) {
@@ -1144,6 +1174,7 @@ const pathOptions = [
   },
   {
     id: "flyer",
+    emoji: "📰",
     name: "📰 Flyer",
     tags: ["environment", "trading"],
     getDescription(forGuidebook = false) {
@@ -2474,11 +2505,14 @@ class Game {
   }
 
   updateHeldItemsDisplay() {
+    const heldItemsThumbnails = document.querySelector('#held-items-thumbnails>span');
+
     const heldItemsDisplay = document.getElementById('held-items');
     const scrollLeft = heldItemsDisplay.scrollLeft;
     const scrolledToEnd = scrollLeft > 1 && scrollLeft + heldItemsDisplay.clientWidth + 1 >= heldItemsDisplay.scrollWidth;
     let capacityCounter = 0;
 
+    heldItemsThumbnails.innerHTML = "";
     heldItemsDisplay.innerHTML = "";
 
     for (let i = 0; i < this.player.heldItems.length; i++) {
@@ -2535,6 +2569,14 @@ class Game {
 
         capacityWeightDisplay.appendChild(capacityIcon);
       }
+
+      const itemThumbnail = document.createElement('span');
+      itemThumbnail.innerText = heldItem.emoji;
+      if (capacityCounter > this.player.capacity) {
+        itemThumbnail.classList.add('notify');
+      }
+
+      heldItemsThumbnails.appendChild(itemThumbnail);
 
       if (this.player.environment === "trading-post") {
         const tradeRequest = tradeRequestsMap.get(game.nextTradeRequestId);
@@ -2601,10 +2643,14 @@ class Game {
 
     for (let i = this.player.getHeldItemsCapacityWeight(); i < this.player.capacity; i++) {
       const emptyCapacitySpace = document.createElement('div');
-      emptyCapacitySpace.classList.add('empty-capacity-space');
       emptyCapacitySpace.innerHTML = "✋";
-
+      emptyCapacitySpace.classList.add('empty-capacity-space');
       heldItemsDisplay.appendChild(emptyCapacitySpace);
+
+      const emptyCapacityThumbnail = document.createElement('span');
+      emptyCapacityThumbnail.innerText = "✋";
+      emptyCapacityThumbnail.classList.add('empty-space');
+      heldItemsThumbnails.appendChild(emptyCapacityThumbnail);
     }
 
     heldItemsDisplay.scrollLeft = scrolledToEnd ?
@@ -2825,6 +2871,44 @@ let historyLog = new HistoryLog();
 const guidebook = new Guidebook();
 const chanceTime = new ChanceTime();
 const game = new Game();
+
+function onHeldItemsThumbnailsTouchMove(event) {
+  if (event.changedTouches.length === 1) {
+    const touch = event.changedTouches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    heldItemsThumbnailsMoveHandler(event.currentTarget, target);
+  }
+}
+
+function onHeldItemsThumbnailsMouseMove(event) {
+  heldItemsThumbnailsMoveHandler(event.currentTarget, event.target);
+}
+
+function heldItemsThumbnailsMoveHandler(currentTarget, target) {
+  if (!target || !currentTarget || target === currentTarget) {
+    return;
+  }
+
+  const spanTarget = target.closest('span');
+  const itemIndex = [...currentTarget.children].indexOf(spanTarget);
+
+  if (itemIndex < 0 || itemIndex >= currentTarget.childElementCount) {
+    return;
+  }
+
+  const heldItemsDisplay = document.getElementById('held-items');
+  const xPadding = 10;
+  const containerRect = heldItemsDisplay.getBoundingClientRect();
+  const containerLeft = containerRect.left + xPadding;
+  const containerRight = containerRect.right - xPadding;
+  const itemRect = heldItemsDisplay.children[itemIndex].getBoundingClientRect();
+
+  if (itemRect.left < containerLeft) {
+    smoothScrollX(heldItemsDisplay, heldItemsDisplay.scrollLeft - (containerLeft - itemRect.left));
+  } else if (itemRect.right > containerRight) {
+    smoothScrollX(heldItemsDisplay, heldItemsDisplay.scrollLeft + (itemRect.right - containerRight));
+  }
+}
 
 function onHeldItemsMouseMove(event) {
   if (!game.scrollModeManual && window.matchMedia('(hover: hover)').matches) {
