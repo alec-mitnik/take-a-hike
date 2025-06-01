@@ -769,7 +769,7 @@ button.path-option {
       background: linear-gradient(to bottom, #0000, #0008 90%, black 100%);
 
       /* Ensure this fully covers the decoration background edge */
-      margin-bottom: -1px;
+      margin-bottom: -2px;
     }
   }
 
