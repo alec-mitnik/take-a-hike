@@ -1057,10 +1057,7 @@ dialog#kofi-dialog {
   margin: auto;
   padding: 20px;
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
   z-index: 50;
   border: none;
   background: transparent;
@@ -1069,10 +1066,7 @@ dialog#kofi-dialog {
 
   .modal-backdrop {
     position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    inset: 0;
     background-color: rgba(0, 0, 0, 0.5);
   }
 

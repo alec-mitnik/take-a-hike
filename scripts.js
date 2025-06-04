@@ -628,6 +628,10 @@ const pathOptions = [
     chance: 12,
     specialConditions: [
       {
+        id: "first",
+        description: "The first one does nothing for me.  I need to follow it up with more before consuming anything else.",
+      },
+      {
         id: "fill",
         description: "I keep craving and recovering more until I finally have my fill after 6 in a row.",
       },
@@ -640,6 +644,7 @@ const pathOptions = [
       player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  ${
           (player.berryStreak > 0) ? `I crave more!` : `Yummy!`}`;
 
+      guidebook.notesMap.get("berry").specialConditions.get("first").encountered = true;
       album.memoriesMap.get("berry-bonanza").checkAchieved(player);
 
       return true;
