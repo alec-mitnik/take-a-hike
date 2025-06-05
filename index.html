@@ -37,7 +37,7 @@
       </button>
 
       <!-- Ko-fi tipping dialog -->
-      <dialog id="kofi-dialog" style="width: 350px; max-width: 100%; height: 675px; max-height: 100%;">
+      <dialog id="kofi-dialog" aria-label="Support My Projects" style="width: 350px; max-width: 100%; height: 675px; max-height: 100%;">
         <div id="kofi-backdrop" class="modal-backdrop" onclick="document.getElementById('kofi-dialog').close();"></div>
         <div class="modal">
           <button autofocus class="close-button" aria-label="Close tipping dialog" onclick="document.getElementById('kofi-dialog').close();">
@@ -51,7 +51,7 @@
       </dialog>
     </div>
     <div id="hike-wrapper">
-      <dialog id="album-display" class="sidebar left">
+      <dialog id="album-display" class="sidebar left" aria-label="Memories Album">
         <div class="backdrop" onclick="album.hide();"></div>
         <div class="panel">
           <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Memories Album" onClick="album.hide();"><span>X</span></button>
@@ -59,7 +59,7 @@
           <div id="album-content" class="panel-content"></div>
         </div>
       </dialog>
-      <dialog id="guidebook-display" class="sidebar right">
+      <dialog id="guidebook-display" class="sidebar right" aria-label="Guidebook">
         <div class="backdrop" onclick="guidebook.hide();"></div>
         <div class="panel">
           <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Guidebook" onClick="guidebook.hide();"><span>X</span></button>
@@ -67,7 +67,7 @@
           <div id="guidebook-content" class="panel-content"></div>
         </div>
       </dialog>
-      <dialog id="chance-time-display" class="sidebar left">
+      <dialog id="chance-time-display" class="sidebar left" aria-label="Chance Time">
         <div class="backdrop" onclick="chanceTime.hide();"></div>
         <div class="panel">
           <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Chance Time" onClick="chanceTime.hide();"><span>X</span></button>
@@ -84,7 +84,7 @@
           </div>
         </div>
       </dialog>
-      <dialog id="history-log-display" class="sidebar right">
+      <dialog id="history-log-display" class="sidebar right" aria-label="History Log">
         <div class="backdrop" onclick="historyLog.hide();"></div>
         <div class="panel">
           <button autofocus type="button" class="close-button shadowed-button" aria-label="Close History Log" onClick="historyLog.hide();"><span>X</span></button>
