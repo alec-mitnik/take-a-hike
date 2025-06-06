@@ -82,7 +82,7 @@ const parcelOptions = [
   {
     id: "material",
     emoji: "🎗️",
-    description: "Got a nice ribbon.  :O",
+    description: `Got a nice ribbon.  <span class="no-wrap" role="img" aria-label="Surprised face">:O</span>`,
     content: ["ribbon"],
     chance: 2,
   },
@@ -178,6 +178,7 @@ for (const mushroomSideEffect of mushroomSideEffects) {
 }
 
 // TODO - 🪦(fallback: ⚰️)🥀↔️🧺🐚🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢
+// Update emoji usage for screen reader
 // Move scripts into separate module files
 // Sound effects?
 // Beach/mountain locales?
@@ -370,11 +371,11 @@ const pathOptions = [
     },
     onDispose(player) {
       if (player.environment === "receptacle") {
-        player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  <span class="no-wrap">&lt;/3</span>`;
+        player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  <span class="no-wrap" role="img" aria-label="Broken heart">&lt;/3</span>`;
         return true;
       }
 
-      player.actionMessage += '  <span class="no-wrap">&lt;/3</span>';
+      player.actionMessage += '  <span class="no-wrap" role="img" aria-label="Broken heart">&lt;/3</span>';
       return false;
     },
   },
@@ -403,7 +404,7 @@ const pathOptions = [
       });
     },
     onPick(player) {
-      const actionMessage = "Ooh, what could be inside the parcel?\n...";
+      const actionMessage = "Ooh, what could be inside the parcel?\nLet's see...";
       player.actionMessage = actionMessage;
 
       chanceTime.initiate(`Discover what's inside the <span class="no-wrap">${wrapInBadge(this.name)}!</span>`, 4, 1,
@@ -435,7 +436,7 @@ const pathOptions = [
     emoji: "🐦",
     name: "🐦 Bright Bird",
     tags: ["bird"],
-    description: 'Normally just flies away...  <span class="no-wrap">:(</span>',
+    description: 'Normally just flies away...  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>',
     chance: 1,
     specialConditions: [
       {
@@ -465,9 +466,9 @@ const pathOptions = [
         }
 
         player.setQueasyCounter(0);
-        player.actionMessage = `I got to feed a ${wrapInBadge(berryItem.name)} to the <span class="no-wrap">${wrapInBadge(this.name)}!</span>  Feeling great.  :D`;
+        player.actionMessage = `I got to feed a ${wrapInBadge(berryItem.name)} to the <span class="no-wrap">${wrapInBadge(this.name)}!</span>  Feeling great.  <span class="no-wrap" role="img" aria-label="Elated face">:D</span>`;
       } else {
-        player.actionMessage = 'Aw, the bird flew away.  <span class="no-wrap">:(</span>';
+        player.actionMessage = 'Aw, the bird flew away.  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>';
       }
 
       return true;
@@ -478,7 +479,7 @@ const pathOptions = [
     emoji: DARK_BIRD_EMOJI,
     name: `${DARK_BIRD_EMOJI} Dark Bird`,
     tags: ["bird"],
-    description: 'Normally just flies away...  <span class="no-wrap">:(</span>',
+    description: 'Normally just flies away...  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>',
     chance: 1,
     specialConditions: [
       {
@@ -508,9 +509,9 @@ const pathOptions = [
         }
 
         player.setQueasyCounter(0);
-        player.actionMessage = `I got to feed a ${wrapInBadge(nutItem.name)} to the <span class="no-wrap">${wrapInBadge(this.name)}!</span>  Feeling great.  :D`;
+        player.actionMessage = `I got to feed a ${wrapInBadge(nutItem.name)} to the <span class="no-wrap">${wrapInBadge(this.name)}!</span>  Feeling great.  <span class="no-wrap" role="img" aria-label="Elated face">:D</span>`;
       } else {
-        player.actionMessage = 'Aw, the bird flew away.  <span class="no-wrap">:(</span>';
+        player.actionMessage = 'Aw, the bird flew away.  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>';
       }
 
       return true;
@@ -528,7 +529,7 @@ const pathOptions = [
         pathOptionsMap.get(this.id).negativeModifier++;
         pathOptionsMap.get("blank").positiveModifier++;
         guidebook.notesMap.get("receptacle").specialConditions.get("clean").encountered = true;
-        player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  <span class="no-wrap">:)</span>`;
+        player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
 
         album.memoriesMap.get("good-samaritan").checkAchieved(player);
         return true;
@@ -549,7 +550,7 @@ const pathOptions = [
         pathOptionsMap.get(this.id).negativeModifier++;
         pathOptionsMap.get("blank").positiveModifier++;
         guidebook.notesMap.get("receptacle").specialConditions.get("clean").encountered = true;
-        player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  <span class="no-wrap">:)</span>`;
+        player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
 
         album.memoriesMap.get("good-samaritan").checkAchieved(player);
         return true;
@@ -673,7 +674,7 @@ const pathOptions = [
         return true;
       }
 
-      player.actionMessage = `I need another ${wrapInBadge(this.name)} to eat with this.  It's the rules!  <span class="no-wrap">>:(</span>`;
+      player.actionMessage = `I need another ${wrapInBadge(this.name)} to eat with this.  It's the rules!  <span class="no-wrap" role="img" aria-label="Angry face">&gt;:(</span>`;
       return false;
     },
   },
@@ -689,15 +690,15 @@ const pathOptions = [
     specialConditions: [
       {
         id: "juggle",
-        description: `If I ever hold three at once, I'll attempt to juggle them.  <span class="no-wrap">>:D</span>`,
+        description: `If I ever hold three at once, I'll attempt to juggle them.  <span class="no-wrap" role="img" aria-label="Mischievous face">&gt;:D</span>`,
       },
       {
         id: "drop",
-        description: 'Possibility: I drop any that I fail to catch...  <span class="no-wrap">:(</span>',
+        description: 'Possibility: I drop any that I fail to catch...  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>',
       },
       {
         id: "success",
-        description: `Possibility: If I catch all three, I get so pumped that I instantly peel and eat them!  <span class="no-wrap">>:P</span>`,
+        description: `Possibility: If I catch all three, I get so pumped that I instantly peel and eat them!  <span class="no-wrap" role="img" aria-label="Mischievous face with tongue sticking out">&gt;:P</span>`,
       },
     ],
     onPick(player) {
@@ -715,7 +716,7 @@ const pathOptions = [
 
           if (nonFruitSelections.length === 0) {
             // Success
-            player.actionMessage = `${actionMessage}\nI did it!  That got me so pumped that I instantly peeled and ate them all.  <span class="no-wrap">>:P</span>`;
+            player.actionMessage = `${actionMessage}\nI did it!  That got me so pumped that I instantly peeled and ate them all.  <span class="no-wrap" role="img" aria-label="Mischievous face with tongue sticking out">&gt;:P</span>`;
             player.recoverStamina(7 * 3);
             guidebook.notesMap.get(this.id).specialConditions.get("success").encountered = true;
             album.memoriesMap.get("fruitful-finesse").checkAchieved(player);
@@ -731,7 +732,7 @@ const pathOptions = [
               amount = "them all";
             }
 
-            player.actionMessage = `${actionMessage}\nOh shoot, I dropped ${amount}!  <span class="no-wrap">:(</span>`;
+            player.actionMessage = `${actionMessage}\nOh shoot, I dropped ${amount}!  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>`;
             guidebook.notesMap.get(this.id).specialConditions.get("drop").encountered = true;
 
             const heldFruit = player.heldItems.filter(item => item.id === "tangerine");
@@ -747,7 +748,7 @@ const pathOptions = [
 
         return false;
       } else if (numHeldFruit === 2) {
-        player.actionMessage = `All I need is a third ${wrapInBadge(this.name)} and I can try to juggle them!  <span class="no-wrap">>:D</span>`;
+        player.actionMessage = `All I need is a third ${wrapInBadge(this.name)} and I can try to juggle them!  <span class="no-wrap" role="img" aria-label="Mischievous face">&gt;:D</span>`;
       }
 
       return false;
@@ -755,7 +756,7 @@ const pathOptions = [
     onConsume(player) {
       if (this.stepsLeftToPeel <= 0) {
         player.recoverStamina(7);
-        player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  It took some work, but it was worth it.  <span class="no-wrap">:P</span>`;
+        player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  It took some work, but it was worth it.  <span class="no-wrap" role="img" aria-label="Face with tongue sticking out">:P</span>`;
         return true;
       }
 
@@ -790,7 +791,7 @@ const pathOptions = [
 
       const withText = player.heldItems.some(heldItem => heldItem.id === "bottle") ? `nothing but a flimsy ${wrapInBadge(pathOptionsMap.get("bottle").name)}` : "my bare hands";
 
-      player.actionMessage = `I can't crack open the ${wrapInBadge(this.name)} with <span class="no-wrap">${withText}.</span>  <span class="no-wrap">:(</span>`;
+      player.actionMessage = `I can't crack open the ${wrapInBadge(this.name)} with <span class="no-wrap">${withText}.</span>  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>`;
       return false;
     },
   },
@@ -963,13 +964,13 @@ const pathOptions = [
       {
         id: "sighting",
         get description() {
-          return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("bunny").name)}!</span>  <span class="no-wrap">&lt;3</span>`;
+          return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("bunny").name)}!</span>  <span class="no-wrap" role="img" aria-label="Heart">&lt;3</span>`;
         },
       },
       {
         id: "bust",
         get description() {
-          return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("turd").name)}.</span>  <span class="no-wrap">:/</span>`;
+          return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("turd").name)}.</span>  <span class="no-wrap" role="img" aria-label="Unimpressed face">:/</span>`;
         },
       },
     ],
@@ -979,7 +980,7 @@ const pathOptions = [
     emoji: "🐇",
     name: "🐇 Bunny",
     tags: ["tracking"],
-    description: `So cute.  Makes my day!  <span class="no-wrap">&lt;3</span>`,
+    description: `So cute.  Makes my day!  <span class="no-wrap" role="img" aria-label="Heart">&lt;3</span>`,
     chance: -1,
     specialConditions: [
       {
@@ -990,7 +991,7 @@ const pathOptions = [
       },
     ],
     onPick(player) {
-      player.actionMessage = `Whoa, a <span class="no-wrap">${wrapInBadge(this.name)}!</span>  So cute.  My day is made!  <span class="no-wrap">&lt;3</span>`;
+      player.actionMessage = `Whoa, a <span class="no-wrap">${wrapInBadge(this.name)}!</span>  So cute.  My day is made!  <span class="no-wrap" role="img" aria-label="Heart">&lt;3</span>`;
       player.recoverStamina(2 * player.trackPathLength);
       player.trackPathLength = 0;
       album.memoriesMap.get("special-sighting").checkAchieved(player);
@@ -1071,7 +1072,7 @@ const pathOptions = [
         bouquet.flowers = heldFlowers.map(heldItem => heldItem.id);
         player.encounterPathOption(bouquet);
 
-        player.actionMessage = `Used the ${wrapInBadge(this.name)} to make a ${wrapInBadge(pathOptionsMap.get("bouquet").name)} out of all my flowers.  <span class="no-wrap">:)</span>`;
+        player.actionMessage = `Used the ${wrapInBadge(this.name)} to make a ${wrapInBadge(pathOptionsMap.get("bouquet").name)} out of all my flowers.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
         player.loseStamina(heldFlowers.length);
         return true;
       }
@@ -1341,13 +1342,15 @@ class ChanceTime {
 
     while (optionsToPopulate.length) {
       const option = randomDraw(optionsToPopulate, true);
+      const ordinal = this.startingOptions.length - optionsToPopulate.length;
 
       const optionElement = document.createElement("label");
       optionElement.classList.add("checkbox-button");
-      optionElement.ariaLabel = "Chance Time option";
 
       const optionCheckbox = document.createElement("input");
       optionCheckbox.type = "checkbox";
+      optionCheckbox.ariaLabel = `Chance Time option ${ordinal} of ${this.startingOptions.length}`;
+      optionCheckbox.name = `option${ordinal}`;
       optionCheckbox.onclick = () => {
         optionCheckbox.disabled = true;
         this.selectedOptions.push(option);
@@ -1748,7 +1751,7 @@ const achievements = [
     difficulty: 1,
     name: "Bird Feeder",
     imageName: "bird-feeder.jpg",
-    imageAlt: "Photo of a tan-colored, crested bird with a ripe red berry in its mouth",
+    imageAlt: "Photo of a tan-colored crested bird with a ripe red berry in its mouth",
     description: "Got to feed a bird",
     achieved: false,
     checkAchieved(player) {
@@ -2220,6 +2223,7 @@ class Album {
 
       const memoryContent = document.createElement("div");
       memoryContent.classList.add("album-memory__content");
+      const hintToUnlockText = `Hint to unlock: ${memory.emojiHint}`;
 
       if (memory.achieved && memory.imageName) {
         const memoryImage = document.createElement("img");
@@ -2231,11 +2235,16 @@ class Album {
         const memoryHint = document.createElement("dd");
         memoryHint.innerHTML = memory.emojiHint;
         memoryHint.role = "img";
-        memoryHint.ariaLabel = `Hint to unlock: ${memory.emojiHint}`;
+        memoryHint.ariaLabel = hintToUnlockText;
         memoryContent.appendChild(memoryHint);
       }
 
       memoryDiv.appendChild(memoryContent);
+      memoryDiv.role = "img";
+      // memoryDiv.ariaLabel = `${memory.name}.`;
+      // TODO - hint emojis aren't being read out
+      memoryDiv.ariaDescription =
+          `${memory.name}. ${difficultyRating.ariaLabel}.${memory.achieved ? ` ${memory.description}.` : ''}${memory.achieved && memory.imageName ? ` ${memory.imageAlt}` : ` ${hintToUnlockText}`}`;
 
       albumContent.appendChild(memoryDiv);
     }
@@ -2524,12 +2533,12 @@ class Game {
         didNotOpenMessage = `<p>I should really take a look at that ${wrapInBadge("📷 Memories")} album.</p>`;
       }
 
-      let finalMessage = 'That was a nice hike.  <span class="no-wrap">:)</span>';
+      let finalMessage = 'That was a nice hike.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>';
 
       if (totalAchievementDifficulty <= 5) {
         finalMessage = "I didn't do much of note.  There's still more to try!";
       } else if (totalAchievementDifficulty >= 15) {
-        finalMessage = "Wow, that was a hike to remember!  :D";
+        finalMessage = `Wow, that was a hike to remember!  <span class="no-wrap" role="img" aria-label="Elated face">:D</span>`;
       } else if (this.iterationsCount < 2) {
         finalMessage = "I didn't walk very far.  There's still more to see!";
       }
@@ -2564,6 +2573,8 @@ class Game {
       } else {
         historyLog.addLogEntry(messagesDisplay.innerHTML);
       }
+
+      messagesDisplay.focus();
     }
   }
 
@@ -2725,13 +2736,12 @@ class Game {
         }
 
         optionDisplay.classList.add('path-option');
-        optionDisplay.style.gridRow = this.pathStepOptions.length - i;
         optionDisplay.disabled = this.player.getHeldItemsCapacityWeight() > this.player.capacity || i > 0 || this.gameActive === false || chanceTime.awaitingSelection;
         optionDisplay.onclick = () => {
           this.player.selectPathOption(stepOption.id);
         };
 
-        pathDisplay.appendChild(optionDisplay);
+        pathDisplay.insertBefore(optionDisplay, pathDisplay.firstChild);
 
         if (stepOptionId !== "blank") {
           guidebook.notesMap.get(stepOptionId).seen = true;
@@ -2881,7 +2891,7 @@ class Game {
       this.addToPathStepOptions();
     }
 
-    this.player.actionMessage = 'Time to take a hike!  <span class="no-wrap">:)</span>';
+    this.player.actionMessage = 'Time to take a hike!  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>';
 
     this.updateMessagesDisplay();
     this.updatePathDisplay();

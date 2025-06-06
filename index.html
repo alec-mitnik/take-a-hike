@@ -25,7 +25,7 @@
       <h1 id="title">Take a Hike</h1>
       <h2 id="author">A game by Alec Mitnik</h2>
       <div class="shadowed-text">
-        <p>Explore, keep your stamina up, and make some nice memories!  <span class="no-wrap">:)</span></p>
+        <p>Explore, keep your stamina up, and make some nice memories!  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span></p>
         <p>Please note that data does not persist once you leave the page.  The game may continue to be updated as I work on it.</p>
       </div>
       <button type="button" id="start-button" class="main-button" onClick="game.startGame();">Embark</button>
@@ -75,7 +75,7 @@
           <div id="chance-time-content" class="panel-content">
             <p id="chance-time-message"></p>
             <div id="chance-time-grid-wrapper">
-              <div id="chance-time-grid"></div>
+              <fieldset id="chance-time-grid"></fieldset>
             </div>
             <p id="chance-time-progress"><span id="chance-time-progress__total">0</span>/<span id="chance-time-progress__goal">0</span></p>
             <button type="button" id="chance-time-try-again" class="main-button" onClick="chanceTime.tryAgain();">🍀 Try Again</button>
@@ -114,7 +114,7 @@
           <button type="button" class="shadowed-button" aria-label="Open History Log" onClick="historyLog.show();"><span><span id="history-log-emoji">🪶</span> History Log</span></button>
 
           <div id="messages-wrapper">
-            <p id="messages" class="shadowed-text"></p>
+            <div id="messages" class="shadowed-text" tabindex="0"></div>
           </div>
 
           <button type="button" id="chance-time-button" class="shadowed-button notify" aria-label="Open Chance Time" onClick="chanceTime.show();"><span>🎲 Chance Time</span></button>

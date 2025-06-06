@@ -51,6 +51,13 @@ dd {
   margin: 0;
 }
 
+fieldset {
+  appearance: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
 #title-screen {
   margin: auto;
   min-width: 40%;
@@ -281,7 +288,7 @@ button, input[type="checkbox"] {
             }
 
             + span::after {
-              content: '❔';
+              content: '❔' / '';
               position: absolute;
             }
           }
