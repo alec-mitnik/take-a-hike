@@ -32,7 +32,7 @@
 
       <!-- Ko-fi tipping button -->
       <button id="kofi-button" class="main-button" onclick="document.getElementById('kofi-dialog').showModal()">
-        <img src="https://storage.ko-fi.com/cdn/cup-border.png" alt="Ko-fi donations">
+        <img src="https://storage.ko-fi.com/cdn/cup-border.png" alt="">
         Support my projects
       </button>
 
@@ -51,27 +51,27 @@
       </dialog>
     </div>
     <div id="hike-wrapper">
-      <dialog id="album-display" class="sidebar left" aria-label="Memories Album">
+      <dialog id="album-display" class="sidebar left" aria-labelledby="album-title">
         <div class="backdrop" onclick="album.hide();"></div>
         <div class="panel">
           <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Memories Album" onClick="album.hide();"><span>X</span></button>
-          <h1 class="panel-title">Memories Album</h1>
+          <h1 id="album-title" class="panel-title">Memories Album</h1>
           <div id="album-content" class="panel-content"></div>
         </div>
       </dialog>
-      <dialog id="guidebook-display" class="sidebar right" aria-label="Guidebook">
+      <dialog id="guidebook-display" class="sidebar right" aria-labelledby="guidebook-title">
         <div class="backdrop" onclick="guidebook.hide();"></div>
         <div class="panel">
           <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Guidebook" onClick="guidebook.hide();"><span>X</span></button>
-          <h1 class="panel-title">Guidebook</h1>
+          <h1 id="guidebook-title" class="panel-title">Guidebook</h1>
           <div id="guidebook-content" class="panel-content"></div>
         </div>
       </dialog>
-      <dialog id="chance-time-display" class="sidebar left" aria-label="Chance Time">
+      <dialog id="chance-time-display" class="sidebar left" aria-labelledby="chance-time-title">
         <div class="backdrop" onclick="chanceTime.hide();"></div>
         <div class="panel">
           <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Chance Time" onClick="chanceTime.hide();"><span>X</span></button>
-          <h1 class="panel-title">Chance Time</h1>
+          <h1 id="chance-time-title" class="panel-title">Chance Time</h1>
           <div id="chance-time-content" class="panel-content">
             <p id="chance-time-message"></p>
             <div id="chance-time-grid-wrapper">
@@ -84,20 +84,20 @@
           </div>
         </div>
       </dialog>
-      <dialog id="history-log-display" class="sidebar right" aria-label="History Log">
+      <dialog id="history-log-display" class="sidebar right" aria-labelledby="history-log-title">
         <div class="backdrop" onclick="historyLog.hide();"></div>
         <div class="panel">
           <button autofocus type="button" class="close-button shadowed-button" aria-label="Close History Log" onClick="historyLog.hide();"><span>X</span></button>
-          <h1 class="panel-title">History Log</h1>
+          <h1 id="history-log-title" class="panel-title">History Log</h1>
           <div id="history-log-content" class="panel-content">
-            <ul id="history-log-list"></ul>
+            <ul id="history-log-list" aria-labelledby="history-log-title"></ul>
           </div>
         </div>
       </dialog>
 
       <div id="viewport-display">
         <div id="path"></div>
-        <div id="path-arrows">
+        <div id="path-arrows" aria-hidden="true">
           <span>▲</span>
           <span>▲</span>
           <span>▲</span>
@@ -121,17 +121,18 @@
           <button type="button" id="restart-button" class="main-button" onclick="game.startGame();">Go Again</button>
 
           <div id="held-items-wrapper">
-            <div
+            <dl
               id="held-items"
+              aria-label="Held Items"
               onwheel="onHeldItemsMouseWheel(event)"
               onmousemove="onHeldItemsMouseMove(event)"
-            ></div>
+            ></dl>
 
             <label id="scroll-mode-toggle" class="shadowed-text">
               <span><input id="scroll-mode-checkbox" type="checkbox" onchange="game.scrollModeManual = this.checked;" />Scroll held items manually</span>
             </label>
 
-            <div id="held-items-thumbnails" class="shadowed-text">
+            <div id="held-items-thumbnails" class="shadowed-text" aria-hidden="true">
               <span
                 onmousemove="onHeldItemsThumbnailsMouseMove(event)"
                 ontouchmove="onHeldItemsThumbnailsTouchMove(event)"

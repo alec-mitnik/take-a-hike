@@ -1352,6 +1352,9 @@ class ChanceTime {
         optionCheckbox.disabled = true;
         this.selectedOptions.push(option);
 
+        optionElement.tabIndex="0";
+        optionElement.focus();
+
         const allSelectionsMade = this.selectedOptions.length >= this.selectionsToMake;
         this.updateChanceTimeProgress(allSelectionsMade);
 
@@ -1403,6 +1406,7 @@ class ChanceTime {
 
     const chanceTimeButton = document.getElementById("chance-time-button");
     chanceTimeButton.style.display = "inline-flex";
+    chanceTimeButton.focus();
     this.awaitingSelection = true;
     game.updateHeldItemsDisplay();
   }
@@ -1470,6 +1474,7 @@ class HistoryLog {
     for (const logEntry of this.log) {
       const entryListItem = document.createElement("li");
       entryListItem.innerHTML = `<span>${logEntry}</span>`;
+      entryListItem.tabIndex = 0;
       historyLogList.appendChild(entryListItem);
     }
 
@@ -1533,8 +1538,9 @@ class Guidebook {
     guidebookContentParent.removeChild(oldGuidebookContent);
 
     // <div id="guidebook-content" class="panel-content"></div>
-    const guidebookContent = document.createElement("div");
+    const guidebookContent = document.createElement("dl");
     guidebookContent.id = "guidebook-content";
+    guidebookContent.ariaLabelledByElements = [document.getElementById("guidebook-title")];
     guidebookContent.classList.add("panel-content");
     guidebookContentParent.appendChild(guidebookContent);
 
@@ -1549,24 +1555,40 @@ class Guidebook {
         noteDiv.classList.add("not-seen");
       }
 
-      const noteName = document.createElement("h2");
+      const noteName = document.createElement("dt");
       noteName.classList.add("guidebook-note-name");
-      noteName.innerText = note.encountered === false && note.seen === false && note.chance <= 0 ? "???" : note.name;
-      noteDiv.appendChild(noteName);
+      const nameObscured = note.encountered === false && note.seen === false && note.chance <= 0;
+      noteName.innerText = nameObscured ? "???" : note.name;
 
-      const noteList = document.createElement("ul");
-
-      const noteDescription = document.createElement("li");
-      noteDescription.innerHTML = note.encountered ? (note.getDescription ? note.getDescription(true) : note.description) : "???";
-      noteList.appendChild(noteDescription);
-
-      for (const specialCondition of note.specialConditions.values()) {
-        const conditionDescription = document.createElement("li");
-        conditionDescription.innerHTML = specialCondition.encountered ? specialCondition.description : "???";
-        noteList.appendChild(conditionDescription);
+      if (nameObscured) {
+        noteName.role = "img";
+        noteName.ariaLabel = "Undiscovered Encounter";
       }
 
-      noteDiv.appendChild(noteList);
+      noteDiv.appendChild(noteName);
+
+      const noteDescription = document.createElement("dd");
+      noteDescription.innerHTML = note.encountered ? (note.getDescription ? note.getDescription(true) : note.description) : "???";
+
+      if (!note.encountered) {
+        noteDescription.role = "img";
+        noteDescription.ariaLabel = "Undiscovered Insights";
+      }
+
+      noteDiv.appendChild(noteDescription);
+
+      for (const specialCondition of note.specialConditions.values()) {
+        const conditionDescription = document.createElement("dd");
+        conditionDescription.innerHTML = specialCondition.encountered ? specialCondition.description : "???";
+
+        if (!specialCondition.encountered) {
+          conditionDescription.role = "img";
+          conditionDescription.ariaLabel = "Undiscovered Insights";
+        }
+
+        noteDiv.appendChild(conditionDescription);
+      }
+
       guidebookContent.appendChild(noteDiv);
     }
 
@@ -1596,6 +1618,7 @@ const achievements = [
     difficulty: 2,
     name: "Bonus Bag",
     imageName: "bonus-bag.jpg",
+    imageAlt: "Photo of a woven bag hanging from a fence, a little beat up but still functional",
     description: "Found a nice extra bag to use",
     achieved: false,
     checkAchieved(player) {
@@ -1615,6 +1638,7 @@ const achievements = [
     difficulty: 2,
     name: "Berry Bonanza",
     imageName: "berry-bonanza.jpg",
+    imageAlt: "Photo of a cluster of bright blue berries growing on a branch, ripe and ready to eat",
     description: "Ate my fill of berries",
     achieved: false,
     checkAchieved(player) {
@@ -1637,6 +1661,7 @@ const achievements = [
     difficulty: 4,
     name: "Hoarder of Fortune",
     imageName: "hoarder-of-fortune.jpg",
+    imageAlt: "Photo of a patch of bright green clovers growing on an old, mossy tree trunk",
     description: "Held 4 lucky clovers at once",
     achieved: false,
     checkAchieved(player) {
@@ -1658,6 +1683,7 @@ const achievements = [
     difficulty: 3,
     name: "Fruitful Finesse",
     imageName: "fruitful-finesse.jpg",
+    imageAlt: "Photo of a few citrus fruits, bright orange, with one pealed and ready for eating",
     description: "Successfully juggled some fruit",
     achieved: false,
     checkAchieved(player) {
@@ -1678,6 +1704,7 @@ const achievements = [
     difficulty: 2,
     name: "Nut Nut",
     imageName: "nut-nut.jpg",
+    imageAlt: "Photo of a couple of growing tree nuts surrounded by bright green leaves, basking in sunlight",
     description: "Ate enough nuts to raise my max stamina to 25",
     achieved: false,
     checkAchieved(player) {
@@ -1699,6 +1726,7 @@ const achievements = [
     difficulty: 4,
     name: "Super Nut Nut",
     imageName: "super-nut-nut.jpg",
+    imageAlt: "Photo of multiple growing tree nuts hanging from branches, surrounded by green leaves in sun",
     description: "Ate enough nuts to raise my max stamina to 30",
     achieved: false,
     checkAchieved(player) {
@@ -1720,6 +1748,7 @@ const achievements = [
     difficulty: 1,
     name: "Bird Feeder",
     imageName: "bird-feeder.jpg",
+    imageAlt: "Photo of a tan-colored, crested bird with a ripe red berry in its mouth",
     description: "Got to feed a bird",
     achieved: false,
     checkAchieved(player) {
@@ -1739,6 +1768,7 @@ const achievements = [
     difficulty: 2,
     name: "Special Sighting",
     imageName: "special-sighting.jpg",
+    imageAlt: "Photo of a fluffy white rabbit sitting on a lush green forest floor",
     description: "Spotted a bunny by following all of its tracks",
     achieved: false,
     checkAchieved(player) {
@@ -1758,6 +1788,7 @@ const achievements = [
     difficulty: 1,
     name: "Insatiable Curiosity",
     imageName: "insatiable-curiosity.jpg",
+    imageAlt: "Photo of a painted model poop emoji placed on the ground, giving a great big smile",
     description: "Just couldn't help myself",
     achieved: false,
     checkAchieved(player) {
@@ -1777,6 +1808,7 @@ const achievements = [
     difficulty: 4,
     name: "Wild Remedy",
     imageName: "wild-remedy.jpg",
+    imageAlt: "Photo of a small, red-breasted bird perched on a branch, surrounded with soft, warm light",
     description: "Recovered from queasiness by having an exciting encounter",
     achieved: false,
     checkAchieved(player) {
@@ -1796,6 +1828,7 @@ const achievements = [
     difficulty: 3,
     name: "Rock Collector",
     imageName: "rock-collector.jpg",
+    imageAlt: "Photo of a small tower of rocks in the woods, carefully stacked upon a much larger rock",
     description: "Held 3 rocks at once",
     achieved: false,
     checkAchieved(player) {
@@ -1817,6 +1850,7 @@ const achievements = [
     difficulty: 5,
     name: "Rock Maniac",
     imageName: "rock-maniac.jpg",
+    imageAlt: "Photo of a collection of rocks on a mossy stump, with some neatly stacked into a small tower",
     description: "Held 4 rocks at once",
     achieved: false,
     checkAchieved(player) {
@@ -1838,6 +1872,7 @@ const achievements = [
     difficulty: 3,
     name: "Good Samaritan",
     imageName: "good-samaritan.jpg",
+    imageAlt: "Photo of a clean, picturesque forest with tall trees bathed in warm sunlight, ",
     description: "Disposed of 6 pieces of trash properly and made the woods a little cleaner",
     achieved: false,
     checkAchieved(player) {
@@ -1862,6 +1897,7 @@ const achievements = [
     difficulty: 4,
     name: "Bug Banisher",
     imageName: "bug-banisher.jpg",
+    imageAlt: "Photo of peaceful forest clearing surrounded by tall trees and a bright sun peaking through from above",
     description: "Shooed 3 bugs away and made the woods a little more pleasant",
     achieved: false,
     checkAchieved(player) {
@@ -1886,6 +1922,7 @@ const achievements = [
     difficulty: 1,
     name: "Flower Finder",
     imageName: "flower-finder.jpg",
+    imageAlt: "Photo of a colorful variety of different wildflowers all growing together",
     description: "Held all flower types at once",
     achieved: false,
     checkAchieved(player) {
@@ -1916,6 +1953,7 @@ const achievements = [
     difficulty: 2,
     name: "Balanced Bouquet",
     imageName: "balanced-bouquet.jpg",
+    imageAlt: "Photo of a colorful variety of different flowers gathered into a bouquet",
     description: "Made a bouquet out of the same number of every flower type",
     achieved: false,
     checkAchieved(player) {
@@ -1953,10 +1991,11 @@ const achievements = [
   },
   {
     id: "favorite-flower",
-    emojiHint: "💐🌹🌹🌹",
+    emojiHint: `💐${PURPLE_FLOWER_EMOJI}${PURPLE_FLOWER_EMOJI}${PURPLE_FLOWER_EMOJI}`,
     difficulty: 3,
     name: "Favorite Flower",
     imageName: "favorite-flower.jpg",
+    imageAlt: "Photo of a small bunch of vivid purple-blue flowers gathered into a bouquet",
     description: "Made a bouquet of 3 or more of the all the same flower type",
     achieved: false,
     checkAchieved(player) {
@@ -1980,10 +2019,11 @@ const achievements = [
   },
   {
     id: "fixated-florist",
-    emojiHint: "💐🌹🌹🌹🌹🌹",
+    emojiHint: "💐🌼🌼🌼🌼🌼",
     difficulty: 5,
     name: "Fixated Florist",
     imageName: "fixated-florist.jpg",
+    imageAlt: "Photo of a large bunch of flowers with white petals and yellow centers",
     description: "Made a bouquet of 5 or more of the all the same flower type",
     achieved: false,
     checkAchieved(player) {
@@ -2011,6 +2051,7 @@ const achievements = [
     difficulty: 3,
     name: "Flower Power",
     imageName: "flower-power.jpg",
+    imageAlt: "Photo of a basket of flowers in a variety of types and colors, with a big yellow one in the center",
     description: "Held a total of 7 flowers at once",
     achieved: false,
     checkAchieved(player) {
@@ -2037,6 +2078,7 @@ const achievements = [
     difficulty: 5,
     name: "Flower Frenzy",
     imageName: "flower-frenzy.jpg",
+    imageAlt: "Photo of a large bag of gathered flowers of different types and colors",
     description: "Held a total of 11 flowers at once",
     achieved: false,
     checkAchieved(player) {
@@ -2063,6 +2105,7 @@ const achievements = [
     difficulty: 2,
     name: "Trusty Trader",
     imageName: "trusty-trader.jpg",
+    imageAlt: "Photo of person in silhouette kneeling down before a small body of water in the woods, covered in fog",
     description: "Successfully completed a trade",
     achieved: false,
     checkAchieved(player) {
@@ -2082,6 +2125,7 @@ const achievements = [
     difficulty: 5,
     name: "Memory Maker",
     imageName: "memory-maker.jpg",
+    imageAlt: "Photo of a mountainous, forested area from a high vantage point, under a cloudy, breathtaking sky",
     description: "Made 8+ special memories",
     achieved: false,
     checkAchieved(player) {
@@ -2133,8 +2177,9 @@ class Album {
     albumContentParent.removeChild(oldAlbumContent);
 
     // <div id="album-content" class="panel-content"></div>
-    const albumContent = document.createElement("div");
+    const albumContent = document.createElement("dl");
     albumContent.id = "album-content";
+    albumContent.ariaLabelledByElements = [document.getElementById("album-title")];
     albumContent.classList.add("panel-content");
     albumContentParent.appendChild(albumContent);
 
@@ -2149,22 +2194,7 @@ class Album {
         memoryDiv.classList.add("not-achieved");
       }
 
-      const memoryContent = document.createElement("div");
-      memoryContent.classList.add("album-memory__content");
-
-      if (memory.achieved && memory.imageName) {
-        const memoryImage = document.createElement("img");
-        memoryImage.src = `images/memories/${memory.imageName}`;
-        memoryImage.draggable = false;
-        memoryContent.appendChild(memoryImage);
-      } else {
-        const memoryHint = document.createElement("span");
-        memoryHint.innerHTML = memory.emojiHint;
-        memoryContent.appendChild(memoryHint);
-      }
-      memoryDiv.appendChild(memoryContent);
-
-      const memoryHeader = document.createElement("h3");
+      const memoryHeader = document.createElement("dt");
       memoryHeader.classList.add("album-memory__header");
       memoryDiv.appendChild(memoryHeader);
 
@@ -2174,12 +2204,38 @@ class Album {
 
       const difficultyRating = document.createElement("span");
       difficultyRating.innerHTML = "⭐".repeat(memory.difficulty);
+      difficultyRating.role = "img";
+      difficultyRating.ariaLabel = `${memory.difficulty} star${memory.difficulty === 1 ? "" : "s"}`;
       memoryHeader.appendChild(difficultyRating);
 
-      const memoryDescription = document.createElement("p");
+      const memoryDescription = document.createElement("dd");
       memoryDescription.classList.add("album-memory__description");
       memoryDescription.innerHTML = memory.achieved ? memory.description : "???";
+
+      if (!memory.achieved) {
+        memoryDescription.ariaHidden = true;
+      }
+
       memoryDiv.appendChild(memoryDescription);
+
+      const memoryContent = document.createElement("div");
+      memoryContent.classList.add("album-memory__content");
+
+      if (memory.achieved && memory.imageName) {
+        const memoryImage = document.createElement("img");
+        memoryImage.src = `images/memories/${memory.imageName}`;
+        memoryImage.alt = memory.imageAlt;
+        memoryImage.draggable = false;
+        memoryContent.appendChild(memoryImage);
+      } else {
+        const memoryHint = document.createElement("dd");
+        memoryHint.innerHTML = memory.emojiHint;
+        memoryHint.role = "img";
+        memoryHint.ariaLabel = `Hint to unlock: ${memory.emojiHint}`;
+        memoryContent.appendChild(memoryHint);
+      }
+
+      memoryDiv.appendChild(memoryContent);
 
       albumContent.appendChild(memoryDiv);
     }
@@ -2532,12 +2588,12 @@ class Game {
       itemBackgroundDecoration.classList.add('item-background-decoration');
       itemDisplay.appendChild(itemBackgroundDecoration);
 
-      const itemName = document.createElement('span');
+      const itemName = document.createElement('dt');
       itemName.classList.add('item-name');
       itemName.innerText = heldItem.name;
       itemDisplay.appendChild(itemName);
 
-      const itemDescription = document.createElement('p');
+      const itemDescription = document.createElement('dd');
       itemDescription.classList.add('item-description');
       itemDescription.innerText = heldItem.getDescription ? heldItem.getDescription() : heldItem.description;
       itemDisplay.appendChild(itemDescription);
@@ -2569,6 +2625,7 @@ class Game {
       for (let i = 0; i < (heldItem.capacityWeight ?? 1); i++) {
         const capacityIcon = document.createElement('div');
         capacityIcon.innerText = "✊";
+        capacityIcon.ariaHidden = true;
         capacityCounter++;
 
         if (capacityCounter > this.player.capacity) {
@@ -2578,8 +2635,12 @@ class Game {
         capacityWeightDisplay.appendChild(capacityIcon);
       }
 
+      const capacityWeight = capacityWeightDisplay.childElementCount;
+      capacityWeightDisplay.ariaLabel = `This item takes up ${capacityWeight} capacity slot${capacityWeight !== 1 ? "s" : ""}.`;
+
       const itemThumbnail = document.createElement('span');
       itemThumbnail.innerText = heldItem.emoji;
+
       if (capacityCounter > this.player.capacity) {
         itemThumbnail.classList.add('notify');
       }
@@ -2590,33 +2651,16 @@ class Game {
         const tradeRequest = tradeRequestsMap.get(game.nextTradeRequestId);
 
         if (tradeRequest.items.includes(heldItem.id)) {
-          // const heldItemIds = this.player.heldItems.map(heldItem => heldItem.id);
-          // const requiredItemIds = [...tradeRequest.items];
-          // let canTrade = true;
+          const tradeButton = document.createElement('button');
+          tradeButton.type = "button";
+          tradeButton.disabled = this.gameActive === false || chanceTime.awaitingSelection;
+          tradeButton.innerText = TRADING_POST_EMOJI;
+          tradeButton.ariaLabel = "Trade";
+          tradeButton.onclick = () => {
+            game.tradeItems();
+          };
 
-          // while (canTrade && requiredItemIds.length) {
-          //   const itemIndex = heldItemIds.indexOf(requiredItemIds[0]);
-
-          //   if (itemIndex > -1) {
-          //     heldItemIds.splice(itemIndex, 1);
-          //     requiredItemIds.splice(0, 1);
-          //   } else {
-          //     canTrade = false;
-          //   }
-          // }
-
-          // if (canTrade) {
-            const tradeButton = document.createElement('button');
-            tradeButton.type = "button";
-            tradeButton.disabled = this.gameActive === false || chanceTime.awaitingSelection;
-            tradeButton.innerText = TRADING_POST_EMOJI;
-            tradeButton.ariaLabel = "Trade";
-            tradeButton.onclick = () => {
-              game.tradeItems();
-            };
-
-            itemButtons.appendChild(tradeButton);
-          // }
+          itemButtons.appendChild(tradeButton);
         }
       }
 
@@ -2651,12 +2695,12 @@ class Game {
 
     for (let i = this.player.getHeldItemsCapacityWeight(); i < this.player.capacity; i++) {
       const emptyCapacitySpace = document.createElement('div');
-      emptyCapacitySpace.innerHTML = "✋";
+      emptyCapacitySpace.ariaLabel = "Empty capacity slot";
+      emptyCapacitySpace.tabIndex = 0;
       emptyCapacitySpace.classList.add('empty-capacity-space');
       heldItemsDisplay.appendChild(emptyCapacitySpace);
 
       const emptyCapacityThumbnail = document.createElement('span');
-      emptyCapacityThumbnail.innerText = "✋";
       emptyCapacityThumbnail.classList.add('empty-space');
       heldItemsThumbnails.appendChild(emptyCapacityThumbnail);
     }
@@ -2691,6 +2735,8 @@ class Game {
 
         if (stepOptionId !== "blank") {
           guidebook.notesMap.get(stepOptionId).seen = true;
+        } else {
+          optionDisplay.ariaLabel = "Nothing here";
         }
       }
     }
