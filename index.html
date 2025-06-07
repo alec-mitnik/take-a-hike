@@ -109,7 +109,7 @@
       </dialog>
 
       <div id="viewport-display">
-        <div id="path"></div>
+        <div id="path" role="group" aria-label="Path Options"></div>
         <div id="path-arrows" aria-hidden="true">
           <span>▲</span>
           <span>▲</span>
@@ -127,6 +127,7 @@
           <button type="button" class="shadowed-button" aria-label="Open History Log" onClick="historyLog.show();"><span><span id="history-log-emoji">🪶</span> History Log</span></button>
 
           <div id="messages-wrapper">
+            <!-- aria-live="assertive" gets read multiple times, and "polite" gets skipped sometimes... -->
             <div id="messages" class="shadowed-text" tabindex="0"></div>
           </div>
 

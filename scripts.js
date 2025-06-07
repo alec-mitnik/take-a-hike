@@ -2575,6 +2575,7 @@ class Game {
         historyLog.addLogEntry(messagesDisplay.innerHTML);
       }
 
+      // Ensure messages get read and prevent the focus from getting lost as elements get removed
       messagesDisplay.focus();
     }
   }
@@ -2723,6 +2724,8 @@ class Game {
 
   updatePathDisplay() {
     const pathDisplay = document.getElementById('path');
+    const focusedIndex = [...pathDisplay.children].indexOf(document.activeElement);
+
     pathDisplay.innerHTML = "";
 
     for (let i = 0; i < this.pathStepOptions.length; i++) {
@@ -2750,6 +2753,10 @@ class Game {
           optionDisplay.ariaLabel = "Nothing here";
         }
       }
+    }
+
+    if (focusedIndex >= 0) {
+      pathDisplay.children[focusedIndex].focus();
     }
   }
 
@@ -2910,6 +2917,9 @@ class Game {
 
     const endButtonWrapper = document.getElementById('end-button-wrapper');
     endButtonWrapper.style.display = null;
+
+    const messagesDisplay = document.getElementById('messages');
+    messagesDisplay.focus();
   }
 
   gameOver() {
