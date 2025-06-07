@@ -180,8 +180,9 @@ for (const mushroomSideEffect of mushroomSideEffects) {
 // TODO - 🪦(fallback: ⚰️)🥀↔️🧺🐚🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢
 // Update emoji usage for screen reader
 // Move scripts into separate module files
-// Sound effects?
-// Beach/mountain locales?
+// Saving/loading state with local storage (will need to handle iOS page restores too)
+// Sound effects
+// shore/mountain locales?
 
 // Refer to stars as "inspiration," which lets you "buy" blank or templated canvases for creating art based on Color Bloom app,
 // with sliders for hue/variation, and add share API for the created artwork and to promote the app.

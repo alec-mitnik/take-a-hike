@@ -2,15 +2,18 @@
 <html lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Explore, keep your stamina up, and make some nice memories in this web game by Alec Mitnik.">
 
+    <link rel="icon" type="image/x-icon" href="./favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="./favicon.png">
 
-    <!-- Preload the font so that it's immediately applied when first used (gives CORS error when local) -->
-    <link rel="preload" href="./Symbola.ttf" as="font" crossorigin>
+    <!-- Preload the fonts so that they are immediately applied when first used (gives CORS error when local) -->
+    <link rel="preload" as="font" href="./Symbola.ttf" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap">
     <link rel="stylesheet" href="./styles.css">
 
     <title>Take a Hike</title>
@@ -19,38 +22,48 @@
   </head>
 
   <body onload="document.getElementById('history-log-emoji').innerHTML = HISTORY_LOG_EMOJI;">
-    <div id="fog-back"></div>
-    <div id="fog-front"></div>
-    <div id="title-screen">
-      <h1 id="title">Take a Hike</h1>
-      <h2 id="author">A game by Alec Mitnik</h2>
-      <div class="shadowed-text">
-        <p>Explore, keep your stamina up, and make some nice memories!  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span></p>
-        <p>Please note that data does not persist once you leave the page.  The game may continue to be updated as I work on it.</p>
-      </div>
-      <button type="button" id="start-button" class="main-button" onClick="game.startGame();">Embark</button>
+    <div id="fog-back" aria-hidden="true"></div>
+    <div id="fog-front" aria-hidden="true"></div>
 
-      <!-- Ko-fi tipping button -->
-      <button id="kofi-button" class="main-button" onclick="document.getElementById('kofi-dialog').showModal()">
-        <img src="https://storage.ko-fi.com/cdn/cup-border.png" alt="">
-        Support my projects
-      </button>
+    <main id="title-screen">
+      <div aria-hidden="true"></div>
 
-      <!-- Ko-fi tipping dialog -->
-      <dialog id="kofi-dialog" aria-label="Support My Projects" style="width: 350px; max-width: 100%; height: 675px; max-height: 100%;">
-        <div id="kofi-backdrop" class="modal-backdrop" onclick="document.getElementById('kofi-dialog').close();"></div>
-        <div class="modal">
-          <button autofocus class="close-button" aria-label="Close tipping dialog" onclick="document.getElementById('kofi-dialog').close();">
-            <span>❌&#65038;</span>
-          </button>
-          <iframe
-            src="https://ko-fi.com/alecmitnik/?hidefeed=true&widget=true&embed=true&preview=true"
-            style="border: none; border-radius: 8px; width: 100%; height: 100%;"
-          ></iframe>
+      <section>
+        <header>
+          <h1 id="title">Take a Hike</h1>
+          <h2 id="author">A game by Alec Mitnik</h2>
+        </header>
+        <div class="shadowed-text">
+          <p>Explore, keep your stamina up, and make some nice memories!  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span></p>
+          <p>Please note that data does not persist once you leave the page.  The game may continue to be updated as I work on it.</p>
         </div>
-      </dialog>
-    </div>
-    <div id="hike-wrapper">
+
+        <button type="button" id="start-button" class="main-button" onClick="game.startGame();">Embark</button>
+      </section>
+
+      <footer>
+        <!-- Ko-fi tipping button -->
+        <button id="kofi-button" class="main-button" onclick="document.getElementById('kofi-dialog').showModal()">
+          <img src="https://storage.ko-fi.com/cdn/cup-border.png" alt="">
+          Support My Projects
+        </button>
+
+        <!-- Ko-fi tipping dialog -->
+        <dialog id="kofi-dialog" aria-label="Support My Projects" style="width: 350px; max-width: 100%; height: 675px; max-height: 100%;">
+          <div id="kofi-backdrop" class="modal-backdrop" onclick="document.getElementById('kofi-dialog').close();"></div>
+          <div class="modal">
+            <button autofocus class="close-button" aria-label="Close tipping dialog" onclick="document.getElementById('kofi-dialog').close();">
+              <span>❌&#65038;</span>
+            </button>
+            <iframe
+              src="https://ko-fi.com/alecmitnik/?hidefeed=true&widget=true&embed=true&preview=true"
+              style="border: none; border-radius: 8px; width: 100%; height: 100%;"
+            ></iframe>
+          </div>
+        </dialog>
+      </footer>
+    </main>
+    <main id="hike-wrapper">
       <dialog id="album-display" class="sidebar left" aria-labelledby="album-title">
         <div class="backdrop" onclick="album.hide();"></div>
         <div class="panel">
@@ -147,6 +160,6 @@
         <button type="button" class="main-button" onclick="callItADay();">Call It a Day</button>
         <button type="button" id="confirm-end-button" class="main-button confirm-button" onclick="game.player.loseStamina(game.player.stamina);">⚠️ Really End the Hike ⚠️</button>
       </span>
-    </div>
+    </main>
   </body>
 </html>
