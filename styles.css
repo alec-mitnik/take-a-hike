@@ -80,6 +80,10 @@ fieldset {
     gap: 1rem;
   }
 
+  header {
+    filter: drop-shadow(0 0 2px black);
+  }
+
   footer {
     align-self: flex-end;
   }
