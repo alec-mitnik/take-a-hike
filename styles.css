@@ -249,6 +249,10 @@ button, input[type="checkbox"] {
   &::after {
     content: '  🙝🙜';
   }
+
+  @media (width <= 500px) {
+    padding: 60px 40px 20px;
+  }
 }
 
 .panel-content {

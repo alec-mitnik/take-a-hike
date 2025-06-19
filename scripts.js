@@ -1,38 +1,5 @@
 "use strict";
 
-const supportsLatestEmojis = (function() {
-  let checked = false;
-  let supports = false;
-
-  return function() {
-    if (checked === false) {
-        checked = true;
-
-        // Create an element to test rendering
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        context.font = '16px Arial';
-
-        // Combo emoji rendering as a brown mushroom only supported since 2023
-        const brownMushroomWidth = context.measureText('🍄‍🟫').width;
-        const mushroomWidth = context.measureText('🍄').width;
-
-        supports = brownMushroomWidth < mushroomWidth * 1.5;
-    }
-
-    return supports;
-  };
-})();
-
-const MUSHROOM_EMOJI = supportsLatestEmojis() ? '🍄‍🟫' : '🍄';
-const BERRY_EMOJI = supportsLatestEmojis() ? '🫐' : '🍓';
-const DARK_BIRD_EMOJI = supportsLatestEmojis() ? '🐦‍⬛' : '🦉';
-const ROCK_EMOJI = supportsLatestEmojis() ? '🪨' : '🗿';
-const CREEPY_CRAWLY_EMOJI = supportsLatestEmojis() ? '🪳' : '🕷️';
-const PURPLE_FLOWER_EMOJI = supportsLatestEmojis() ? '🪻' : '🍇';
-const HISTORY_LOG_EMOJI = supportsLatestEmojis() ? '🪶' : '📜';
-const TRADING_POST_EMOJI = supportsLatestEmojis() ? '🪧' : '🚩';
-
 function randomDraw(deck, removesFromDeck) {
   const randomIndex = Math.floor(Math.random() * deck.length);
   const drawResult = removesFromDeck ? deck.splice(randomIndex, 1)[0] : deck[randomIndex];
@@ -43,10 +10,8 @@ function wrapInBadge(text) {
   return `<span class="badge">${text}</span>`;
 }
 
-const root = document.querySelector(':root');
-
 function updateCssVar(varName, value) {
-  root.style.setProperty(varName, value);
+  document.documentElement.style.setProperty(varName, value);
 }
 
 function callItADay() {
@@ -56,6 +21,60 @@ function callItADay() {
   const confirmEndButton = document.getElementById('confirm-end-button');
   confirmEndButton.focus();
 }
+
+const supportsLatestEmojis = (function() {
+  let checked = false;
+  let supports = false;
+
+  return function() {
+    if (checked === false) {
+      checked = true;
+
+      // Create an element to test rendering
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      context.font = '16px Arial';
+
+      // Combo emoji rendering as a brown mushroom only supported since 2023
+      const brownMushroomWidth = context.measureText('🍄‍🟫').width;
+      const mushroomWidth = context.measureText('🍄').width;
+
+      supports = brownMushroomWidth < mushroomWidth * 1.5;
+    }
+
+    return supports;
+  };
+})();
+
+// TODO - 🪦(fallback: ⚰️)🥀↔️🧺🧶🐚💎🫙🥤🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢🌳🌲🌿🎒
+// Update emoji usage for screen reader
+// Move scripts into separate module files
+// Saving/loading state with local storage (will need to handle iOS page restores too)
+// Sound effects
+// Make into a progressive web app?
+// Shore/mountain locales?
+// Graves/shrines for secret bouquet codes or to adjust encounter chances?
+// String combines with 3+ shells to make a necklace?
+// Collect sea glass in a jar?
+// Chipmunk - give a nut in exchange for something random?  Two rocks, two clovers, three berries, two cherries, two fruits, a bag?
+// Refer to stars as "inspiration," which lets you "buy" blank or templated canvases for Color Bloom Art Maker?
+// Unlock new starting items (by achieving related memory?):
+// - 🍫 Snackbar (default)
+// - 📙 Mushroom Encyclopedia - see the effects of mushrooms on pickup rather than on consume
+// - 🗑️ Litter Bag - trash is held for free (to a point?)
+// - 👓 Binoculars - can use 1 stamina to see farther and recovers stamina from bird encounters
+// - 🧺 Flower Basket - holds bouquets for free, and using ribbons doesn't take stamina
+// Cute/heartfelt thank-you cards for completing quests?
+
+// Emojis dated after 2019 need fallbacks
+const MUSHROOM_EMOJI = supportsLatestEmojis() ? '🍄‍🟫' : '🍄';
+const BERRY_EMOJI = supportsLatestEmojis() ? '🫐' : '🍓';
+const DARK_BIRD_EMOJI = supportsLatestEmojis() ? '🐦‍⬛' : '🦉';
+const ROCK_EMOJI = supportsLatestEmojis() ? '🪨' : '🗿';
+const CREEPY_CRAWLY_EMOJI = supportsLatestEmojis() ? '🪳' : '🕷️';
+const PURPLE_FLOWER_EMOJI = supportsLatestEmojis() ? '🪻' : '🍇';
+const HISTORY_LOG_EMOJI = supportsLatestEmojis() ? '🪶' : '📜';
+const TRADING_POST_EMOJI = supportsLatestEmojis() ? '🪧' : '🚩';
 
 const parcelOptions = [
   {
@@ -177,21 +196,7 @@ for (const mushroomSideEffect of mushroomSideEffects) {
   }
 }
 
-// TODO - 🪦(fallback: ⚰️)🥀↔️🧺🐚🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢
-// Update emoji usage for screen reader
-// Move scripts into separate module files
-// Saving/loading state with local storage (will need to handle iOS page restores too)
-// Sound effects
-// shore/mountain locales?
-
-// Refer to stars as "inspiration," which lets you "buy" blank or templated canvases for creating art based on Color Bloom app,
-// with sliders for hue/variation, and add share API for the created artwork and to promote the app.
-// Blank canvas offers option to draw freehand outline at 3 different thicknesses.  Or maybe you always trace over a template,
-// making it more personal/customizable, and letting any image be used, not just outlined ones.
-// Can also let user upload their own template.
-// Shared artwork hosting?  Artwork screenshot file generation?
-
-// Emojis dated after 2019 need fallbacks
+// Path Options
 const pathOptions = [
   {
     id: "blank",
