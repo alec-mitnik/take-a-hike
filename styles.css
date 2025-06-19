@@ -71,51 +71,104 @@ fieldset {
   min-width: 40%;
   width: 500px;
   max-width: 100%;
-  display: grid;
-  grid-template-rows: minmax(min-content, 1fr) minmax(min-content, auto) minmax(min-content, 1fr);
-  grid-template-columns: 1fr;
-  gap: 1rem;
+  padding: 0 20px;
   height: 100%;
   min-height: min-content;
-  text-align: center;
-  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  transition: opacity 1s ease;
 
-  > *, header {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+  &[inert] {
+    opacity: 0;
+  }
+
+  #clear-data-button-wrapper:not(.has-data) {
+    display: none;
+  }
+
+  #title-viewport {
+    flex: 1 0 100%;
+    display: grid;
+    grid-template-rows: minmax(min-content, 1fr) minmax(min-content, auto) minmax(min-content, 1fr);
+    grid-template-columns: 1fr;
     gap: 1rem;
-  }
+    height: 100%;
+    min-height: min-content;
+    text-align: center;
 
-  header {
-    filter: drop-shadow(0 0 2px black);
-  }
+    > *, header {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+    }
 
-  footer {
-    align-self: flex-end;
-  }
+    header {
+      filter: drop-shadow(0 0 2px black);
+    }
 
-  #title {
-    margin-top: 20px;
-    font-size: 4rem;
-    line-height: 1;
-    font-weight: bold;
-  }
+    footer {
+      align-self: flex-end;
+    }
 
-  #author {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 20px;
-  }
+    #title {
+      margin-top: 20px;
+      font-size: 4rem;
+      line-height: 1;
+      font-weight: bold;
+    }
 
-  #start-button {
-    margin: 20px 0;
+    #author {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    #title-message {
+      &:not(.storage-failed) {
+        .show-if-save-disabled {
+          display: none;
+        }
+      }
+
+      #local-storage-warning {
+        font-style: italic;
+      }
+    }
+
+
+    #start-buttons {
+      margin: 2rem 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+
+      &:not(.hike-in-progress) .hike-in-progress-button {
+        display: none;
+      }
+
+      &.hike-in-progress .start-button {
+        display: none;
+      }
+
+      &:not(.confirm) #confirm-abandon-button {
+        display: none;
+      }
+
+      &.confirm #start-fresh-hike-button {
+        display: none;
+      }
+    }
   }
 }
 
 #hike-wrapper {
   height: 100%;
+  min-height: min-content;
   display: none;
   flex-direction: column;
   justify-content: flex-start;
@@ -713,9 +766,18 @@ dialog.sidebar {
   font-size: 1.25rem;
   transition: transform 50ms ease-in-out;
 
+  &.smaller {
+    font-size: max(12px, 1rem);
+    padding: 0.5rem 12px;
+  }
+
   &.confirm-button {
     border-style: dashed;
     border-width: 3px;
+  }
+
+  &.needs-confirm-button {
+    margin: 2px;
   }
 
   @media (hover: hover) {
@@ -1094,14 +1156,9 @@ button.path-option {
   border-radius: 4px;
 }
 
-#end-button-wrapper {
+.danger-button-wrapper {
   margin-top: 200px;
   padding-bottom: 30px;
-
-  > button {
-    font-size: max(12px, 1rem);
-    padding: 0.5rem 12px;
-  }
 
   &.confirm {
     > :not(.confirm-button) {

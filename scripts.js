@@ -1,5 +1,71 @@
 "use strict";
 
+let game;
+
+window.addEventListener('DOMContentLoaded', init);
+window.addEventListener('pageshow', init);
+
+function init() {
+  if (document.readyState === "loading") {
+    return;
+  }
+
+  document.getElementById('history-log-emoji').innerHTML = HISTORY_LOG_EMOJI;
+
+  if (localStorageAvailable()) {
+    document.getElementById('title-message').classList.remove('storage-failed');
+    const loadedGameData = localStorage.getItem("game");
+
+    if (loadedGameData) {
+      document.getElementById('clear-data-button-wrapper').classList.add('has-data');
+
+      game = new Game(JSON.parse(loadedGameData, (_key, value) => {
+        if (typeof value === 'object' && value != null) {
+          if (value.dataType === 'Map') {
+            return new Map(value.value);
+          }
+        }
+
+        return value;
+      }));
+
+      if (game.gameActive) {
+        document.getElementById('start-buttons').classList.add('hike-in-progress');
+      }
+    } else {
+      game = new Game();
+    }
+  } else {
+    game = new Game();
+    document.getElementById('title-message').classList.add('storage-failed');
+  }
+}
+
+// This fires when the entire page, including all resources like images and stylesheets, has fully loaded
+window.addEventListener('load', () => {
+  document.getElementById('title-screen').inert = false;
+});
+
+function localStorageAvailable() {
+  let storage;
+
+  try {
+    storage = window["localStorage"];
+    const x = "__storage_test__";
+    storage.setItem(x, x);
+    storage.removeItem(x);
+    return true;
+  } catch (e) {
+    return (
+      e instanceof DOMException &&
+      e.name === "QuotaExceededError" &&
+      // acknowledge QuotaExceededError only if there's something already stored
+      storage &&
+      storage.length !== 0
+    );
+  }
+}
+
 function randomDraw(deck, removesFromDeck) {
   const randomIndex = Math.floor(Math.random() * deck.length);
   const drawResult = removesFromDeck ? deck.splice(randomIndex, 1)[0] : deck[randomIndex];
@@ -20,6 +86,27 @@ function callItADay() {
 
   const confirmEndButton = document.getElementById('confirm-end-button');
   confirmEndButton.focus();
+}
+
+function startFreshHike() {
+  const startButtonsWrapper = document.getElementById('start-buttons');
+  startButtonsWrapper.classList.add('confirm');
+
+  const confirmAbandonButton = document.getElementById('confirm-abandon-button');
+  confirmAbandonButton.focus();
+}
+
+function clearAllDataConfirm() {
+  const clearDataButtonWrapper = document.getElementById('clear-data-button-wrapper');
+  clearDataButtonWrapper.classList.add('confirm');
+
+  const confirmClearDataButton = document.getElementById('confirm-clear-data-button');
+  confirmClearDataButton.focus();
+}
+
+function clearAllData() {
+  localStorage.clear();
+  location.reload();
 }
 
 const supportsLatestEmojis = (function() {
@@ -45,6 +132,8 @@ const supportsLatestEmojis = (function() {
     return supports;
   };
 })();
+
+// WITH PROGRESS PERSISTING, NEED TO CONSIDER BACKWARD COMPATIBILITY FOR ALL UPDATES!
 
 // TODO - 🪦(fallback: ⚰️)🥀↔️🧺🧶🐚💎🫙🥤🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢🌳🌲🌿🎒
 // Update emoji usage for screen reader
@@ -196,8 +285,73 @@ for (const mushroomSideEffect of mushroomSideEffects) {
   }
 }
 
+function deepFreeze(obj) {
+  const propNames = Object.getOwnPropertyNames(obj);
+
+  for (const name of propNames) {
+    const descriptor = Object.getOwnPropertyDescriptor(obj, name);
+
+    // Skip getters/setters and functions to prevent immediate evaluation
+    if (descriptor.get || descriptor.set || typeof descriptor.value === 'function') {
+      continue;
+    }
+
+    const value = descriptor.value;
+
+    if (value && typeof value === "object") {
+      deepFreeze(value);
+    }
+  }
+
+  return Object.freeze(obj);
+}
+
+function deepCopy(obj) {
+    const copy = {};
+
+  // First pass: copy all non-function properties
+  for (const key in obj) {
+    const descriptor = Object.getOwnPropertyDescriptor(obj, key);
+
+    if (descriptor.get || descriptor.set) {
+      // Handle getters/setters without evaluating them
+      Object.defineProperty(copy, key, {
+        get: descriptor.get?.bind(copy),
+        set: descriptor.set?.bind(copy),
+        enumerable: descriptor.enumerable,
+        configurable: descriptor.configurable
+      });
+    } else if (typeof descriptor.value !== 'function') {
+      const value = descriptor.value;
+
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        // Use structuredClone for deep cloning objects (safer than JSON)
+        copy[key] = structuredClone(value);
+      } else if (Array.isArray(value)) {
+        // Clone arrays
+        copy[key] = [...value];
+      } else {
+        // Copy primitive values
+        copy[key] = value;
+      }
+    }
+  }
+
+  // Second pass: bind functions after all properties are copied
+  for (const key in obj) {
+    const descriptor = Object.getOwnPropertyDescriptor(obj, key);
+
+    if (typeof descriptor.value === 'function') {
+      // Bind methods to the new copy (after all properties exist)
+      copy[key] = descriptor.value.bind(copy);
+    }
+  }
+
+  return copy;
+}
+
 // Path Options
-const pathOptions = [
+const pathOptions = deepFreeze([
   {
     id: "blank",
     emoji: "",
@@ -240,7 +394,7 @@ const pathOptions = [
     name: "☘️ Clover Patch",
     tags: ["grows"],
     getDescription() {
-      return `A great place to find a <span class="no-wrap">${wrapInBadge(pathOptionsMap.get('clover').name)}.</span>`;
+      return `A great place to find a <span class="no-wrap">${wrapInBadge(game.pathOptionsMap.get('clover').name)}.</span>`;
     },
     chance: 0,
     specialConditions: [
@@ -250,46 +404,47 @@ const pathOptions = [
       },
     ],
     onPick(player) {
-      const actionMessage = `A patch of clovers!  Let's see if I can find any lucky ones...`;
-      player.actionMessage = actionMessage;
+      player.actionMessage = this.chanceTimeActionMessage;
 
-      chanceTime.initiate(`Try to find a <span class="no-wrap">${wrapInBadge(pathOptionsMap.get('clover').name)}!</span>`, 4, 5,
-          ["🍀","🍀","🍀","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️"], (selections) => {
-        const foundLuckyClovers = selections.filter(emoji => emoji === "🍀").length;
+      game.chanceTime.initiate(this.id, `Try to find a <span class="no-wrap">${wrapInBadge(game.pathOptionsMap.get('clover').name)}!</span>`, 4, 5,
+          ["🍀","🍀","🍀","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️"], this.chanceTimeCallback.bind(this));
+
+      game.guidebook.notesMap.get("clover").seen = true;
+
+      return true;
+    },
+    chanceTimeActionMessage: `A patch of clovers!  Let's see if I can find any lucky ones...`,
+    chanceTimeCallback(selections) {
+      const foundLuckyClovers = selections.filter(emoji => emoji === "🍀").length;
 
         switch (foundLuckyClovers) {
           case 0: {
-            player.actionMessage = `${actionMessage}\nMaybe next time.`;
+            game.player.actionMessage = `${this.chanceTimeActionMessage}\nMaybe next time.`;
             break;
           }
           case 1: {
-            player.actionMessage = `${actionMessage}\nI found one, yay!`;
+            game.player.actionMessage = `${this.chanceTimeActionMessage}\nI found one, yay!`;
             break;
           }
           case 2: {
-            player.actionMessage = `${actionMessage}\nAw yeah, double trouble!`;
+            game.player.actionMessage = `${this.chanceTimeActionMessage}\nAw yeah, double trouble!`;
             break;
           }
           case 3: {
-            player.actionMessage = `${actionMessage}\nWow, three?  Jackpot!`;
+            game.player.actionMessage = `${this.chanceTimeActionMessage}\nWow, three?  Jackpot!`;
             break;
           }
           default: {
-            player.actionMessage = `${actionMessage}\nWow, ${foundLuckyClovers}?  Jackpot!`;
+            game.player.actionMessage = `${this.chanceTimeActionMessage}\nWow, ${foundLuckyClovers}?  Jackpot!`;
             break;
           }
         }
 
         for (let i = 0; i < foundLuckyClovers; i++) {
-          player.encounterPathOptionById("clover");
+          game.player.encounterPathOptionById("clover");
         }
 
         game.updateMessagesDisplay(true);
-      });
-
-      guidebook.notesMap.get("clover").seen = true;
-
-      return true;
     },
   },
   {
@@ -306,7 +461,7 @@ const pathOptions = [
       }
     ],
     onPick(player) {
-      setTimeout(() => album.memoriesMap.get("hoarder-of-fortune").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("hoarder-of-fortune").checkAchieved(player));
       return false;
     },
     onDispose(player) {
@@ -325,7 +480,7 @@ const pathOptions = [
       {
         id: "waste",
         get description() {
-          return `Leaves me with a ${wrapInBadge(pathOptionsMap.get("wrapper").name)} when consumed.`;
+          return `Leaves me with a ${wrapInBadge(pathOptionsReferenceMap.get("wrapper").name)} when consumed.`;
         },
       },
     ],
@@ -334,7 +489,7 @@ const pathOptions = [
       player.encounterPathOptionById("wrapper");
       player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  That hit the spot!`;
 
-      guidebook.notesMap.get(this.id).specialConditions.get("waste").encountered = true;
+      game.guidebook.notesMap.get(this.id).specialConditions.get("waste").encountered = true;
       return true;
     },
     onDispose(player) {
@@ -359,9 +514,9 @@ const pathOptions = [
       {
         id: "waste",
         get description() {
-          return `Leaves me with <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("bag").name)
-              },</span> <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("wrapper").name)
-              },</span> and ${wrapInBadge(pathOptionsMap.get("bottle").name)} when consumed.`;
+          return `Leaves me with <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("bag").name)
+              },</span> <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("wrapper").name)
+              },</span> and ${wrapInBadge(pathOptionsReferenceMap.get("bottle").name)} when consumed.`;
         },
       },
     ],
@@ -372,7 +527,7 @@ const pathOptions = [
       player.encounterPathOptionById("bottle");
       player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  Delicious!`;
 
-      guidebook.notesMap.get(this.id).specialConditions.get("waste").encountered = true;
+      game.guidebook.notesMap.get(this.id).specialConditions.get("waste").encountered = true;
       return true;
     },
     onDispose(player) {
@@ -399,7 +554,7 @@ const pathOptions = [
           get description() {
             return `Possibility: ${parcelOption.content.length ?
                 `${parcelOption.content.map((contentId, index) => {
-                  return `<span class="no-wrap">${wrapInBadge(pathOptionsMap.get(contentId).name)}${
+                  return `<span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get(contentId).name)}${
                       index < parcelOption.content.length - 1 && parcelOption.content.length > 2 ? "," : ""}</span>${
                       index < parcelOption.content.length - 1 ? " " : ""}${
                       index === parcelOption.content.length - 2 ? "and " : ""}`;
@@ -410,32 +565,35 @@ const pathOptions = [
       });
     },
     onPick(player) {
-      const actionMessage = "Ooh, what could be inside the parcel?\nLet's see...";
-      player.actionMessage = actionMessage;
+      player.actionMessage = this.chanceTimeActionMessage;
 
-      chanceTime.initiate(`Discover what's inside the <span class="no-wrap">${wrapInBadge(this.name)}!</span>`, 4, 1,
-          parcelDeck.map(optionId => parcelOptionsMap.get(optionId).emoji), (selections) => {
-        const parcelContents = parcelOptions.find(option => option.emoji === selections[0]);
-        player.actionMessage = `${actionMessage}\n${parcelContents.description}`;
-
-        for (const resultId of parcelContents.content) {
-          player.encounterPathOptionById(resultId);
-        }
-
-        guidebook.notesMap.get(this.id).specialConditions.get(parcelContents.id).encountered = true;
-
-        if (parcelContents.id === "capacity") {
-          album.memoriesMap.get("bonus-bag").checkAchieved(player);
-        }
-
-        game.updateMessagesDisplay(true);
-      }, true, (option) => {
-        const parcelContents = parcelOptions.find(parcelOption => parcelOption.emoji === option);
-        return guidebook.notesMap.get(this.id).specialConditions.get(parcelContents.id).encountered !== true;
-      });
+      game.chanceTime.initiate(this.id, `Discover what's inside the <span class="no-wrap">${wrapInBadge(this.name)}!</span>`,
+          4, 1, parcelDeck.map(optionId => parcelOptionsMap.get(optionId).emoji),
+          this.chanceTimeCallback.bind(this), true, this.chanceTimeShroudedFunction.bind(this));
 
       return true;
     },
+    chanceTimeActionMessage: "Ooh, what could be inside the parcel?\nLet's see...",
+    chanceTimeCallback(selections) {
+      const parcelContents = parcelOptions.find(option => option.emoji === selections[0]);
+      game.player.actionMessage = `${this.chanceTimeActionMessage}\n${parcelContents.description}`;
+
+      for (const resultId of parcelContents.content) {
+        game.player.encounterPathOptionById(resultId);
+      }
+
+      game.guidebook.notesMap.get(this.id).specialConditions.get(parcelContents.id).encountered = true;
+
+      if (parcelContents.id === "capacity") {
+        game.album.memoriesMap.get("bonus-bag").checkAchieved(game.player);
+      }
+
+      game.updateMessagesDisplay(true);
+    },
+    chanceTimeShroudedFunction(option) {
+      const parcelContents = parcelOptions.find(parcelOption => parcelOption.emoji === option);
+      return game.guidebook.notesMap.get(this.id).specialConditions.get(parcelContents.id).encountered !== true;
+    }
   },
   {
     id: "robin",
@@ -448,7 +606,7 @@ const pathOptions = [
       {
         id: "feed",
         get description() {
-          return `I can feed it a ${wrapInBadge(pathOptionsMap.get("berry").name)} if I have one!`;
+          return `I can feed it a ${wrapInBadge(pathOptionsReferenceMap.get("berry").name)} if I have one!`;
         }
       },
       {
@@ -463,12 +621,12 @@ const pathOptions = [
         const berryItem = player.heldItems[berryIndex];
         player.heldItems.splice(berryIndex, 1);
 
-        guidebook.notesMap.get(this.id).specialConditions.get("feed").encountered = true;
-        album.memoriesMap.get("bird-feeder").checkAchieved(player);
+        game.guidebook.notesMap.get(this.id).specialConditions.get("feed").encountered = true;
+        game.album.memoriesMap.get("bird-feeder").checkAchieved(player);
 
         if (player.queasyCounter > 0) {
-          guidebook.notesMap.get(this.id).specialConditions.get("cure").encountered = true;
-          album.memoriesMap.get("wild-remedy").checkAchieved(player);
+          game.guidebook.notesMap.get(this.id).specialConditions.get("cure").encountered = true;
+          game.album.memoriesMap.get("wild-remedy").checkAchieved(player);
         }
 
         player.setQueasyCounter(0);
@@ -491,7 +649,7 @@ const pathOptions = [
       {
         id: "feed",
         get description() {
-          return `I can feed it a ${wrapInBadge(pathOptionsMap.get("nut").name)} if I have one!`;
+          return `I can feed it a ${wrapInBadge(pathOptionsReferenceMap.get("nut").name)} if I have one!`;
         }
       },
       {
@@ -506,12 +664,12 @@ const pathOptions = [
         const nutItem = player.heldItems[nutIndex];
         player.heldItems.splice(nutIndex, 1);
 
-        guidebook.notesMap.get(this.id).specialConditions.get("feed").encountered = true;
-        album.memoriesMap.get("bird-feeder").checkAchieved(player);
+        game.guidebook.notesMap.get(this.id).specialConditions.get("feed").encountered = true;
+        game.album.memoriesMap.get("bird-feeder").checkAchieved(player);
 
         if (player.queasyCounter > 0) {
-          guidebook.notesMap.get(this.id).specialConditions.get("cure").encountered = true;
-          album.memoriesMap.get("wild-remedy").checkAchieved(player);
+          game.guidebook.notesMap.get(this.id).specialConditions.get("cure").encountered = true;
+          game.album.memoriesMap.get("wild-remedy").checkAchieved(player);
         }
 
         player.setQueasyCounter(0);
@@ -532,12 +690,12 @@ const pathOptions = [
     chance: 4,
     onDispose(player) {
       if (player.environment === "receptacle") {
-        pathOptionsMap.get(this.id).negativeModifier++;
-        pathOptionsMap.get("blank").positiveModifier++;
-        guidebook.notesMap.get("receptacle").specialConditions.get("clean").encountered = true;
+        game.pathOptionsMap.get(this.id).negativeModifier++;
+        game.pathOptionsMap.get("blank").positiveModifier++;
+        game.guidebook.notesMap.get("receptacle").specialConditions.get("clean").encountered = true;
         player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
 
-        album.memoriesMap.get("good-samaritan").checkAchieved(player);
+        game.album.memoriesMap.get("good-samaritan").checkAchieved(player);
         return true;
       }
 
@@ -553,12 +711,12 @@ const pathOptions = [
     chance: 4,
     onDispose(player) {
       if (player.environment === "receptacle") {
-        pathOptionsMap.get(this.id).negativeModifier++;
-        pathOptionsMap.get("blank").positiveModifier++;
-        guidebook.notesMap.get("receptacle").specialConditions.get("clean").encountered = true;
+        game.pathOptionsMap.get(this.id).negativeModifier++;
+        game.pathOptionsMap.get("blank").positiveModifier++;
+        game.guidebook.notesMap.get("receptacle").specialConditions.get("clean").encountered = true;
         player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
 
-        album.memoriesMap.get("good-samaritan").checkAchieved(player);
+        game.album.memoriesMap.get("good-samaritan").checkAchieved(player);
         return true;
       }
 
@@ -602,29 +760,34 @@ const pathOptions = [
       });
     },
     onConsume(player) {
-      const actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}...</span>`;
-      player.actionMessage = actionMessage;
+      player.actionMessage = this.getChanceTimeActionMessage();
 
-      chanceTime.initiate(`Discover the effects of the <span class="no-wrap">${wrapInBadge(this.name)}!</span>`, 5, 1,
-          mushroomSideEffectsDeck.map(sideEffectId => mushroomSideEffectsMap.get(sideEffectId).emoji), (selections) => {
-        const sideEffectData = mushroomSideEffects.find(sideEffect => sideEffect.emoji === selections[0]);
-        player.actionMessage = `${actionMessage}  ${sideEffectData.description}`;
-
-        player.recoverStamina(4);
-
-        if (sideEffectData.onEffect) {
-          sideEffectData.onEffect(player);
-        }
-
-        guidebook.notesMap.get(this.id).specialConditions.get(sideEffectData.id).encountered = true;
-        game.updateMessagesDisplay(true);
-      }, false, (option) => {
-        const sideEffectData = mushroomSideEffects.find(sideEffect => sideEffect.emoji === option);
-        return guidebook.notesMap.get(this.id).specialConditions.get(sideEffectData.id).encountered !== true;
-      });
+      game.chanceTime.initiate(this.id, `Discover the effects of the <span class="no-wrap">${wrapInBadge(this.name)}!</span>`, 5, 1,
+          mushroomSideEffectsDeck.map(sideEffectId => mushroomSideEffectsMap.get(sideEffectId).emoji),
+          this.chanceTimeCallback.bind(this), false, this.chanceTimeShroudedFunction.bind(this));
 
       return true;
     },
+    getChanceTimeActionMessage() {
+      return `Ate the <span class="no-wrap">${wrapInBadge(this.name)}...</span>`;
+    },
+    chanceTimeCallback(selections) {
+      const sideEffectData = mushroomSideEffects.find(sideEffect => sideEffect.emoji === selections[0]);
+      game.player.actionMessage = `${this.getChanceTimeActionMessage()}  ${sideEffectData.description}`;
+
+      game.player.recoverStamina(4);
+
+      if (sideEffectData.onEffect) {
+        sideEffectData.onEffect(game.player);
+      }
+
+      game.guidebook.notesMap.get(this.id).specialConditions.get(sideEffectData.id).encountered = true;
+      game.updateMessagesDisplay(true);
+    },
+    chanceTimeShroudedFunction(option) {
+      const sideEffectData = mushroomSideEffects.find(sideEffect => sideEffect.emoji === option);
+      return game.guidebook.notesMap.get(this.id).specialConditions.get(sideEffectData.id).encountered !== true;
+    }
   },
   {
     id: "berry",
@@ -651,8 +814,8 @@ const pathOptions = [
       player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  ${
           (player.berryStreak > 0) ? `I crave more!` : `Yummy!`}`;
 
-      guidebook.notesMap.get("berry").specialConditions.get("first").encountered = true;
-      album.memoriesMap.get("berry-bonanza").checkAchieved(player);
+      game.guidebook.notesMap.get("berry").specialConditions.get("first").encountered = true;
+      game.album.memoriesMap.get("berry-bonanza").checkAchieved(player);
 
       return true;
     },
@@ -712,45 +875,11 @@ const pathOptions = [
       const numHeldFruit = 1 + player.heldItems.length - heldNonFruit.length;
 
       if (numHeldFruit >= 3) {
-        const actionMessage = `That's three <span class="no-wrap">${wrapInBadge(this.name)}!</span>  Commencing juggle attempt...`;
-        player.actionMessage = actionMessage;
-        guidebook.notesMap.get(this.id).specialConditions.get("juggle").encountered = true;
+        player.actionMessage = this.getChanceTimeActionMessage();
+        game.guidebook.notesMap.get(this.id).specialConditions.get("juggle").encountered = true;
 
-        chanceTime.initiate(`Attempt to juggle by catching all three <span class="no-wrap">${wrapInBadge(this.name)}!</span>`, 3, 3,
-            ["🍊","🍊","🍊","🍊","🍊","🍊","❌","❌","❌"], (selections) => {
-          const nonFruitSelections = selections.filter(selection => selection !== "🍊");
-
-          if (nonFruitSelections.length === 0) {
-            // Success
-            player.actionMessage = `${actionMessage}\nI did it!  That got me so pumped that I instantly peeled and ate them all.  <span class="no-wrap" role="img" aria-label="Mischievous face with tongue sticking out">&gt;:P</span>`;
-            player.recoverStamina(7 * 3);
-            guidebook.notesMap.get(this.id).specialConditions.get("success").encountered = true;
-            album.memoriesMap.get("fruitful-finesse").checkAchieved(player);
-
-            const heldNonFruit = player.heldItems.filter(item => item.id !== "tangerine");
-            player.heldItems = heldNonFruit;
-          } else {
-            // Failure
-            let amount = "some";
-            if (nonFruitSelections.length === 1) {
-              amount = "one";
-            } else if (nonFruitSelections.length >= 3) {
-              amount = "them all";
-            }
-
-            player.actionMessage = `${actionMessage}\nOh shoot, I dropped ${amount}!  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>`;
-            guidebook.notesMap.get(this.id).specialConditions.get("drop").encountered = true;
-
-            const heldFruit = player.heldItems.filter(item => item.id === "tangerine");
-
-            for (let i = 0; i < nonFruitSelections.length; i++) {
-              const randomFruit = randomDraw(heldFruit, true);
-              player.heldItems.splice(player.heldItems.indexOf(randomFruit), 1);
-            }
-          }
-
-          game.updateMessagesDisplay(true);
-        });
+        game.chanceTime.initiate(this.id, `Attempt to juggle by catching all three <span class="no-wrap">${wrapInBadge(this.name)}!</span>`,
+            3, 3, ["🍊","🍊","🍊","🍊","🍊","🍊","❌","❌","❌"], this.chanceTimeCallback.bind(this));
 
         return false;
       } else if (numHeldFruit === 2) {
@@ -758,6 +887,43 @@ const pathOptions = [
       }
 
       return false;
+    },
+    getChanceTimeActionMessage() {
+      return `That's three <span class="no-wrap">${wrapInBadge(this.name)}!</span>  Commencing juggle attempt...`;
+    },
+    chanceTimeCallback(selections) {
+      const nonFruitSelections = selections.filter(selection => selection !== "🍊");
+
+      if (nonFruitSelections.length === 0) {
+        // Success
+        game.player.actionMessage = `${this.getChanceTimeActionMessage()}\nI did it!  That got me so pumped that I instantly peeled and ate them all.  <span class="no-wrap" role="img" aria-label="Mischievous face with tongue sticking out">&gt;:P</span>`;
+        game.player.recoverStamina(7 * 3);
+        game.guidebook.notesMap.get(this.id).specialConditions.get("success").encountered = true;
+        game.album.memoriesMap.get("fruitful-finesse").checkAchieved(game.player);
+
+        const heldNonFruit = game.player.heldItems.filter(item => item.id !== "tangerine");
+        game.player.heldItems = heldNonFruit;
+      } else {
+        // Failure
+        let amount = "some";
+        if (nonFruitSelections.length === 1) {
+          amount = "one";
+        } else if (nonFruitSelections.length >= 3) {
+          amount = "them all";
+        }
+
+        game.player.actionMessage = `${this.getChanceTimeActionMessage()}\nOh shoot, I dropped ${amount}!  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>`;
+        game.guidebook.notesMap.get(this.id).specialConditions.get("drop").encountered = true;
+
+        const heldFruit = game.player.heldItems.filter(item => item.id === "tangerine");
+
+        for (let i = 0; i < nonFruitSelections.length; i++) {
+          const randomFruit = randomDraw(heldFruit, true);
+          game.player.heldItems.splice(game.player.heldItems.indexOf(randomFruit), 1);
+        }
+      }
+
+      game.updateMessagesDisplay(true);
     },
     onConsume(player) {
       if (this.stepsLeftToPeel <= 0) {
@@ -781,21 +947,21 @@ const pathOptions = [
       {
         id: "rock",
         get description() {
-          return `I can use a ${wrapInBadge(pathOptionsMap.get("rock").name)} for this!`;
+          return `I can use a ${wrapInBadge(pathOptionsReferenceMap.get("rock").name)} for this!`;
         }
       },
     ],
     onConsume(player) {
       if (player.heldItems.some(heldItem => heldItem.id === "rock")) {
         player.gainMaxStamina(1);
-        player.actionMessage = `Ate the ${wrapInBadge(this.name)} by breaking the shell with a <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("rock").name)}.</span>  I feel stronger!`;
+        player.actionMessage = `Ate the ${wrapInBadge(this.name)} by breaking the shell with a <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("rock").name)}.</span>  I feel stronger!`;
 
-        guidebook.notesMap.get(this.id).specialConditions.get("rock").encountered = true;
-        guidebook.notesMap.get("rock").specialConditions.get("nut").encountered = true;
+        game.guidebook.notesMap.get(this.id).specialConditions.get("rock").encountered = true;
+        game.guidebook.notesMap.get("rock").specialConditions.get("nut").encountered = true;
         return true;
       }
 
-      const withText = player.heldItems.some(heldItem => heldItem.id === "bottle") ? `nothing but a flimsy ${wrapInBadge(pathOptionsMap.get("bottle").name)}` : "my bare hands";
+      const withText = player.heldItems.some(heldItem => heldItem.id === "bottle") ? `nothing but a flimsy ${wrapInBadge(pathOptionsReferenceMap.get("bottle").name)}` : "my bare hands";
 
       player.actionMessage = `I can't crack open the ${wrapInBadge(this.name)} with <span class="no-wrap">${withText}.</span>  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>`;
       return false;
@@ -813,7 +979,7 @@ const pathOptions = [
       {
         id: "nut",
         get description() {
-          return `Holding this allows me to break the shell of a <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("nut").name)}.</span>`;
+          return `Holding this allows me to break the shell of a <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("nut").name)}.</span>`;
         }
       },
       {
@@ -822,8 +988,8 @@ const pathOptions = [
       },
     ],
     onPick(player) {
-      setTimeout(() => album.memoriesMap.get("rock-collector").checkAchieved(player));
-      setTimeout(() => album.memoriesMap.get("rock-maniac").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("rock-collector").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("rock-maniac").checkAchieved(player));
 
       return false;
     },
@@ -843,7 +1009,7 @@ const pathOptions = [
       {
         id: "shoo",
         get description() {
-          return `I'll shoo it away instead if I have a ${wrapInBadge(pathOptionsMap.get("rock").name)} I can use up.  Good riddance!`;
+          return `I'll shoo it away instead if I have a ${wrapInBadge(pathOptionsReferenceMap.get("rock").name)} I can use up.  Good riddance!`;
         },
       },
     ],
@@ -856,11 +1022,11 @@ const pathOptions = [
         player.heldItems.splice(rockIndex, 1);
         player.actionMessage = `Shooed the ${wrapInBadge(this.name)} away with a <span class="no-wrap">${wrapInBadge(rockItem.name)}.</span>  Good riddance!`;
 
-        pathOptionsMap.get(this.id).negativeModifier++;
-        pathOptionsMap.get("blank").positiveModifier++;
-        guidebook.notesMap.get(this.id).specialConditions.get("shoo").encountered = true;
-        guidebook.notesMap.get("rock").specialConditions.get("bug").encountered = true;
-        album.memoriesMap.get("bug-banisher").checkAchieved(player);
+        game.pathOptionsMap.get(this.id).negativeModifier++;
+        game.pathOptionsMap.get("blank").positiveModifier++;
+        game.guidebook.notesMap.get(this.id).specialConditions.get("shoo").encountered = true;
+        game.guidebook.notesMap.get("rock").specialConditions.get("bug").encountered = true;
+        game.album.memoriesMap.get("bug-banisher").checkAchieved(player);
       } else {
         for (let i = 0; i < game.pathVisibility - 1; i++) {
           game.takePathStep();
@@ -883,7 +1049,7 @@ const pathOptions = [
       {
         id: "shoo",
         get description() {
-          return `I'll shoo it away instead if I have a ${wrapInBadge(pathOptionsMap.get("rock").name)} I can use up.  Good riddance!`;
+          return `I'll shoo it away instead if I have a ${wrapInBadge(pathOptionsReferenceMap.get("rock").name)} I can use up.  Good riddance!`;
         },
       },
     ],
@@ -896,11 +1062,11 @@ const pathOptions = [
         player.heldItems.splice(rockIndex, 1);
         player.actionMessage = `Shooed the ${wrapInBadge(this.name)} away with a <span class="no-wrap">${wrapInBadge(rockItem.name)}.</span>  Good riddance!`;
 
-        pathOptionsMap.get(this.id).negativeModifier++;
-        pathOptionsMap.get("blank").positiveModifier++;
-        guidebook.notesMap.get(this.id).specialConditions.get("shoo").encountered = true;
-        guidebook.notesMap.get("rock").specialConditions.get("bug").encountered = true;
-        album.memoriesMap.get("bug-banisher").checkAchieved(player);
+        game.pathOptionsMap.get(this.id).negativeModifier++;
+        game.pathOptionsMap.get("blank").positiveModifier++;
+        game.guidebook.notesMap.get(this.id).specialConditions.get("shoo").encountered = true;
+        game.guidebook.notesMap.get("rock").specialConditions.get("bug").encountered = true;
+        game.album.memoriesMap.get("bug-banisher").checkAchieved(player);
       } else {
         for (let i = 0; i < game.pathVisibility - 1; i++) {
           game.takePathStep();
@@ -922,61 +1088,68 @@ const pathOptions = [
     onPick(player) {
       player.trackCounter = -player.trackCounter;
       player.trackCounter++;
-      let actionMessage = "Ooh, animal tracks!  I wonder what they'll lead to if I keep following them...";
-      player.actionMessage = actionMessage;
+      player.actionMessage = this.getChanceTimeActionMessage();
 
       if (player.trackCounter >= player.trackPathLength) {
-        actionMessage += "  Oh!";
-        player.actionMessage = actionMessage;
-
         const chanceOptions = ["🐾","🐾","🐾","🐾","🐾","❌","❌","❌","❌"];
-        chanceTime.initiate(`Attempt to follow at least three <span class="no-wrap">${wrapInBadge(this.name)}!</span>`, 3, 5, chanceOptions, (selections) => {
-          const tracksSelections = selections.filter(selection => selection === "🐾");
-          let tracksOptionId;
-
-          if (tracksSelections.length >= 3) {
-            // Success
-            player.trackPathLength = tracksSelections.length - 1;
-            player.actionMessage = `${actionMessage}\nI see it in the distance, wow!`;
-            tracksOptionId = "bunny";
-            guidebook.notesMap.get(this.id).specialConditions.get("sighting").encountered = true;
-          } else {
-            // Failure
-            player.trackPathLength = 5 - tracksSelections.length;
-            player.actionMessage = `${actionMessage}\nI see it in the distance, ew...`;
-            tracksOptionId = "turd";
-            guidebook.notesMap.get(this.id).specialConditions.get("bust").encountered = true;
-          }
-
-          player.trackCounter = 0;
-          let replacedTracks = false;
-
-          for (let i = 0; i < game.pathStepOptions[0].length && replacedTracks !== true; i++) {
-            for (let j = 0; j < game.pathStepOptions[i][0].length && replacedTracks !== true; j++) {
-              if (game.pathStepOptions[i][j] === this.id) {
-                game.pathStepOptions[i][j] = tracksOptionId;
-                replacedTracks = true;
-              }
-            }
-          }
-
-          game.updateMessagesDisplay(true);
-        });
+        game.chanceTime.initiate(this.id, `Attempt to follow at least three <span class="no-wrap">${wrapInBadge(this.name)}!</span>`,
+            3, 5, chanceOptions, this.chanceTimeCallback.bind(this));
       }
 
       return true;
+    },
+    getChanceTimeActionMessage() {
+      let actionMessage = "Ooh, animal tracks!  I wonder what they'll lead to if I keep following them...";
+
+      if (game.player.trackCounter >= game.player.trackPathLength) {
+              actionMessage += "  Oh!";
+      }
+
+      return actionMessage;
+    },
+    chanceTimeCallback(selections) {
+      const tracksSelections = selections.filter(selection => selection === "🐾");
+      let tracksOptionId;
+
+      if (tracksSelections.length >= 3) {
+        // Success
+        game.player.actionMessage = `${this.getChanceTimeActionMessage()}\nI see it in the distance, wow!`;
+        game.player.trackPathLength = tracksSelections.length - 1;
+        tracksOptionId = "bunny";
+        game.guidebook.notesMap.get(this.id).specialConditions.get("sighting").encountered = true;
+      } else {
+        // Failure
+        game.player.actionMessage = `${this.getChanceTimeActionMessage()}\nI see it in the distance, ew...`;
+        game.player.trackPathLength = 5 - tracksSelections.length;
+        tracksOptionId = "turd";
+        game.guidebook.notesMap.get(this.id).specialConditions.get("bust").encountered = true;
+      }
+
+      game.player.trackCounter = 0;
+      let replacedTracks = false;
+
+      for (let i = 0; i < game.pathStepOptions[0].length && replacedTracks !== true; i++) {
+        for (let j = 0; j < game.pathStepOptions[i][0].length && replacedTracks !== true; j++) {
+          if (game.pathStepOptions[i][j] === this.id) {
+            game.pathStepOptions[i][j] = tracksOptionId;
+            replacedTracks = true;
+          }
+        }
+      }
+
+      game.updateMessagesDisplay(true);
     },
     specialConditions: [
       {
         id: "sighting",
         get description() {
-          return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("bunny").name)}!</span>  <span class="no-wrap" role="img" aria-label="Heart">&lt;3</span>`;
+          return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("bunny").name)}!</span>  <span class="no-wrap" role="img" aria-label="Heart">&lt;3</span>`;
         },
       },
       {
         id: "bust",
         get description() {
-          return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsMap.get("turd").name)}.</span>  <span class="no-wrap" role="img" aria-label="Unimpressed face">:/</span>`;
+          return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("turd").name)}.</span>  <span class="no-wrap" role="img" aria-label="Unimpressed face">:/</span>`;
         },
       },
     ],
@@ -1000,12 +1173,12 @@ const pathOptions = [
       player.actionMessage = `Whoa, a <span class="no-wrap">${wrapInBadge(this.name)}!</span>  So cute.  My day is made!  <span class="no-wrap" role="img" aria-label="Heart">&lt;3</span>`;
       player.recoverStamina(2 * player.trackPathLength);
       player.trackPathLength = 0;
-      album.memoriesMap.get("special-sighting").checkAchieved(player);
+      game.album.memoriesMap.get("special-sighting").checkAchieved(player);
 
       if (player.queasyCounter > 0) {
         player.setQueasyCounter(0);
-        guidebook.notesMap.get(this.id).specialConditions.get("cure").encountered = true;
-        album.memoriesMap.get("wild-remedy").checkAchieved(player);
+        game.guidebook.notesMap.get(this.id).specialConditions.get("cure").encountered = true;
+        game.album.memoriesMap.get("wild-remedy").checkAchieved(player);
       }
 
       return true;
@@ -1024,7 +1197,7 @@ const pathOptions = [
       player.trackPathLength = 0;
       player.actionMessage = "Ew, something defecated here!  I lost my appetite...";
 
-      album.memoriesMap.get("insatiable-curiosity").checkAchieved(player);
+      game.album.memoriesMap.get("insatiable-curiosity").checkAchieved(player);
       return true;
     },
   },
@@ -1037,7 +1210,7 @@ const pathOptions = [
     // and survives copying the object with the spread operator
     getDescription(forGuidebook = false) {
       return `A lovely bouquet of ${forGuidebook === false && this.flowers.length ? `${this.flowers.length} flowers:\n${
-      this.flowers.map(flower => pathOptionsMap.get(flower).name.substring(0, 2)).join("")
+      this.flowers.map(flower => pathOptionsReferenceMap.get(flower).emoji).join("")
       }\n\n` : "flowers.  "}Much easier to carry.`
     },
     flowers: [],
@@ -1045,9 +1218,9 @@ const pathOptions = [
     // TODO - special conditions: different flower combos could translate to different "codes" that can perhaps lead to different outcomes
     // if left at shrines or on graves or something.  Lots of possibilities.
     onPick(player) {
-      setTimeout(() => album.memoriesMap.get("balanced-bouquet").checkAchieved(player));
-      setTimeout(() => album.memoriesMap.get("favorite-flower").checkAchieved(player));
-      setTimeout(() => album.memoriesMap.get("fixated-florist").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("balanced-bouquet").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("favorite-flower").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("fixated-florist").checkAchieved(player));
       return false;
     },
     onDispose(player) {
@@ -1074,11 +1247,11 @@ const pathOptions = [
         const nonFlowers = player.heldItems.filter(heldItem => heldItem.tags.includes("flower") === false);
         player.heldItems = nonFlowers;
 
-        const bouquet = {...pathOptionsMap.get("bouquet")};
+        const bouquet = deepCopy(game.pathOptionsMap.get("bouquet"));
         bouquet.flowers = heldFlowers.map(heldItem => heldItem.id);
         player.encounterPathOption(bouquet);
 
-        player.actionMessage = `Used the ${wrapInBadge(this.name)} to make a ${wrapInBadge(pathOptionsMap.get("bouquet").name)} out of all my flowers.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
+        player.actionMessage = `Used the ${wrapInBadge(this.name)} to make a ${wrapInBadge(pathOptionsReferenceMap.get("bouquet").name)} out of all my flowers.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
         player.loseStamina(heldFlowers.length);
         return true;
       }
@@ -1104,9 +1277,9 @@ const pathOptions = [
     description: "Collectable.  Smells nice!",
     chance: 2,
     onPick(player) {
-      setTimeout(() => album.memoriesMap.get("flower-finder").checkAchieved(player));
-      setTimeout(() => album.memoriesMap.get("flower-power").checkAchieved(player));
-      setTimeout(() => album.memoriesMap.get("flower-frenzy").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("flower-finder").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("flower-power").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("flower-frenzy").checkAchieved(player));
       return false;
     },
   },
@@ -1118,9 +1291,9 @@ const pathOptions = [
     description: "Collectable.  So vibrant!",
     chance: 2,
     onPick(player) {
-      setTimeout(() => album.memoriesMap.get("flower-finder").checkAchieved(player));
-      setTimeout(() => album.memoriesMap.get("flower-power").checkAchieved(player));
-      setTimeout(() => album.memoriesMap.get("flower-frenzy").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("flower-finder").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("flower-power").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("flower-frenzy").checkAchieved(player));
       return false;
     },
   },
@@ -1132,9 +1305,9 @@ const pathOptions = [
     description: "Collectable.  Soft petals!",
     chance: 2,
     onPick(player) {
-      setTimeout(() => album.memoriesMap.get("flower-finder").checkAchieved(player));
-      setTimeout(() => album.memoriesMap.get("flower-power").checkAchieved(player));
-      setTimeout(() => album.memoriesMap.get("flower-frenzy").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("flower-finder").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("flower-power").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("flower-frenzy").checkAchieved(player));
       return false;
     },
   },
@@ -1146,9 +1319,9 @@ const pathOptions = [
     description: "Collectable.  Cheerful!",
     chance: 2,
     onPick(player) {
-      setTimeout(() => album.memoriesMap.get("flower-finder").checkAchieved(player));
-      setTimeout(() => album.memoriesMap.get("flower-power").checkAchieved(player));
-      setTimeout(() => album.memoriesMap.get("flower-frenzy").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("flower-finder").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("flower-power").checkAchieved(player));
+      setTimeout(() => game.album.memoriesMap.get("flower-frenzy").checkAchieved(player));
       return false;
     },
   },
@@ -1164,8 +1337,8 @@ const pathOptions = [
     },
     chance: 1,
     onPick() {
-      guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeRequestId).encountered = true;
-      guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeOfferId).encountered = true;
+      game.guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeRequestId).encountered = true;
+      game.guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeOfferId).encountered = true;
       return true;
     },
     get specialConditions() {
@@ -1197,19 +1370,20 @@ const pathOptions = [
           wrapInBadge(tradeOffersMap.get(game.nextTradeOfferId)?.emojis)} in exchange for <span class="no-wrap">${
           wrapInBadge(tradeRequestsMap.get(game.nextTradeRequestId)?.emojis)}.</span>`
           : `Shows what someone wants to trade at the next <span class="no-wrap">${
-          wrapInBadge(pathOptionsMap.get("trading-post").name)}.</span>`;
+          wrapInBadge(pathOptionsReferenceMap.get("trading-post").name)}.</span>`;
     },
     chance: 2,
-    onPick(player) {
-      guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeRequestId).encountered = true;
-      guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeOfferId).encountered = true;
+    onPick() {
+      game.guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeRequestId).encountered = true;
+      game.guidebook.notesMap.get("trading-post").specialConditions.get(game.nextTradeOfferId).encountered = true;
       return true;
     },
   },
-];
+]);
 
-// ID -> path option
-const pathOptionsMap = new Map(pathOptions.map(pathOption => [pathOption.id, pathOption]));
+// Create immutable reference map from the frozen array.
+// Objects are already frozen, so we can use them directly.
+const pathOptionsReferenceMap = Object.freeze(new Map(pathOptions.map(pathOption => [pathOption.id, pathOption])));
 
 const tradeRequests = [
   {
@@ -1280,6 +1454,7 @@ const tradeOffersMap = new Map(tradeOffers.map(tradeOffer => [tradeOffer.id, tra
 
 class ChanceTime {
   awaitingSelection;
+  callerId;
   message;
   startingOptions;
   selectedOptions;
@@ -1288,16 +1463,17 @@ class ChanceTime {
   callback;
   smallIcons;
 
-  constructor() {
-    this.awaitingSelection = false;
-    this.message = "";
-    this.startingOptions = [];
-    this.selectedOptions = [];
-    this.selectionsToMake = 1;
-    this.cols = 3;
-    this.callback = () => {};
-    this.smallIcons = false;
-    this.shroudedFunction = () => false;
+  constructor(loadedChanceTime = {}) {
+    this.awaitingSelection = loadedChanceTime.awaitingSelection ?? false;
+    this.callerId = loadedChanceTime.callerId ?? "";
+    this.message = loadedChanceTime.message ?? "";
+    this.startingOptions = loadedChanceTime.startingOptions ?? [];
+    this.selectedOptions = loadedChanceTime.selectedOptions ?? [];
+    this.selectionsToMake = loadedChanceTime.selectionsToMake ?? 1;
+    this.cols = loadedChanceTime.cols ?? 3;
+    this.callback = pathOptionsReferenceMap.get(loadedChanceTime.callerId)?.chanceTimeCallback ?? (() => {});
+    this.smallIcons = loadedChanceTime.smallIcons ?? false;
+    this.shroudedFunction = pathOptionsReferenceMap.get(loadedChanceTime.callerId)?.chanceTimeShroudedFunction ?? (() => false);
   }
 
   show() {
@@ -1314,11 +1490,13 @@ class ChanceTime {
   }
 
   // Cols should not exceed 5
-  initiate(message, cols, selectionsToMake, startingOptions, callback, smallIcons = false, shroudedFunction = () => false) {
+  initiate(callerId, message, cols, selectionsToMake, startingOptions, callback,
+      smallIcons = false, shroudedFunction = () => false, isLoadedFromSave = false) {
     if (game.gameActive !== true) {
       return;
     }
 
+    this.callerId = callerId;
     this.shroudedFunction = shroudedFunction;
     this.smallIcons = smallIcons;
     this.callback = callback;
@@ -1326,6 +1504,14 @@ class ChanceTime {
     updateCssVar('--chance-time-cols', cols);
     this.selectionsToMake = selectionsToMake;
     this.startingOptions = startingOptions;
+
+    let loadedOptions = [];
+
+    if (isLoadedFromSave) {
+      loadedOptions = [...this.selectedOptions];
+    }
+
+    const loadedOptionsCheckboxes = [];
     this.selectedOptions = [];
 
     const chanceTimeMessage = document.getElementById("chance-time-message");
@@ -1391,8 +1577,17 @@ class ChanceTime {
             }
           }
         }
+
+        game.saveData();
       };
       optionElement.appendChild(optionCheckbox);
+
+      const loadedOptionIndex = loadedOptions.indexOf(option);
+
+      if (loadedOptionIndex > -1) {
+        loadedOptionsCheckboxes.push(optionCheckbox);
+        loadedOptions.splice(loadedOptionIndex, 1);
+      }
 
       const optionSpan = document.createElement("span");
       const nestedSpan = document.createElement("span");
@@ -1418,6 +1613,10 @@ class ChanceTime {
     chanceTimeButton.focus();
     this.awaitingSelection = true;
     game.updateHeldItemsDisplay();
+
+    for (const checkbox of loadedOptionsCheckboxes) {
+      checkbox.click();
+    }
   }
 
   done() {
@@ -1435,15 +1634,17 @@ class ChanceTime {
   tryAgain() {
     const cloverIndex = game.player.heldItems.findIndex(heldItem => heldItem.id === "clover");
     game.player.heldItems.splice(cloverIndex, 1);
-    guidebook.notesMap.get("clover").specialConditions.get("reroll").encountered = true;
-    game.updateHeldItemsDisplay();
-    this.initiate(this.message, this.cols, this.selectionsToMake, this.startingOptions, this.callback, this.smallIcons, this.shroudedFunction);
+    game.guidebook.notesMap.get("clover").specialConditions.get("reroll").encountered = true;
+    // Will call game.updateHeldItemsDisplay() to disable their buttons
+    this.initiate(this.callerId, this.message, this.cols, this.selectionsToMake, this.startingOptions,
+        this.callback, this.smallIcons, this.shroudedFunction);
   }
 
   keepLooking() {
     game.player.loseStamina(1);
-    guidebook.notesMap.get("shamrock").specialConditions.get("keep-looking").encountered = true;
-    this.initiate(this.message, this.cols, this.selectionsToMake, this.startingOptions, this.callback, this.smallIcons, this.shroudedFunction);
+    game.guidebook.notesMap.get("shamrock").specialConditions.get("keep-looking").encountered = true;
+    this.initiate(this.callerId, this.message, this.cols, this.selectionsToMake, this.startingOptions,
+        this.callback, this.smallIcons, this.shroudedFunction);
   }
 
   updateChanceTimeProgress(hide) {
@@ -1460,8 +1661,8 @@ class ChanceTime {
 class HistoryLog {
   log;
 
-  constructor() {
-    this.log = [];
+  constructor(loadedHistoryLog = {}) {
+    this.log = loadedHistoryLog.log ?? [];
   }
 
   replaceLastLogEntry(message) {
@@ -1503,16 +1704,18 @@ class HistoryLog {
 class Guidebook {
   notesMap;
 
-  constructor() {
-    this.notesMap = new Map(pathOptions.filter(pathOption => pathOption.id !== "blank").map(pathOption => [pathOption.id, {
+  constructor(loadedGuidebook = {}) {
+    this.notesMap = new Map(pathOptionsReferenceMap.values().filter(pathOption => pathOption.id !== "blank").map(pathOption => [pathOption.id, {
       ...pathOption,
       encountered: false,
       seen: false,
+      ...loadedGuidebook.notesMap?.get(pathOption.id),
       specialConditions: new Map(pathOption.specialConditions ?
           pathOption.specialConditions.map(condition => [condition.id, {
             ...condition,
             encountered: false,
             seen: false,
+            ...loadedGuidebook.notesMap?.get(pathOption.id)?.specialConditions?.get(condition.id),
           }])
           : null),
     }]));
@@ -1539,7 +1742,7 @@ class Guidebook {
   }
 
   show() {
-    openedGuidebook = true;
+    game.everOpenedGuidebook = true;
 
     // Recreate the entire scroll container just to reset the scroll position, since scrollTo is inconsistent in Safari
     const oldGuidebookContent = document.getElementById("guidebook-content");
@@ -1613,7 +1816,7 @@ class Guidebook {
 
 function notifyAchievement(achievement, player) {
   document.getElementById("memories-button").classList.add("notify");
-  album.memoriesMap.get("memory-maker").checkAchieved(player);
+  game.album.memoriesMap.get("memory-maker").checkAchieved(player);
 
   // Doesn't work if message already updated, and don't want to update again because that would cause a repeated history log entry
   // player.actionMessage += `${player.actionMessage.length ? "\n\n" : ""}Made a special memory: ${achievement.name}!`;
@@ -1654,7 +1857,7 @@ const achievements = [
       if (this.achieved === false) {
         if (player.berryStreak === 0) {
           this.achieved = true;
-          guidebook.notesMap.get("berry").specialConditions.get("fill").encountered = true;
+          game.guidebook.notesMap.get("berry").specialConditions.get("fill").encountered = true;
           notifyAchievement(this, player);
 
           return true;
@@ -1881,13 +2084,13 @@ const achievements = [
     difficulty: 3,
     name: "Good Samaritan",
     imageName: "good-samaritan.jpg",
-    imageAlt: "Photo of a clean, picturesque forest with tall trees bathed in warm sunlight, ",
-    description: "Disposed of 6 pieces of trash properly and made the woods a little cleaner",
+    imageAlt: "Photo of a clean, picturesque forest with tall trees bathed in warm sunlight",
+    description: "Disposed of 6+ pieces of trash properly and made the woods a little cleaner",
     achieved: false,
     checkAchieved(player) {
       if (this.achieved === false) {
-        const wrapperModifier = pathOptionsMap.get("wrapper").negativeModifier;
-        const bottleModifier = pathOptionsMap.get("bottle").negativeModifier;
+        const wrapperModifier = game.pathOptionsMap.get("wrapper").negativeModifier;
+        const bottleModifier = game.pathOptionsMap.get("bottle").negativeModifier;
 
         if (wrapperModifier + bottleModifier >= 6) {
           this.achieved = true;
@@ -1911,8 +2114,8 @@ const achievements = [
     achieved: false,
     checkAchieved(player) {
       if (this.achieved === false) {
-        const roachModifier = pathOptionsMap.get("roach").negativeModifier;
-        const mosquitoModifier = pathOptionsMap.get("mosquito").negativeModifier;
+        const roachModifier = game.pathOptionsMap.get("roach").negativeModifier;
+        const mosquitoModifier = game.pathOptionsMap.get("mosquito").negativeModifier;
 
         if (roachModifier + mosquitoModifier >= 3) {
           this.achieved = true;
@@ -2139,7 +2342,7 @@ const achievements = [
     achieved: false,
     checkAchieved(player) {
       if (this.achieved === false) {
-        if (album.getAchievedMemories().length >= 8) {
+        if (game.album.getAchievedMemories().length >= 8) {
           this.achieved = true;
           notifyAchievement(this, player);
           return true;
@@ -2154,8 +2357,10 @@ const achievements = [
 class Album {
   memoriesMap;
 
-  constructor() {
-    this.memoriesMap = new Map(achievements.map(achievement => [achievement.id, {...achievement}]));
+  constructor(loadedAlbum = {}) {
+    this.memoriesMap = new Map(achievements.map(achievement => {
+      return [achievement.id, {...achievement, ...loadedAlbum.memoriesMap?.get(achievement.id)}];
+    }));
   }
 
   getAchievedMemories() {
@@ -2175,7 +2380,7 @@ class Album {
   }
 
   show() {
-    openedAlbum = true;
+    game.everOpenedAlbum = true;
 
     const memoriesButton = document.getElementById("memories-button");
     memoriesButton.classList.remove("notify");
@@ -2277,19 +2482,27 @@ class Player {
   trackCounter;
   trackPathLength;
 
-  constructor() {
-    this.maxStamina = 20;
-    this.stamina = this.maxStamina;
-    this.capacity = 6;
-    this.heldItems = [];
-    this.environment = null;
-    this.actionMessage = "";
-    this.berryStreak = 0;
-    this.queasyCounter = 0;
-    this.trackCounter = 0;
-    this.trackPathLength = 0;
+  constructor(loadedPlayer = {}) {
+    this.maxStamina = loadedPlayer.maxStamina ?? 20;
+    this.stamina = loadedPlayer.stamina ?? this.maxStamina;
+    this.capacity = loadedPlayer.capacity ?? 6;
+    this.heldItems = this.loadHeldItems(loadedPlayer.heldItems ?? []);
+    this.environment = loadedPlayer.environment ?? null;
+    this.actionMessage = loadedPlayer.actionMessage ?? "";
+    this.berryStreak = loadedPlayer.berryStreak ?? 0;
+    this.queasyCounter = loadedPlayer.queasyCounter ?? 0;
+    this.trackCounter = loadedPlayer.trackCounter ?? 0;
+    this.trackPathLength = loadedPlayer.trackPathLength ?? 0;
+  }
 
-    // Pick a random flower to become allergic to, causing low visibility or dropping an item?
+  loadHeldItems(heldItemsData) {
+    return heldItemsData.map(heldItemData => {
+      const heldItemTemplate = pathOptionsReferenceMap.get(heldItemData.id);
+      return {
+        ...heldItemTemplate,
+        ...heldItemData,
+      }
+    });
   }
 
   getHeldItemsCapacityWeight() {
@@ -2305,8 +2518,8 @@ class Player {
     this.maxStamina += amount;
     game.updateStaminaDisplay();
 
-    album.memoriesMap.get("nut-nut").checkAchieved(this);
-    album.memoriesMap.get("super-nut-nut").checkAchieved(this);
+    game.album.memoriesMap.get("nut-nut").checkAchieved(this);
+    game.album.memoriesMap.get("super-nut-nut").checkAchieved(this);
   }
 
   loseMaxStamina(amount) {
@@ -2348,7 +2561,7 @@ class Player {
   }
 
   encounterPathOptionById(optionId) {
-    this.encounterPathOption({...pathOptionsMap.get(optionId)});
+    this.encounterPathOption(deepCopy(game.pathOptionsMap.get(optionId)));
   }
 
   encounterPathOption(option) {
@@ -2365,7 +2578,7 @@ class Player {
       this.heldItems.push(option);
     }
 
-    guidebook.notesMap.get(option.id).encountered = true;
+    game.guidebook.notesMap.get(option.id).encountered = true;
   }
 
   disposeItem(heldItemIndex) {
@@ -2395,7 +2608,7 @@ class Player {
     if (heldItem.onConsume && heldItem.onConsume(this)) {
       this.heldItems.splice(this.heldItems.indexOf(heldItem), 1);
 
-      if (heldItem.id !== "berry") {
+      if (heldItem.tags.includes("consumable") && heldItem.id !== "berry") {
         this.berryStreak = 0;
       }
 
@@ -2409,7 +2622,12 @@ class Player {
 }
 
 class Game {
+  pathOptionsMap;
   player;
+  album;
+  historyLog;
+  guidebook;
+  chanceTime;
   gameActive;
   pathDeck;
   pathStepOptions;
@@ -2420,17 +2638,43 @@ class Game {
   nextTradeRequestId;
   nextTradeOfferId;
   scrollModeManual;
+  everOpenedGuidebook;
+  everOpenedAlbum;
 
-  constructor() {
-    this.player = new Player();
-    this.gameActive = false;
-    this.pathDeck = [];
-    this.pathStepOptions = [];
-    this.pathSize = 3;
-    this.pathVisibility = 3;
-    this.iterationsCount = 0;
-    this.stepCount = 0;
-    this.scrollModeManual = false;
+  constructor(loadedGame = {}) {
+    this.pathOptionsMap = new Map(pathOptions.map(pathOption => {
+      return [pathOption.id, {...deepCopy(pathOption), ...loadedGame.pathOptionsMap?.get(pathOption.id)}];
+    }));
+    this.player = new Player(loadedGame.player);
+    this.album = new Album(loadedGame.album);
+    this.historyLog = new HistoryLog(loadedGame.historyLog);
+    this.guidebook = new Guidebook(loadedGame.guidebook);
+    this.chanceTime = new ChanceTime(loadedGame.chanceTime);
+    this.gameActive = loadedGame.gameActive ?? false;
+    this.pathDeck = loadedGame.pathDeck ?? [];
+    this.pathStepOptions = loadedGame.pathStepOptions ?? [];
+    this.pathSize = loadedGame.pathSize ?? 3;
+    this.pathVisibility = loadedGame.pathVisibility ?? 3;
+    this.iterationsCount = loadedGame.iterationsCount ?? 0;
+    this.stepCount = loadedGame.stepCount ?? 0;
+    this.scrollModeManual = loadedGame.scrollModeManual ?? false;
+    this.everOpenedGuidebook = loadedGame.everOpenedGuidebook ?? false;
+    this.everOpenedAlbum = loadedGame.everOpenedAlbum ?? false;
+    this.nextTradeRequestId = loadedGame.nextTradeRequestId;
+    this.nextTradeOfferId = loadedGame.nextTradeOfferId;
+  }
+
+  saveData() {
+    localStorage.setItem("game", JSON.stringify(this, (_key, value) => {
+      if (value instanceof Map) {
+        return {
+          dataType: 'Map',
+          value: Array.from(value.entries()),
+        };
+      } else {
+        return value;
+      }
+    }));
   }
 
   determineNextTrade() {
@@ -2443,6 +2687,8 @@ class Game {
     const tradeOffer = tradeOffersMap.get(this.nextTradeOfferId);
 
     const originalHeldItems = [...this.player.heldItems];
+    let tradedWrapperCount = 0;
+    let tradedBottleCount = 0;
 
     for (const requestedItemId of tradeRequest.items) {
       // Use last index to trade away the least-peeled fruit
@@ -2455,8 +2701,28 @@ class Game {
         return;
       }
 
+      const heldItem = this.player.heldItems[heldItemIndex];
+
+      if (heldItem.id === "wrapper") {
+        tradedWrapperCount++;
+      } else if (heldItem.id === "bottle") {
+        tradedBottleCount++;
+      }
+
       this.player.heldItems.splice(heldItemIndex, 1);
     }
+
+    for (let i = 0; i < tradedWrapperCount; i++) {
+      this.pathOptionsMap.get("wrapper").negativeModifier++;
+      this.pathOptionsMap.get("blank").positiveModifier++;
+    }
+
+    for (let i = 0; i < tradedBottleCount; i++) {
+      this.pathOptionsMap.get("bottle").negativeModifier++;
+      this.pathOptionsMap.get("blank").positiveModifier++;
+    }
+
+    game.album.memoriesMap.get("good-samaritan").checkAchieved(this.player);
 
     for (const offeredItemId of tradeOffer.items) {
       this.player.encounterPathOptionById(offeredItemId);
@@ -2466,7 +2732,7 @@ class Game {
         `Traded ${wrapInBadge(tradeRequest.emojis)} for <span class="no-wrap">${wrapInBadge(tradeOffer.emojis)}!</span>`;
     this.player.environment = null;
 
-    album.memoriesMap.get("trusty-trader").checkAchieved(this.player);
+    this.album.memoriesMap.get("trusty-trader").checkAchieved(this.player);
 
     this.determineNextTrade();
     this.updateHeldItemsDisplay();
@@ -2474,6 +2740,8 @@ class Game {
   }
 
   updateStaminaDisplay() {
+    this.saveData();
+
     const staminaCountDisplay = document.getElementById('stamina-count');
     const staminaStatus = document.getElementById('stamina-status');
     staminaCountDisplay.innerText = `${this.player.stamina}/${this.player.maxStamina}`;
@@ -2510,6 +2778,8 @@ class Game {
       return;
     }
 
+    this.saveData();
+
     const endButtonWrapper = document.getElementById('end-button-wrapper');
     endButtonWrapper.classList.remove('confirm');
 
@@ -2520,7 +2790,7 @@ class Game {
       const bouquets = this.player.heldItems.filter(item => item.id === "bouquet");
       totalFlowers = bouquets.reduce((total, bouquet) => total + bouquet.flowers.length, totalFlowers);
 
-      const achievedMemories = album.getAchievedMemories();
+      const achievedMemories = game.album.getAchievedMemories();
       const totalAchievementDifficulty = achievedMemories.reduce((total, memory) => total + memory.difficulty, 0);
       const starsMessage = totalAchievementDifficulty === 0 ? "" : `\n${
           "⭐".repeat(totalAchievementDifficulty).split("⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐").map(tenStars => tenStars.length ? tenStars : "⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐").join("\n")
@@ -2528,14 +2798,14 @@ class Game {
 
       let didNotOpenMessage = "";
 
-      if (openedGuidebook === false) {
-        if (openedAlbum === false) {
+      if (game.everOpenedGuidebook === false) {
+        if (game.everOpenedAlbum === false) {
           didNotOpenMessage = `<p>I should really take a look at that ${wrapInBadge("📷 Memories")} album,\nand it might be worth using the ${
               wrapInBadge("📒 Guidebook")} next time, too.</p>`;
         } else {
           didNotOpenMessage = `<p>It might be worth using the ${wrapInBadge("📒 Guidebook")} next time.</p>`;
         }
-      } else if (openedAlbum === false) {
+      } else if (game.everOpenedAlbum === false) {
         didNotOpenMessage = `<p>I should really take a look at that ${wrapInBadge("📷 Memories")} album.</p>`;
       }
 
@@ -2558,15 +2828,15 @@ class Game {
         messages.push(this.player.actionMessage);
       }
 
-      if (this.player.environment && chanceTime.awaitingSelection !== true) {
-        const environmentOption = pathOptionsMap.get(this.player.environment);
+      if (this.player.environment && this.chanceTime.awaitingSelection !== true) {
+        const environmentOption = this.pathOptionsMap.get(this.player.environment);
 
         if (environmentOption) {
           messages.push(environmentOption.getDescription ? environmentOption.getDescription() : environmentOption.description);
         }
       }
 
-      if (this.player.getHeldItemsCapacityWeight() > this.player.capacity && chanceTime.awaitingSelection !== true) {
+      if (this.player.getHeldItemsCapacityWeight() > this.player.capacity && this.chanceTime.awaitingSelection !== true) {
         messages.push("I have too many things to carry with me.")
       }
 
@@ -2575,9 +2845,9 @@ class Game {
 
     if (messagesDisplay.innerHTML.length) {
       if (replaceLastLogEntry) {
-        historyLog.replaceLastLogEntry(messagesDisplay.innerHTML);
+        this.historyLog.replaceLastLogEntry(messagesDisplay.innerHTML);
       } else {
-        historyLog.addLogEntry(messagesDisplay.innerHTML);
+        this.historyLog.addLogEntry(messagesDisplay.innerHTML);
       }
 
       // Ensure messages get read and prevent the focus from getting lost as elements get removed
@@ -2586,6 +2856,8 @@ class Game {
   }
 
   updateHeldItemsDisplay() {
+    this.saveData();
+
     const heldItemsThumbnails = document.querySelector('#held-items-thumbnails>span');
 
     const heldItemsDisplay = document.getElementById('held-items');
@@ -2671,7 +2943,7 @@ class Game {
         if (tradeRequest.items.includes(heldItem.id)) {
           const tradeButton = document.createElement('button');
           tradeButton.type = "button";
-          tradeButton.disabled = this.gameActive === false || chanceTime.awaitingSelection;
+          tradeButton.disabled = this.gameActive === false || this.chanceTime.awaitingSelection;
           tradeButton.innerText = TRADING_POST_EMOJI;
           tradeButton.ariaLabel = "Trade";
           tradeButton.onclick = () => {
@@ -2685,7 +2957,7 @@ class Game {
       if (heldItem.onConsume) {
         const consumeButton = document.createElement('button');
         consumeButton.type = "button";
-        consumeButton.disabled = this.gameActive === false || chanceTime.awaitingSelection;
+        consumeButton.disabled = this.gameActive === false || this.chanceTime.awaitingSelection;
         consumeButton.innerText = heldItem.tags.includes("consumable") ? "Consume" : "Use";
         consumeButton.style.flexGrow = 3;
         consumeButton.onclick = () => {
@@ -2697,7 +2969,7 @@ class Game {
       if (heldItem.tags.includes("treasure") === false) {
         const disposeButton = document.createElement('button');
         disposeButton.type = "button";
-        disposeButton.disabled = this.gameActive === false || chanceTime.awaitingSelection;
+        disposeButton.disabled = this.gameActive === false || this.chanceTime.awaitingSelection;
         // Need to keep track of exceptions
         disposeButton.innerText = this.player.environment === "receptacle" && heldItem.tags.includes("trashable") ? "🚮" : "X";
         disposeButton.ariaLabel = "Dispose";
@@ -2728,6 +3000,8 @@ class Game {
   }
 
   updatePathDisplay() {
+    this.saveData();
+
     const pathDisplay = document.getElementById('path');
     const focusedIndex = [...pathDisplay.children].indexOf(document.activeElement);
 
@@ -2735,7 +3009,7 @@ class Game {
 
     for (let i = 0; i < this.pathStepOptions.length; i++) {
       for (const stepOptionId of this.pathStepOptions[i]) {
-        const stepOption = pathOptionsMap.get(stepOptionId);
+        const stepOption = this.pathOptionsMap.get(stepOptionId);
         const optionDisplay = document.createElement('button');
         optionDisplay.type = "button";
         optionDisplay.innerHTML = stepOption.name;
@@ -2745,7 +3019,8 @@ class Game {
         }
 
         optionDisplay.classList.add('path-option');
-        optionDisplay.disabled = this.player.getHeldItemsCapacityWeight() > this.player.capacity || i > 0 || this.gameActive === false || chanceTime.awaitingSelection;
+        optionDisplay.disabled = this.player.getHeldItemsCapacityWeight() > this.player.capacity
+            || i > 0 || this.gameActive === false || this.chanceTime.awaitingSelection;
         optionDisplay.onclick = () => {
           this.player.selectPathOption(stepOption.id);
         };
@@ -2753,7 +3028,7 @@ class Game {
         pathDisplay.insertBefore(optionDisplay, pathDisplay.firstChild);
 
         if (stepOptionId !== "blank") {
-          guidebook.notesMap.get(stepOptionId).seen = true;
+          this.guidebook.notesMap.get(stepOptionId).seen = true;
         } else {
           optionDisplay.ariaLabel = "Nothing here";
         }
@@ -2766,7 +3041,7 @@ class Game {
   }
 
   addToPathDeck() {
-    for (const pathOption of pathOptions) {
+    for (const pathOption of this.pathOptionsMap.values()) {
       for (let i = 0; i < (pathOption.chance + pathOption.positiveModifier - pathOption.negativeModifier); i++) {
         this.pathDeck.push(pathOption.id);
       }
@@ -2777,10 +3052,10 @@ class Game {
     if (this.pathDeck.length < 20) {
       game.iterationsCount++;
 
-      for (const pathOption of pathOptions) {
+      for (const pathOption of this.pathOptionsMap.values()) {
         if (pathOption.tags.includes("obstacle")) {
           pathOption.positiveModifier += game.iterationsCount;
-          pathOptionsMap.get("blank").negativeModifier += game.iterationsCount;
+          this.pathOptionsMap.get("blank").negativeModifier += game.iterationsCount;
         } else if (pathOption.tags.includes("grows")) {
           pathOption.positiveModifier++;
         }
@@ -2851,11 +3126,11 @@ class Game {
         (
           // Prevent drawing new tracks if already tracking or showing any tracking options
           pathOptionId === "tracks" && (randomIndexForTracks >= 0
-              || shownPathOptions.some(optionId => pathOptionsMap.get(optionId).tags.includes("tracking")))
+              || shownPathOptions.some(optionId => this.pathOptionsMap.get(optionId).tags.includes("tracking")))
         ) || (
           // Prevent drawing new trading path options if trading or already showing any
-          pathOptionsMap.get(pathOptionId).tags.includes("trading") && (this.player.environment === "trading-post"
-              || shownPathOptions.some(optionId => pathOptionsMap.get(optionId).tags.includes("trading")))
+          this.pathOptionsMap.get(pathOptionId).tags.includes("trading") && (this.player.environment === "trading-post"
+              || shownPathOptions.some(optionId => this.pathOptionsMap.get(optionId).tags.includes("trading")))
         )
       );
 
@@ -2872,8 +3147,8 @@ class Game {
 
   startGame() {
     // TODO - album needs to reset so long as it's used for assessing the hike, but would be nice for it to persist...
-    album = new Album();
-    historyLog = new HistoryLog();
+    this.album = new Album();
+    this.historyLog = new HistoryLog();
 
     this.player = new Player();
     this.player.encounterPathOptionById("lunch");
@@ -2891,7 +3166,7 @@ class Game {
 
     this.determineNextTrade();
 
-    for (const pathOption of pathOptions) {
+    for (const pathOption of this.pathOptionsMap.values()) {
       pathOption.negativeModifier = 0;
       pathOption.positiveModifier = 0;
     }
@@ -2906,7 +3181,14 @@ class Game {
 
     this.player.actionMessage = 'Time to take a hike!  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>';
 
-    this.updateMessagesDisplay();
+    this.updateDisplaysForStartOrLoad();
+  }
+
+  updateDisplaysForStartOrLoad(forLoad = false) {
+    updateCssVar('--path-size', 3);
+    updateCssVar('--path-visibility', 3);
+
+    this.updateMessagesDisplay(forLoad);
     this.updatePathDisplay();
     this.updateHeldItemsDisplay();
     this.updateStaminaDisplay();
@@ -2925,6 +3207,26 @@ class Game {
 
     const messagesDisplay = document.getElementById('messages');
     messagesDisplay.focus();
+
+    document.getElementById('scroll-mode-checkbox').checked = this.scrollModeManual;
+
+    if (forLoad) {
+      this.player.setQueasyCounter(this.player.queasyCounter);
+
+      if (this.chanceTime.awaitingSelection) {
+        this.chanceTime.initiate(
+          this.chanceTime.callerId,
+          this.chanceTime.message,
+          this.chanceTime.cols,
+          this.chanceTime.selectionsToMake,
+          this.chanceTime.startingOptions,
+          this.chanceTime.callback.bind(this.pathOptionsMap.get(this.chanceTime.callerId)),
+          this.chanceTime.smallIcons,
+          this.chanceTime.shroudedFunction.bind(this.pathOptionsMap.get(this.chanceTime.callerId)),
+          true,
+        );
+      }
+    }
   }
 
   gameOver() {
@@ -2942,15 +3244,6 @@ class Game {
     }
   }
 }
-
-// TODO - save and load?
-let openedGuidebook = false;
-let openedAlbum = false;
-let album = new Album();
-let historyLog = new HistoryLog();
-const guidebook = new Guidebook();
-const chanceTime = new ChanceTime();
-const game = new Game();
 
 function onHeldItemsThumbnailsClick(event) {
   heldItemsThumbnailsMoveHandler(event.currentTarget, event.target);

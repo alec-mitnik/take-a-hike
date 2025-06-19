@@ -21,54 +21,69 @@
     <script type="text/javascript" src="./scripts.js"></script>
   </head>
 
-  <body onload="document.getElementById('history-log-emoji').innerHTML = HISTORY_LOG_EMOJI;">
+  <body>
     <div id="fog-back" aria-hidden="true"></div>
     <div id="fog-front" aria-hidden="true"></div>
 
-    <main id="title-screen">
-      <div aria-hidden="true"></div>
+    <main id="title-screen" inert>
+      <div id="title-viewport">
+        <div aria-hidden="true"></div>
 
-      <section>
-        <header>
-          <h1 id="title">Take a Hike</h1>
-          <h2 id="author">A game by Alec Mitnik</h2>
-        </header>
-        <div class="shadowed-text">
-          <p>Explore, keep your stamina up, and make some nice memories!  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span></p>
-          <p>Please note that data does not persist once you leave the page.  The game may continue to be updated as I work on it.</p>
-        </div>
+        <section>
+          <header>
+            <h1 id="title">Take a Hike</h1>
+            <h2 id="author">A game by Alec Mitnik</h2>
+          </header>
+          <div id="title-message" class="shadowed-text">
+            <p>Explore, keep your stamina up, and make some nice memories!  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span></p>
+            <p>The game may continue to be updated as I work on it.  Progress is automatically saved through the browser's local storage.</p>
+            <p class="show-if-save-disabled">⚠️ Local storage not enabled! ⚠️</p>
+            <p id="local-storage-warning" class="show-if-save-disabled">Are you using private browsing?  Data will not persist.</p>
+          </div>
 
-        <button type="button" id="start-button" class="main-button" onClick="game.startGame();">Embark</button>
-      </section>
+          <!-- TODO - start or load -->
+          <div id="start-buttons">
+            <button type="button" class="main-button start-button" onclick="game.startGame();">Embark</button>
+            <button type="button" class="main-button hike-in-progress-button" onclick="game.updateDisplaysForStartOrLoad(true);">Resume Hike</button>
+            <button type="button" id="start-fresh-hike-button" class="main-button smaller needs-confirm-button hike-in-progress-button" onclick="startFreshHike();">Start a Fresh Hike</button>
+            <button type="button" id="confirm-abandon-button" class="main-button smaller confirm-button hike-in-progress-button" onclick="game.startGame();">⚠️ Really Abandon Ongoing Hike ⚠️</button>
+          </div>
+        </section>
 
-      <footer>
-        <!-- Portfolio Link -->
-        <a id="portfolio-link" class="main-button" href="https://alec-mitnik.github.io/" target="_blank" rel="author" aria-label="Check out my other projects">
-          <img src="./images/PXL_Avatar_1B.jpg" alt="">
-        </a>
-      </footer>
+        <footer>
+          <!-- Portfolio Link -->
+          <a id="portfolio-link" class="main-button" href="https://alec-mitnik.github.io/" target="_blank" rel="author" aria-label="Check out my other projects">
+            <img src="./images/PXL_Avatar_1B.jpg" alt="">
+          </a>
+        </footer>
+      </div>
+
+      <span id="clear-data-button-wrapper" class="danger-button-wrapper">
+        <button type="button" class="main-button smaller needs-confirm-button" onclick="clearAllDataConfirm();">Clear All Data</button>
+        <button type="button" id="confirm-clear-data-button" class="main-button smaller confirm-button" onclick="clearAllData();">⚠️ Really Clear All Data ⚠️</button>
+      </span>
     </main>
     <main id="hike-wrapper">
       <dialog id="album-display" class="sidebar left" aria-labelledby="album-title">
-        <div class="backdrop" onclick="album.hide();"></div>
+        <div class="backdrop" onclick="game.album.hide();"></div>
         <div class="panel">
-          <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Memories Album" onClick="album.hide();"><span>X</span></button>
+          <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Memories Album" onclick="game.album.hide();"><span>X</span></button>
           <h1 id="album-title" class="panel-title">Memories Album</h1>
           <div id="album-content" class="panel-content"></div>
         </div>
       </dialog>
       <dialog id="guidebook-display" class="sidebar right" aria-labelledby="guidebook-title">
-        <div class="backdrop" onclick="guidebook.hide();"></div>
+        <div class="backdrop" onclick="game.guidebook.hide();"></div>
         <div class="panel">
-          <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Guidebook" onClick="guidebook.hide();"><span>X</span></button>
+          <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Guidebook" onclick="game.guidebook.hide();"><span>X</span></button>
           <h1 id="guidebook-title" class="panel-title">Guidebook</h1>
           <div id="guidebook-content" class="panel-content"></div>
         </div>
       </dialog>
       <dialog id="chance-time-display" class="sidebar left" aria-labelledby="chance-time-title">
-        <div class="backdrop" onclick="chanceTime.hide();"></div>
+        <div class="backdrop" onclick="game.chanceTime.hide();"></div>
         <div class="panel">
-          <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Chance Time" onClick="chanceTime.hide();"><span>X</span></button>
+          <button autofocus type="button" class="close-button shadowed-button" aria-label="Close Chance Time" onclick="game.chanceTime.hide();"><span>X</span></button>
           <h1 id="chance-time-title" class="panel-title">Chance Time</h1>
           <div id="chance-time-content" class="panel-content">
             <p id="chance-time-message"></p>
@@ -76,16 +91,16 @@
               <fieldset id="chance-time-grid"></fieldset>
             </div>
             <p id="chance-time-progress"><span id="chance-time-progress__total">0</span>/<span id="chance-time-progress__goal">0</span></p>
-            <button type="button" id="chance-time-try-again" class="main-button" onClick="chanceTime.tryAgain();">🍀 Try Again</button>
-            <button type="button" id="chance-time-keep-looking" class="main-button" onClick="chanceTime.keepLooking();">💪💦 Keep Looking</button>
-            <button type="button" id="chance-time-done" class="main-button" onClick="chanceTime.done();">Done</button>
+            <button type="button" id="chance-time-try-again" class="main-button" onclick="game.chanceTime.tryAgain();">🍀 Try Again</button>
+            <button type="button" id="chance-time-keep-looking" class="main-button" onclick="game.chanceTime.keepLooking();">💪💦 Keep Looking</button>
+            <button type="button" id="chance-time-done" class="main-button" onclick="game.chanceTime.done();">Done</button>
           </div>
         </div>
       </dialog>
       <dialog id="history-log-display" class="sidebar right" aria-labelledby="history-log-title">
-        <div class="backdrop" onclick="historyLog.hide();"></div>
+        <div class="backdrop" onclick="game.historyLog.hide();"></div>
         <div class="panel">
-          <button autofocus type="button" class="close-button shadowed-button" aria-label="Close History Log" onClick="historyLog.hide();"><span>X</span></button>
+          <button autofocus type="button" class="close-button shadowed-button" aria-label="Close History Log" onclick="game.historyLog.hide();"><span>X</span></button>
           <h1 id="history-log-title" class="panel-title">History Log</h1>
           <div id="history-log-content" class="panel-content">
             <ul id="history-log-list" aria-labelledby="history-log-title"></ul>
@@ -103,20 +118,20 @@
         <div id="player-display">
           <div id="status-bar">
             <div>
-              <button type="button" id="memories-button" class="shadowed-button" aria-label="Open Memories Album" onClick="album.show();"><span>📷 Memories</span></button>
+              <button type="button" id="memories-button" class="shadowed-button" aria-label="Open Memories Album" onclick="game.album.show();"><span>📷 Memories</span></button>
               <div id="stamina-display" class="shadowed-text"><p><span id="stamina-status">😊</span> Stamina: <span id="stamina-count"></span></p></div>
-              <button type="button" class="shadowed-button" aria-label="Open Guidebook" onClick="guidebook.show();"><span>📒 Guidebook</span></button>
+              <button type="button" class="shadowed-button" aria-label="Open Guidebook" onclick="game.guidebook.show();"><span>📒 Guidebook</span></button>
             </div>
           </div>
 
-          <button type="button" class="shadowed-button" aria-label="Open History Log" onClick="historyLog.show();"><span><span id="history-log-emoji">🪶</span> History Log</span></button>
+          <button type="button" class="shadowed-button" aria-label="Open History Log" onclick="game.historyLog.show();"><span><span id="history-log-emoji">🪶</span> History Log</span></button>
 
           <div id="messages-wrapper">
             <!-- aria-live="assertive" gets read multiple times, and "polite" gets skipped sometimes... -->
             <div id="messages" class="shadowed-text" tabindex="0"></div>
           </div>
 
-          <button type="button" id="chance-time-button" class="shadowed-button notify" aria-label="Open Chance Time" onClick="chanceTime.show();"><span>🎲 Chance Time</span></button>
+          <button type="button" id="chance-time-button" class="shadowed-button notify" aria-label="Open Chance Time" onclick="game.chanceTime.show();"><span>🎲 Chance Time</span></button>
           <button type="button" id="restart-button" class="main-button" onclick="game.startGame();">Go Again</button>
 
           <div id="held-items-wrapper">
@@ -128,7 +143,7 @@
             ></dl>
 
             <label id="scroll-mode-toggle" class="shadowed-text">
-              <span><input id="scroll-mode-checkbox" type="checkbox" onchange="game.scrollModeManual = this.checked;" />Scroll held items manually</span>
+              <span><input id="scroll-mode-checkbox" type="checkbox" onchange="game.scrollModeManual = this.checked; game.saveData();" />Scroll held items manually</span>
             </label>
 
             <div id="held-items-thumbnails" class="shadowed-text" aria-hidden="true">
@@ -142,9 +157,9 @@
         </div>
       </div>
 
-      <span id="end-button-wrapper">
-        <button type="button" class="main-button" onclick="callItADay();">Call It a Day</button>
-        <button type="button" id="confirm-end-button" class="main-button confirm-button" onclick="game.player.loseStamina(game.player.stamina);">⚠️ Really End the Hike ⚠️</button>
+      <span id="end-button-wrapper" class="danger-button-wrapper">
+        <button type="button" class="main-button smaller needs-confirm-button" onclick="callItADay();">Call It a Day</button>
+        <button type="button" id="confirm-end-button" class="main-button smaller confirm-button" onclick="game.player.loseStamina(game.player.stamina);">⚠️ Really End the Hike ⚠️</button>
       </span>
     </main>
   </body>
