@@ -38,7 +38,7 @@
             <p>Explore, keep your stamina up, and make some nice memories!  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span></p>
             <p>The game may continue to be updated as I work on it.  Progress is automatically saved through the browser's local storage.</p>
             <p class="show-if-save-disabled">⚠️ Local storage not enabled! ⚠️</p>
-            <p id="local-storage-warning" class="show-if-save-disabled">Are you using private browsing?  Data will not persist.</p>
+            <p id="local-storage-warning" class="show-if-save-disabled">Data will not persist.</p>
           </div>
 
           <!-- TODO - start or load -->
@@ -118,20 +118,20 @@
         <div id="player-display">
           <div id="status-bar">
             <div>
-              <button type="button" id="memories-button" class="shadowed-button" aria-label="Open Memories Album" onclick="game.album.show();"><span>📷 Memories</span></button>
-              <div id="stamina-display" class="shadowed-text"><p><span id="stamina-status">😊</span> Stamina: <span id="stamina-count"></span></p></div>
-              <button type="button" class="shadowed-button" aria-label="Open Guidebook" onclick="game.guidebook.show();"><span>📒 Guidebook</span></button>
+              <button type="button" id="memories-button" class="shadowed-button" aria-label="Open Memories Album" onclick="game.album.show();"><span><span role="img" aria-hidden="true" style="pointer-events: none;">📷</span> Memories</span></button>
+              <div id="stamina-display" class="shadowed-text" role="img" tabindex="0" aria-labelledBy="stamina-text stamina-status"><p><span id="stamina-status">😊</span> <span id="stamina-text">Stamina: <span id="stamina-count"></span></span></p></div>
+              <button type="button" class="shadowed-button" aria-label="Open Guidebook" onclick="game.guidebook.show();"><span><span role="img" aria-hidden="true" style="pointer-events: none;">📒</span> Guidebook</span></button>
             </div>
           </div>
 
-          <button type="button" class="shadowed-button" aria-label="Open History Log" onclick="game.historyLog.show();"><span><span id="history-log-emoji">🪶</span> History Log</span></button>
+          <button type="button" class="shadowed-button" aria-label="Open History Log" onclick="game.historyLog.show();"><span><span id="history-log-emoji" role="img" aria-hidden="true" style="pointer-events: none;">🪶</span> History Log</span></button>
 
           <div id="messages-wrapper">
             <!-- aria-live="assertive" gets read multiple times, and "polite" gets skipped sometimes... -->
             <div id="messages" class="shadowed-text" tabindex="0"></div>
           </div>
 
-          <button type="button" id="chance-time-button" class="shadowed-button notify" aria-label="Open Chance Time" onclick="game.chanceTime.show();"><span>🎲 Chance Time</span></button>
+          <button type="button" id="chance-time-button" class="shadowed-button notify" aria-label="Open Chance Time" onclick="game.chanceTime.show();"><span><span role="img" aria-hidden="true" style="pointer-events: none;">🎲</span> Chance Time</span></button>
           <button type="button" id="restart-button" class="main-button" onclick="game.startGame();">Go Again</button>
 
           <div id="held-items-wrapper">

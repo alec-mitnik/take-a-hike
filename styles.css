@@ -13,6 +13,7 @@
   --path-visibility: 3;
   --path-size: 3;
   --queasy-count-dashes: '';
+  --queasy-count-alt: '';
   --chance-time-cols: 3;
   font-size: clamp(50%, 0.5vw + 0.5rem, 100%);
 }
@@ -46,6 +47,11 @@ h1, h2, h3, h4, h5, h6, p, ul, ol {
 
 ul, ol {
   padding: 0;
+}
+
+/* 'Idiomatic' text element, not simply italic.  Used for foreign language phrases. */
+i {
+  font-style: normal;
 }
 
 a {
@@ -1043,8 +1049,10 @@ button.path-option {
       }
 
       #stamina-status {
-        &.queasy::before {
-          content: var(--queasy-count-dashes);
+        pointer-events: none;
+
+        &.queasy::after {
+          content: var(--queasy-count-dashes) / var(--queasy-count-alt);
           color: #44dd70;
           position: absolute;
           bottom: 0;

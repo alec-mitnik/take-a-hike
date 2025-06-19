@@ -109,6 +109,10 @@ function clearAllData() {
   location.reload();
 }
 
+function splitEmojiString(emojiString) {
+  return [...new Intl.Segmenter().segment(emojiString)].map(x => x.segment);
+}
+
 const supportsLatestEmojis = (function() {
   let checked = false;
   let supports = false;
@@ -136,9 +140,7 @@ const supportsLatestEmojis = (function() {
 // WITH PROGRESS PERSISTING, NEED TO CONSIDER BACKWARD COMPATIBILITY FOR ALL UPDATES!
 
 // TODO - 🪦(fallback: ⚰️)🥀↔️🧺🧶🐚💎🫙🥤🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢🌳🌲🌿🎒
-// Update emoji usage for screen reader
 // Move scripts into separate module files
-// Saving/loading state with local storage (will need to handle iOS page restores too)
 // Sound effects
 // Make into a progressive web app?
 // Shore/mountain locales?
@@ -356,6 +358,7 @@ const pathOptions = deepFreeze([
     id: "blank",
     emoji: "",
     name: "&#x200B;",
+    getFullName() { return this.name; },
     tags: [],
     description: "Represents a path option with nothing on it.  If I see this description, it's a bug!",
     chance: 15,
@@ -367,7 +370,8 @@ const pathOptions = deepFreeze([
   {
     id: "bag",
     emoji: "👜",
-    name: "👜 Bag",
+    name: "Bag",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["treasure", "tool"],
     description: "Nice, I can carry more with this!",
     chance: 0,
@@ -380,7 +384,7 @@ const pathOptions = deepFreeze([
       player.capacity--;
 
       if (player.environment === "receptacle") {
-        player.actionMessage = `I put the ${wrapInBadge(this.name)} into the receptacle.  I Hope I know what I'm doing...`;
+        player.actionMessage = `I put the ${wrapInBadge(this.getFullName())} into the receptacle.  I Hope I know what I'm doing...`;
         return true;
       }
 
@@ -391,10 +395,11 @@ const pathOptions = deepFreeze([
   {
     id: "shamrock",
     emoji: "☘️",
-    name: "☘️ Clover Patch",
+    name: "Clover Patch",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["grows"],
     getDescription() {
-      return `A great place to find a <span class="no-wrap">${wrapInBadge(game.pathOptionsMap.get('clover').name)}.</span>`;
+      return `A great place to find a <span class="no-wrap">${wrapInBadge(game.pathOptionsMap.get('clover').getFullName())}.</span>`;
     },
     chance: 0,
     specialConditions: [
@@ -406,7 +411,7 @@ const pathOptions = deepFreeze([
     onPick(player) {
       player.actionMessage = this.chanceTimeActionMessage;
 
-      game.chanceTime.initiate(this.id, `Try to find a <span class="no-wrap">${wrapInBadge(game.pathOptionsMap.get('clover').name)}!</span>`, 4, 5,
+      game.chanceTime.initiate(this.id, `Try to find a <span class="no-wrap">${wrapInBadge(game.pathOptionsMap.get('clover').getFullName())}!</span>`, 4, 5,
           ["🍀","🍀","🍀","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️","☘️"], this.chanceTimeCallback.bind(this));
 
       game.guidebook.notesMap.get("clover").seen = true;
@@ -450,7 +455,8 @@ const pathOptions = deepFreeze([
   {
     id: "clover",
     emoji: "🍀",
-    name: "🍀 Lucky Clover",
+    name: "Lucky Clover",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: [],
     description: "A serendipitous find!",
     chance: 0,
@@ -472,7 +478,8 @@ const pathOptions = deepFreeze([
   {
     id: "snackbar",
     emoji: "🍫",
-    name: "🍫 Snack Bar",
+    name: "Snack Bar",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["consumable", "trashable"],
     description: "Eat to recover 5 stamina.",
     chance: 0,
@@ -480,21 +487,21 @@ const pathOptions = deepFreeze([
       {
         id: "waste",
         get description() {
-          return `Leaves me with a ${wrapInBadge(pathOptionsReferenceMap.get("wrapper").name)} when consumed.`;
+          return `Leaves me with a ${wrapInBadge(pathOptionsReferenceMap.get("wrapper").getFullName())} when consumed.`;
         },
       },
     ],
     onConsume(player) {
       player.recoverStamina(5);
       player.encounterPathOptionById("wrapper");
-      player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  That hit the spot!`;
+      player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.getFullName())}.</span>  That hit the spot!`;
 
       game.guidebook.notesMap.get(this.id).specialConditions.get("waste").encountered = true;
       return true;
     },
     onDispose(player) {
       if (player.environment === "receptacle") {
-        player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  What a waste...`;
+        player.actionMessage = `Put the ${wrapInBadge(this.getFullName())} into the receptacle.  What a waste...`;
         return true;
       }
 
@@ -505,7 +512,8 @@ const pathOptions = deepFreeze([
   {
     id: "lunch",
     emoji: "🧰",
-    name: "🧰 Packed Lunch",
+    name: `Packed Lunch`,
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["treasure", "consumable"],
     description: "Eat to recover 10 stamina and free up the bag to carry something else.",
     chance: 0,
@@ -514,9 +522,9 @@ const pathOptions = deepFreeze([
       {
         id: "waste",
         get description() {
-          return `Leaves me with <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("bag").name)
-              },</span> <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("wrapper").name)
-              },</span> and ${wrapInBadge(pathOptionsReferenceMap.get("bottle").name)} when consumed.`;
+          return `Leaves me with <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("bag").getFullName())
+              },</span> <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("wrapper").getFullName())
+              },</span> and ${wrapInBadge(pathOptionsReferenceMap.get("bottle").getFullName())} when consumed.`;
         },
       },
     ],
@@ -525,14 +533,14 @@ const pathOptions = deepFreeze([
       player.encounterPathOptionById("bag");
       player.encounterPathOptionById("wrapper");
       player.encounterPathOptionById("bottle");
-      player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  Delicious!`;
+      player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.getFullName())}.</span>  Delicious!`;
 
       game.guidebook.notesMap.get(this.id).specialConditions.get("waste").encountered = true;
       return true;
     },
     onDispose(player) {
       if (player.environment === "receptacle") {
-        player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  <span class="no-wrap" role="img" aria-label="Broken heart">&lt;/3</span>`;
+        player.actionMessage = `Put the ${wrapInBadge(this.getFullName())} into the receptacle.  <span class="no-wrap" role="img" aria-label="Broken heart">&lt;/3</span>`;
         return true;
       }
 
@@ -543,7 +551,8 @@ const pathOptions = deepFreeze([
   {
     id: "parcel",
     emoji: "📦",
-    name: "📦 Abandoned Parcel",
+    name: "Abandoned Parcel",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["chest"],
     description: "Ooh, what could be inside?",
     chance: 3,
@@ -554,7 +563,7 @@ const pathOptions = deepFreeze([
           get description() {
             return `Possibility: ${parcelOption.content.length ?
                 `${parcelOption.content.map((contentId, index) => {
-                  return `<span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get(contentId).name)}${
+                  return `<span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get(contentId).getFullName())}${
                       index < parcelOption.content.length - 1 && parcelOption.content.length > 2 ? "," : ""}</span>${
                       index < parcelOption.content.length - 1 ? " " : ""}${
                       index === parcelOption.content.length - 2 ? "and " : ""}`;
@@ -567,7 +576,7 @@ const pathOptions = deepFreeze([
     onPick(player) {
       player.actionMessage = this.chanceTimeActionMessage;
 
-      game.chanceTime.initiate(this.id, `Discover what's inside the <span class="no-wrap">${wrapInBadge(this.name)}!</span>`,
+      game.chanceTime.initiate(this.id, `Discover what's inside the <span class="no-wrap">${wrapInBadge(this.getFullName())}!</span>`,
           4, 1, parcelDeck.map(optionId => parcelOptionsMap.get(optionId).emoji),
           this.chanceTimeCallback.bind(this), true, this.chanceTimeShroudedFunction.bind(this));
 
@@ -598,7 +607,8 @@ const pathOptions = deepFreeze([
   {
     id: "robin",
     emoji: "🐦",
-    name: "🐦 Bright Bird",
+    name: "Bright Bird",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["bird"],
     description: 'Normally just flies away...  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>',
     chance: 1,
@@ -606,7 +616,7 @@ const pathOptions = deepFreeze([
       {
         id: "feed",
         get description() {
-          return `I can feed it a ${wrapInBadge(pathOptionsReferenceMap.get("berry").name)} if I have one!`;
+          return `I can feed it a ${wrapInBadge(pathOptionsReferenceMap.get("berry").getFullName())} if I have one!`;
         }
       },
       {
@@ -630,7 +640,7 @@ const pathOptions = deepFreeze([
         }
 
         player.setQueasyCounter(0);
-        player.actionMessage = `I got to feed a ${wrapInBadge(berryItem.name)} to the <span class="no-wrap">${wrapInBadge(this.name)}!</span>  Feeling great.  <span class="no-wrap" role="img" aria-label="Elated face">:D</span>`;
+        player.actionMessage = `I got to feed a ${wrapInBadge(berryItem.getFullName())} to the <span class="no-wrap">${wrapInBadge(this.getFullName())}!</span>  Feeling great.  <span class="no-wrap" role="img" aria-label="Elated face">:D</span>`;
       } else {
         player.actionMessage = 'Aw, the bird flew away.  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>';
       }
@@ -641,7 +651,8 @@ const pathOptions = deepFreeze([
   {
     id: "blackbird",
     emoji: DARK_BIRD_EMOJI,
-    name: `${DARK_BIRD_EMOJI} Dark Bird`,
+    name: "Dark Bird",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["bird"],
     description: 'Normally just flies away...  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>',
     chance: 1,
@@ -649,7 +660,7 @@ const pathOptions = deepFreeze([
       {
         id: "feed",
         get description() {
-          return `I can feed it a ${wrapInBadge(pathOptionsReferenceMap.get("nut").name)} if I have one!`;
+          return `I can feed it a ${wrapInBadge(pathOptionsReferenceMap.get("nut").getFullName())} if I have one!`;
         }
       },
       {
@@ -673,7 +684,7 @@ const pathOptions = deepFreeze([
         }
 
         player.setQueasyCounter(0);
-        player.actionMessage = `I got to feed a ${wrapInBadge(nutItem.name)} to the <span class="no-wrap">${wrapInBadge(this.name)}!</span>  Feeling great.  <span class="no-wrap" role="img" aria-label="Elated face">:D</span>`;
+        player.actionMessage = `I got to feed a ${wrapInBadge(nutItem.getFullName())} to the <span class="no-wrap">${wrapInBadge(this.getFullName())}!</span>  Feeling great.  <span class="no-wrap" role="img" aria-label="Elated face">:D</span>`;
       } else {
         player.actionMessage = 'Aw, the bird flew away.  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>';
       }
@@ -684,7 +695,8 @@ const pathOptions = deepFreeze([
   {
     id: "bottle",
     emoji: "🍾",
-    name: "🍾 Discarded Bottle",
+    name: "Discarded Bottle",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["obstacle", "trash", "trashable"],
     description: "Ugh.  Bring it to a receptacle to dispose of it properly.",
     chance: 4,
@@ -693,7 +705,7 @@ const pathOptions = deepFreeze([
         game.pathOptionsMap.get(this.id).negativeModifier++;
         game.pathOptionsMap.get("blank").positiveModifier++;
         game.guidebook.notesMap.get("receptacle").specialConditions.get("clean").encountered = true;
-        player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
+        player.actionMessage = `Put the ${wrapInBadge(this.getFullName())} into the receptacle.  The woods are a little bit cleaner now.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
 
         game.album.memoriesMap.get("good-samaritan").checkAchieved(player);
         return true;
@@ -705,7 +717,8 @@ const pathOptions = deepFreeze([
   {
     id: "wrapper",
     emoji: "🍬",
-    name: "🍬 Discarded Wrapper",
+    name: "Discarded Wrapper",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["obstacle", "trash", "trashable"],
     description: "Gross.  Bring it to a receptacle to dispose of it properly.",
     chance: 4,
@@ -714,7 +727,7 @@ const pathOptions = deepFreeze([
         game.pathOptionsMap.get(this.id).negativeModifier++;
         game.pathOptionsMap.get("blank").positiveModifier++;
         game.guidebook.notesMap.get("receptacle").specialConditions.get("clean").encountered = true;
-        player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  The woods are a little bit cleaner now.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
+        player.actionMessage = `Put the ${wrapInBadge(this.getFullName())} into the receptacle.  The woods are a little bit cleaner now.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
 
         game.album.memoriesMap.get("good-samaritan").checkAchieved(player);
         return true;
@@ -726,10 +739,11 @@ const pathOptions = deepFreeze([
   {
     id: "receptacle",
     emoji: "🚮",
-    name: "🚮 Trash Receptacle",
+    name: "Trash Receptacle",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["environment"],
     get description() {
-      return `There is a ${wrapInBadge(this.name)} available.`;
+      return `There is a ${wrapInBadge(this.getFullName())} available.`;
     },
     chance: 2,
     specialConditions: [
@@ -745,7 +759,8 @@ const pathOptions = deepFreeze([
   {
     id: "mushroom",
     emoji: MUSHROOM_EMOJI,
-    name: `${MUSHROOM_EMOJI} Mushroom`,
+    name: "Mushroom",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["consumable"],
     description: "Eat to recover 4 stamina, but may have side effects.",
     chance: 6,
@@ -762,14 +777,14 @@ const pathOptions = deepFreeze([
     onConsume(player) {
       player.actionMessage = this.getChanceTimeActionMessage();
 
-      game.chanceTime.initiate(this.id, `Discover the effects of the <span class="no-wrap">${wrapInBadge(this.name)}!</span>`, 5, 1,
+      game.chanceTime.initiate(this.id, `Discover the effects of the <span class="no-wrap">${wrapInBadge(this.getFullName())}!</span>`, 5, 1,
           mushroomSideEffectsDeck.map(sideEffectId => mushroomSideEffectsMap.get(sideEffectId).emoji),
           this.chanceTimeCallback.bind(this), false, this.chanceTimeShroudedFunction.bind(this));
 
       return true;
     },
     getChanceTimeActionMessage() {
-      return `Ate the <span class="no-wrap">${wrapInBadge(this.name)}...</span>`;
+      return `Ate the <span class="no-wrap">${wrapInBadge(this.getFullName())}...</span>`;
     },
     chanceTimeCallback(selections) {
       const sideEffectData = mushroomSideEffects.find(sideEffect => sideEffect.emoji === selections[0]);
@@ -792,7 +807,8 @@ const pathOptions = deepFreeze([
   {
     id: "berry",
     emoji: BERRY_EMOJI,
-    name: `${BERRY_EMOJI} Berry`,
+    name: "Berry",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["consumable"],
     description: "Eat to recover stamina.  The more in one go, the better!",
     chance: 12,
@@ -811,7 +827,7 @@ const pathOptions = deepFreeze([
 
       player.berryStreak = (player.berryStreak + 1) % 6;
 
-      player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  ${
+      player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.getFullName())}.</span>  ${
           (player.berryStreak > 0) ? `I crave more!` : `Yummy!`}`;
 
       game.guidebook.notesMap.get("berry").specialConditions.get("first").encountered = true;
@@ -823,7 +839,8 @@ const pathOptions = deepFreeze([
   {
     id: "cherry",
     emoji: "🍒",
-    name: "🍒 Cherry",
+    name: "Cherry",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["consumable"],
     description: "Eat to recover 3 stamina, but has to be done in pairs.",
     chance: 5,
@@ -839,18 +856,19 @@ const pathOptions = deepFreeze([
           game.updateMessagesDisplay(true);
         });
 
-        player.actionMessage = `Ate the ${wrapInBadge(this.name)} along with another, just as it was meant to be.  Ah...`;
+        player.actionMessage = `Ate the ${wrapInBadge(this.getFullName())} along with another, just as it was meant to be.  Ah...`;
         return true;
       }
 
-      player.actionMessage = `I need another ${wrapInBadge(this.name)} to eat with this.  It's the rules!  <span class="no-wrap" role="img" aria-label="Angry face">&gt;:(</span>`;
+      player.actionMessage = `I need another ${wrapInBadge(this.getFullName())} to eat with this.  It's the rules!  <span class="no-wrap" role="img" aria-label="Angry face">&gt;:(</span>`;
       return false;
     },
   },
   {
     id: "tangerine",
     emoji: "🍊",
-    name: "🍊 Fruit",
+    name: "Fruit",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["consumable"],
     description: "Eat to recover 7 stamina, but takes a while to peel.",
     startingStepsLeftToPeel: 14,
@@ -878,18 +896,18 @@ const pathOptions = deepFreeze([
         player.actionMessage = this.getChanceTimeActionMessage();
         game.guidebook.notesMap.get(this.id).specialConditions.get("juggle").encountered = true;
 
-        game.chanceTime.initiate(this.id, `Attempt to juggle by catching all three <span class="no-wrap">${wrapInBadge(this.name)}!</span>`,
+        game.chanceTime.initiate(this.id, `Attempt to juggle by catching all three <span class="no-wrap">${wrapInBadge(this.getFullName())}!</span>`,
             3, 3, ["🍊","🍊","🍊","🍊","🍊","🍊","❌","❌","❌"], this.chanceTimeCallback.bind(this));
 
         return false;
       } else if (numHeldFruit === 2) {
-        player.actionMessage = `All I need is a third ${wrapInBadge(this.name)} and I can try to juggle them!  <span class="no-wrap" role="img" aria-label="Mischievous face">&gt;:D</span>`;
+        player.actionMessage = `All I need is a third ${wrapInBadge(this.getFullName())} and I can try to juggle them!  <span class="no-wrap" role="img" aria-label="Mischievous face">&gt;:D</span>`;
       }
 
       return false;
     },
     getChanceTimeActionMessage() {
-      return `That's three <span class="no-wrap">${wrapInBadge(this.name)}!</span>  Commencing juggle attempt...`;
+      return `That's three <span class="no-wrap">${wrapInBadge(this.getFullName())}!</span>  Commencing juggle attempt...`;
     },
     chanceTimeCallback(selections) {
       const nonFruitSelections = selections.filter(selection => selection !== "🍊");
@@ -932,14 +950,15 @@ const pathOptions = deepFreeze([
         return true;
       }
 
-      player.actionMessage = `I won't be done peeling this ${wrapInBadge(this.name)} for another ${this.stepsLeftToPeel} step${this.stepsLeftToPeel !== 1 ? "s" : ""}.`;
+      player.actionMessage = `I won't be done peeling this ${wrapInBadge(this.getFullName())} for another ${this.stepsLeftToPeel} step${this.stepsLeftToPeel !== 1 ? "s" : ""}.`;
       return false;
     },
   },
   {
     id: "nut",
     emoji: "🌰",
-    name: "🌰 Nut",
+    name: "Nut",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["consumable"],
     description: "Eat to gain 1 max stamina.  Requires something to break the shell.",
     chance: 10,
@@ -947,30 +966,31 @@ const pathOptions = deepFreeze([
       {
         id: "rock",
         get description() {
-          return `I can use a ${wrapInBadge(pathOptionsReferenceMap.get("rock").name)} for this!`;
+          return `I can use a ${wrapInBadge(pathOptionsReferenceMap.get("rock").getFullName())} for this!`;
         }
       },
     ],
     onConsume(player) {
       if (player.heldItems.some(heldItem => heldItem.id === "rock")) {
         player.gainMaxStamina(1);
-        player.actionMessage = `Ate the ${wrapInBadge(this.name)} by breaking the shell with a <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("rock").name)}.</span>  I feel stronger!`;
+        player.actionMessage = `Ate the ${wrapInBadge(this.getFullName())} by breaking the shell with a <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("rock").getFullName())}.</span>  I feel stronger!`;
 
         game.guidebook.notesMap.get(this.id).specialConditions.get("rock").encountered = true;
         game.guidebook.notesMap.get("rock").specialConditions.get("nut").encountered = true;
         return true;
       }
 
-      const withText = player.heldItems.some(heldItem => heldItem.id === "bottle") ? `nothing but a flimsy ${wrapInBadge(pathOptionsReferenceMap.get("bottle").name)}` : "my bare hands";
+      const withText = player.heldItems.some(heldItem => heldItem.id === "bottle") ? `nothing but a flimsy ${wrapInBadge(pathOptionsReferenceMap.get("bottle").getFullName())}` : "my bare hands";
 
-      player.actionMessage = `I can't crack open the ${wrapInBadge(this.name)} with <span class="no-wrap">${withText}.</span>  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>`;
+      player.actionMessage = `I can't crack open the ${wrapInBadge(this.getFullName())} with <span class="no-wrap">${withText}.</span>  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>`;
       return false;
     },
   },
   {
     id: "rock",
     emoji: ROCK_EMOJI,
-    name: `${ROCK_EMOJI} Rock`,
+    name: "Rock",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["tool"],
     description: "A nice hefty rock.  Hard to carry, though...",
     chance: 3,
@@ -979,7 +999,7 @@ const pathOptions = deepFreeze([
       {
         id: "nut",
         get description() {
-          return `Holding this allows me to break the shell of a <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("nut").name)}.</span>`;
+          return `Holding this allows me to break the shell of a <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("nut").getFullName())}.</span>`;
         }
       },
       {
@@ -1001,7 +1021,8 @@ const pathOptions = deepFreeze([
   {
     id: "mosquito",
     emoji: "🦟",
-    name: "🦟 Nasty Nuisance",
+    name: "Nasty Nuisance",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["obstacle", "bug"],
     description: "Nope!  No thanks.  I'll just run past it until I can't see it anymore.",
     chance: 0,
@@ -1009,7 +1030,7 @@ const pathOptions = deepFreeze([
       {
         id: "shoo",
         get description() {
-          return `I'll shoo it away instead if I have a ${wrapInBadge(pathOptionsReferenceMap.get("rock").name)} I can use up.  Good riddance!`;
+          return `I'll shoo it away instead if I have a ${wrapInBadge(pathOptionsReferenceMap.get("rock").getFullName())} I can use up.  Good riddance!`;
         },
       },
     ],
@@ -1020,7 +1041,7 @@ const pathOptions = deepFreeze([
         const rockItem = player.heldItems[rockIndex];
         rockItem.onDispose(player);
         player.heldItems.splice(rockIndex, 1);
-        player.actionMessage = `Shooed the ${wrapInBadge(this.name)} away with a <span class="no-wrap">${wrapInBadge(rockItem.name)}.</span>  Good riddance!`;
+        player.actionMessage = `Shooed the ${wrapInBadge(this.getFullName())} away with a <span class="no-wrap">${wrapInBadge(rockItem.getFullName())}.</span>  Good riddance!`;
 
         game.pathOptionsMap.get(this.id).negativeModifier++;
         game.pathOptionsMap.get("blank").positiveModifier++;
@@ -1041,7 +1062,8 @@ const pathOptions = deepFreeze([
   {
     id: "roach",
     emoji: CREEPY_CRAWLY_EMOJI,
-    name: `${CREEPY_CRAWLY_EMOJI} Creepy Crawly`,
+    name: "Creepy Crawly",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["obstacle", "bug"],
     description: "Nope!  No thanks.  I'll just run past it until I can't see it anymore.",
     chance: 0,
@@ -1049,7 +1071,7 @@ const pathOptions = deepFreeze([
       {
         id: "shoo",
         get description() {
-          return `I'll shoo it away instead if I have a ${wrapInBadge(pathOptionsReferenceMap.get("rock").name)} I can use up.  Good riddance!`;
+          return `I'll shoo it away instead if I have a ${wrapInBadge(pathOptionsReferenceMap.get("rock").getFullName())} I can use up.  Good riddance!`;
         },
       },
     ],
@@ -1060,7 +1082,7 @@ const pathOptions = deepFreeze([
         const rockItem = player.heldItems[rockIndex];
         rockItem.onDispose(player);
         player.heldItems.splice(rockIndex, 1);
-        player.actionMessage = `Shooed the ${wrapInBadge(this.name)} away with a <span class="no-wrap">${wrapInBadge(rockItem.name)}.</span>  Good riddance!`;
+        player.actionMessage = `Shooed the ${wrapInBadge(this.getFullName())} away with a <span class="no-wrap">${wrapInBadge(rockItem.getFullName())}.</span>  Good riddance!`;
 
         game.pathOptionsMap.get(this.id).negativeModifier++;
         game.pathOptionsMap.get("blank").positiveModifier++;
@@ -1081,7 +1103,8 @@ const pathOptions = deepFreeze([
   {
     id: "tracks",
     emoji: "🐾",
-    name: "🐾 Animal Tracks",
+    name: "Animal Tracks",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["tracking"],
     description: "Ooh, if I follow them all, what might they lead to?",
     chance: 1,
@@ -1092,7 +1115,7 @@ const pathOptions = deepFreeze([
 
       if (player.trackCounter >= player.trackPathLength) {
         const chanceOptions = ["🐾","🐾","🐾","🐾","🐾","❌","❌","❌","❌"];
-        game.chanceTime.initiate(this.id, `Attempt to follow at least three <span class="no-wrap">${wrapInBadge(this.name)}!</span>`,
+        game.chanceTime.initiate(this.id, `Attempt to follow at least three <span class="no-wrap">${wrapInBadge(this.getFullName())}!</span>`,
             3, 5, chanceOptions, this.chanceTimeCallback.bind(this));
       }
 
@@ -1101,8 +1124,8 @@ const pathOptions = deepFreeze([
     getChanceTimeActionMessage() {
       let actionMessage = "Ooh, animal tracks!  I wonder what they'll lead to if I keep following them...";
 
-      if (game.player.trackCounter >= game.player.trackPathLength) {
-              actionMessage += "  Oh!";
+      if (Math.abs(game.player.trackCounter) >= game.player.trackPathLength) {
+        actionMessage += "  Oh!";
       }
 
       return actionMessage;
@@ -1143,13 +1166,13 @@ const pathOptions = deepFreeze([
       {
         id: "sighting",
         get description() {
-          return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("bunny").name)}!</span>  <span class="no-wrap" role="img" aria-label="Heart">&lt;3</span>`;
+          return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("bunny").getFullName())}!</span>  <span class="no-wrap" role="img" aria-label="Heart">&lt;3</span>`;
         },
       },
       {
         id: "bust",
         get description() {
-          return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("turd").name)}.</span>  <span class="no-wrap" role="img" aria-label="Unimpressed face">:/</span>`;
+          return `Possibility: <span class="no-wrap">${wrapInBadge(pathOptionsReferenceMap.get("turd").getFullName())}.</span>  <span class="no-wrap" role="img" aria-label="Unimpressed face">:/</span>`;
         },
       },
     ],
@@ -1157,7 +1180,8 @@ const pathOptions = deepFreeze([
   {
     id: "bunny",
     emoji: "🐇",
-    name: "🐇 Bunny",
+    name: "Bunny",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["tracking"],
     description: `So cute.  Makes my day!  <span class="no-wrap" role="img" aria-label="Heart">&lt;3</span>`,
     chance: -1,
@@ -1170,7 +1194,7 @@ const pathOptions = deepFreeze([
       },
     ],
     onPick(player) {
-      player.actionMessage = `Whoa, a <span class="no-wrap">${wrapInBadge(this.name)}!</span>  So cute.  My day is made!  <span class="no-wrap" role="img" aria-label="Heart">&lt;3</span>`;
+      player.actionMessage = `Whoa, a <span class="no-wrap">${wrapInBadge(this.getFullName())}!</span>  So cute.  My day is made!  <span class="no-wrap" role="img" aria-label="Heart">&lt;3</span>`;
       player.recoverStamina(2 * player.trackPathLength);
       player.trackPathLength = 0;
       game.album.memoriesMap.get("special-sighting").checkAchieved(player);
@@ -1187,7 +1211,8 @@ const pathOptions = deepFreeze([
   {
     id: "turd",
     emoji: "💩",
-    name: "💩 Turd",
+    name: "Turd",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["tracking"],
     description: "Ew.  Makes me feel queasy...",
     chance: -1,
@@ -1204,7 +1229,8 @@ const pathOptions = deepFreeze([
   {
     id: "bouquet",
     emoji: "💐",
-    name: "💐 Bouquet",
+    name: "Bouquet",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["trashable"],
     // Use a regular function rather than a getter so that it recalculates on each access
     // and survives copying the object with the spread operator
@@ -1215,8 +1241,6 @@ const pathOptions = deepFreeze([
     },
     flowers: [],
     chance: 0,
-    // TODO - special conditions: different flower combos could translate to different "codes" that can perhaps lead to different outcomes
-    // if left at shrines or on graves or something.  Lots of possibilities.
     onPick(player) {
       setTimeout(() => game.album.memoriesMap.get("balanced-bouquet").checkAchieved(player));
       setTimeout(() => game.album.memoriesMap.get("favorite-flower").checkAchieved(player));
@@ -1225,18 +1249,19 @@ const pathOptions = deepFreeze([
     },
     onDispose(player) {
       if (player.environment === "receptacle") {
-        player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  C'est la vie...`;
+        player.actionMessage = `Put the ${wrapInBadge(this.getFullName())} into the receptacle.  <i lang="fr">C'est la vie...</i>`;
         return true;
       }
 
-      player.actionMessage += "  C'est la vie...";
+      player.actionMessage += `  <i lang="fr">C'est la vie...</i>`;
       return false;
     },
   },
   {
     id: "ribbon",
     emoji: "🎗️",
-    name: "🎗️ Ribbon",
+    name: "Ribbon",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["tool", "trashable"],
     description: "With some effort, I can use this to turn all my flowers into a bouquet.",
     chance: 1,
@@ -1251,7 +1276,7 @@ const pathOptions = deepFreeze([
         bouquet.flowers = heldFlowers.map(heldItem => heldItem.id);
         player.encounterPathOption(bouquet);
 
-        player.actionMessage = `Used the ${wrapInBadge(this.name)} to make a ${wrapInBadge(pathOptionsReferenceMap.get("bouquet").name)} out of all my flowers.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
+        player.actionMessage = `Used the ${wrapInBadge(this.getFullName())} to make a ${wrapInBadge(pathOptionsReferenceMap.get("bouquet").getFullName())} out of all my flowers.  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>`;
         player.loseStamina(heldFlowers.length);
         return true;
       }
@@ -1261,18 +1286,19 @@ const pathOptions = deepFreeze([
     },
     onDispose(player) {
       if (player.environment === "receptacle") {
-        player.actionMessage = `Put the ${wrapInBadge(this.name)} into the receptacle.  C'est la vie...`;
+        player.actionMessage = `Put the ${wrapInBadge(this.getFullName())} into the receptacle.  <i lang="fr">C'est la vie...</i>`;
         return true;
       }
 
-      player.actionMessage += "  C'est la vie...";
+      player.actionMessage += `  <i lang="fr">C'est la vie...</i>`;
       return false;
     },
   },
   {
     id: "rose",
     emoji: "🌹",
-    name: "🌹 Red Flower",
+    name: "Red Flower",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["flower", "grows"],
     description: "Collectable.  Smells nice!",
     chance: 2,
@@ -1286,7 +1312,8 @@ const pathOptions = deepFreeze([
   {
     id: "hyacinth",
     emoji: `${PURPLE_FLOWER_EMOJI}`,
-    name: `${PURPLE_FLOWER_EMOJI} Purple Flower`,
+    name: "Purple Flower",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["flower", "grows"],
     description: "Collectable.  So vibrant!",
     chance: 2,
@@ -1300,7 +1327,8 @@ const pathOptions = deepFreeze([
   {
     id: "tulip",
     emoji: "🌷",
-    name: "🌷 Pink Flower",
+    name: "Pink Flower",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["flower", "grows"],
     description: "Collectable.  Soft petals!",
     chance: 2,
@@ -1314,7 +1342,8 @@ const pathOptions = deepFreeze([
   {
     id: "daisy",
     emoji: "🌼",
-    name: "🌼 Pale Flower",
+    name: "Pale Flower",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["flower", "grows"],
     description: "Collectable.  Cheerful!",
     chance: 2,
@@ -1328,12 +1357,15 @@ const pathOptions = deepFreeze([
   {
     id: "trading-post",
     emoji: `${TRADING_POST_EMOJI}`,
-    name: `${TRADING_POST_EMOJI} Trading Post`,
+    name: "Trading Post",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["environment", "trading"],
     getDescription(forGuidebook = false) {
-      return forGuidebook ? `A spot for trading items.` : `There is a ${wrapInBadge(this.name)} available, offering ${
-          wrapInBadge(tradeOffersMap.get(game.nextTradeOfferId)?.emojis)} in exchange for <span class="no-wrap">${
-          wrapInBadge(tradeRequestsMap.get(game.nextTradeRequestId)?.emojis)}.</span>`;
+      const offerMarkup = tradeOffersMap.get(game.nextTradeOfferId)?.getEmojisMarkup();
+      const requestMarkup = tradeRequestsMap.get(game.nextTradeRequestId)?.getEmojisMarkup();
+
+      return forGuidebook ? `A spot for trading items.` : `There is a ${wrapInBadge(this.getFullName())
+          } available, offering ${offerMarkup} in exchange for ${requestMarkup}.`;
     },
     chance: 1,
     onPick() {
@@ -1346,14 +1378,14 @@ const pathOptions = deepFreeze([
         return {
           ...tradeRequest,
           get description() {
-            return `Possible request: <span class="no-wrap">${wrapInBadge(tradeRequest.emojis)}.</span>`;
+            return `Possible request: ${tradeRequest.getEmojisMarkup()}.`;
           }
         }
       }), ...tradeOffers.map(tradeOffer => {
         return {
           ...tradeOffer,
           get description() {
-            return `Possible offer: <span class="no-wrap">${wrapInBadge(tradeOffer.emojis)}.</span>`;
+            return `Possible offer: ${tradeOffer.getEmojisMarkup()}.`;
           }
         }
       })]
@@ -1362,15 +1394,16 @@ const pathOptions = deepFreeze([
   {
     id: "flyer",
     emoji: "📰",
-    name: "📰 Flyer",
+    name: "Flyer",
+    getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["environment", "trading"],
     getDescription(forGuidebook = false) {
-      return forGuidebook === false ? `There is a ${wrapInBadge(this.name)
+      return forGuidebook === false ? `There is a ${wrapInBadge(this.getFullName())
           } showing that someone wants to trade up ahead, offering ${
-          wrapInBadge(tradeOffersMap.get(game.nextTradeOfferId)?.emojis)} in exchange for <span class="no-wrap">${
-          wrapInBadge(tradeRequestsMap.get(game.nextTradeRequestId)?.emojis)}.</span>`
+          tradeOffersMap.get(game.nextTradeOfferId)?.getEmojisMarkup()} in exchange for ${
+          tradeRequestsMap.get(game.nextTradeRequestId)?.getEmojisMarkup()}.`
           : `Shows what someone wants to trade at the next <span class="no-wrap">${
-          wrapInBadge(pathOptionsReferenceMap.get("trading-post").name)}.</span>`;
+          wrapInBadge(pathOptionsReferenceMap.get("trading-post").getFullName())}.</span>`;
     },
     chance: 2,
     onPick() {
@@ -1384,31 +1417,63 @@ const pathOptions = deepFreeze([
 // Create immutable reference map from the frozen array.
 // Objects are already frozen, so we can use them directly.
 const pathOptionsReferenceMap = Object.freeze(new Map(pathOptions.map(pathOption => [pathOption.id, pathOption])));
+const pathOptionsEmojiMap = Object.freeze(new Map(pathOptions.map(pathOption => [pathOption.emoji, pathOption])));
+
+function getEmojiMarkup(emoji, labeled = false, overridingLabel = undefined) {
+  return `<span role="img" ${
+    labeled ? `aria-label="${overridingLabel ??
+        pathOptionsEmojiMap.get(emoji)?.name ?? supplementalEmojiLabels[emoji]}"` : `aria-hidden="true" style="pointer-events: none;"`
+  }>${emoji}</span>`
+}
+
+function getWrappedEmojis(emojiString) {
+  const splitEmojis = splitEmojiString(emojiString);
+  const emojiLabel = splitEmojis.map(emoji => pathOptionsEmojiMap.get(emoji)?.name ?? supplementalEmojiLabels[emoji]).join(", ");
+  const emojiMarkup = splitEmojis.map(emoji => getEmojiMarkup(emoji)).join("");
+  const badgeMarkup = wrapInBadge(emojiMarkup);
+  const noWrapMarkup = `<span class="no-wrap" role="img" aria-label="${emojiLabel}">${badgeMarkup}</span>`;
+  return noWrapMarkup;
+}
 
 const tradeRequests = [
   {
     id: "fruit-salad",
     emojis: `${BERRY_EMOJI}🍒🍊`,
+    getEmojisMarkup: function() {
+      return getWrappedEmojis(this.emojis);
+    },
     items: ["berry", "cherry", "tangerine"],
   },
   {
     id: "mushroom-feast",
     emojis: `${MUSHROOM_EMOJI}${MUSHROOM_EMOJI}${MUSHROOM_EMOJI}`,
+    getEmojisMarkup: function() {
+      return getWrappedEmojis(this.emojis);
+    },
     items: ["mushroom", "mushroom", "mushroom"],
   },
   {
     id: "ribbons",
     emojis: `🎗️🎗️`,
+    getEmojisMarkup: function() {
+      return getWrappedEmojis(this.emojis);
+    },
     items: ["ribbon", "ribbon"],
   },
   {
     id: "rocks",
     emojis: `🪨🪨`,
+    getEmojisMarkup: function() {
+      return getWrappedEmojis(this.emojis);
+    },
     items: ["rock", "rock"],
   },
   {
     id: "trash",
     emojis: `🍬🍾🍬🍾`,
+    getEmojisMarkup: function() {
+      return getWrappedEmojis(this.emojis);
+    },
     items: ["wrapper", "bottle", "wrapper", "bottle"],
   },
 ];
@@ -1420,31 +1485,49 @@ const tradeOffers = [
   {
     id: "clover-bunch",
     emojis: `🍀🍀🍀`,
+    getEmojisMarkup: function() {
+      return getWrappedEmojis(this.emojis);
+    },
     items: ["clover", "clover", "clover"],
   },
   {
     id: "extra-lunch",
     emojis: `🧰`,
+    getEmojisMarkup: function() {
+      return getWrappedEmojis(this.emojis);
+    },
     items: ["lunch"],
   },
   {
     id: "pale-flowers",
     emojis: `🌼🌼🌼🌼`,
+    getEmojisMarkup: function() {
+      return getWrappedEmojis(this.emojis);
+    },
     items: ["daisy", "daisy", "daisy", "daisy"],
   },
   {
     id: "red-flowers",
     emojis: `🌹🌹🌹🌹`,
+    getEmojisMarkup: function() {
+      return getWrappedEmojis(this.emojis);
+    },
     items: ["rose", "rose", "rose", "rose"],
   },
   {
     id: "pink-flowers",
     emojis: `🌷🌷🌷🌷`,
+    getEmojisMarkup: function() {
+      return getWrappedEmojis(this.emojis);
+    },
     items: ["tulip", "tulip", "tulip", "tulip"],
   },
   {
     id: "purple-flowers",
     emojis: `${PURPLE_FLOWER_EMOJI}${PURPLE_FLOWER_EMOJI}${PURPLE_FLOWER_EMOJI}${PURPLE_FLOWER_EMOJI}`,
+    getEmojisMarkup: function() {
+      return getWrappedEmojis(this.emojis);
+    },
     items: ["hyacinth", "hyacinth", "hyacinth", "hyacinth"],
   },
 ];
@@ -1536,14 +1619,25 @@ class ChanceTime {
       const option = randomDraw(optionsToPopulate, true);
       const ordinal = this.startingOptions.length - optionsToPopulate.length;
 
+      let optionLabel = splitEmojiString(option).map(emoji => pathOptionsEmojiMap.get(emoji)?.name ?? supplementalEmojiLabels[emoji] ?? emoji).join(", ");
+
+      if (optionLabel === pathOptionsReferenceMap.get("shamrock").name) {
+        optionLabel = "Regular Clover";
+      }
+
       const optionElement = document.createElement("label");
       optionElement.classList.add("checkbox-button");
+
+      const optionSpan = document.createElement("span");
+      const nestedSpan = document.createElement("span");
 
       const optionCheckbox = document.createElement("input");
       optionCheckbox.type = "checkbox";
       optionCheckbox.ariaLabel = `Chance Time option ${ordinal} of ${this.startingOptions.length}`;
       optionCheckbox.name = `option${ordinal}`;
       optionCheckbox.onclick = () => {
+        optionSpan.ariaHidden = false;
+
         optionCheckbox.disabled = true;
         this.selectedOptions.push(option);
 
@@ -1567,13 +1661,17 @@ class ChanceTime {
           }
 
           for (const checkboxButton of chanceTimeGrid.querySelectorAll(".checkbox-button")) {
-            const checkbox = checkboxButton.querySelector("input");
-            checkbox.disabled = true;
+            const otherCheckbox = checkboxButton.querySelector("input");
+            otherCheckbox.disabled = true;
 
-            const nestedSpan = checkboxButton.querySelector(".nested");
+            const otherNestedSpan = checkboxButton.querySelector(".nested");
+            const otherSpan = checkboxButton.querySelector("&> span");
+            otherSpan.ariaHidden = false;
 
-            if (this.selectedOptions.some(selectedOption => selectedOption === nestedSpan.innerHTML)) {
-              nestedSpan.classList.remove("shrouded");
+            if (this.selectedOptions.some(selectedOption => selectedOption === otherNestedSpan.innerHTML)) {
+              otherNestedSpan.classList.remove("shrouded");
+            } else if (otherNestedSpan.classList.contains("shrouded")) {
+              otherSpan.ariaLabel = "Undiscovered Possibility";
             }
           }
         }
@@ -1589,10 +1687,9 @@ class ChanceTime {
         loadedOptions.splice(loadedOptionIndex, 1);
       }
 
-      const optionSpan = document.createElement("span");
-      const nestedSpan = document.createElement("span");
       nestedSpan.innerHTML = option;
       nestedSpan.classList.add("nested");
+      nestedSpan.ariaHidden = true;
 
       if (shroudedFunction(option)) {
         nestedSpan.classList.add("shrouded");
@@ -1602,6 +1699,9 @@ class ChanceTime {
         nestedSpan.style.fontSize = "50%";
       }
 
+      optionSpan.role = "img";
+      optionSpan.ariaLabel = optionLabel;
+      optionSpan.ariaHidden = true;
       optionSpan.appendChild(nestedSpan)
       optionElement.appendChild(optionSpan);
 
@@ -1770,7 +1870,7 @@ class Guidebook {
       const noteName = document.createElement("dt");
       noteName.classList.add("guidebook-note-name");
       const nameObscured = note.encountered === false && note.seen === false && note.chance <= 0;
-      noteName.innerText = nameObscured ? "???" : note.name;
+      noteName.innerHTML = nameObscured ? "???" : note.getFullName();
 
       if (nameObscured) {
         noteName.role = "img";
@@ -1814,7 +1914,7 @@ class Guidebook {
   }
 }
 
-function notifyAchievement(achievement, player) {
+function notifyAchievement(_achievement, player) {
   document.getElementById("memories-button").classList.add("notify");
   game.album.memoriesMap.get("memory-maker").checkAchieved(player);
 
@@ -2354,6 +2454,20 @@ const achievements = [
   },
 ];
 
+const supplementalEmojiLabels = {
+  "💗": "Heart",
+  "📷": "Camera",
+  "❌": "Miss",
+  "😊": "Joyous Face",
+  "🤢": "Queasy Face",
+  "😖": "Disgusted Face",
+  "😰": "Drained Face",
+  "🥵": "Exhausted Face",
+  "😐": "Tired Face",
+  "🙂": "Smiling Face",
+  "😩": "Done Face",
+}
+
 class Album {
   memoriesMap;
 
@@ -2434,7 +2548,9 @@ class Album {
 
       const memoryContent = document.createElement("div");
       memoryContent.classList.add("album-memory__content");
-      const hintToUnlockText = `Hint to unlock: ${memory.emojiHint}`;
+      const hintToUnlockText = `Hint to unlock: ${splitEmojiString(memory.emojiHint).map(emoji => {
+        return pathOptionsEmojiMap.get(emoji)?.name ?? supplementalEmojiLabels[emoji] ?? emoji;
+      }).join(", ")}.`;
 
       if (memory.achieved && memory.imageName) {
         const memoryImage = document.createElement("img");
@@ -2453,7 +2569,6 @@ class Album {
       memoryDiv.appendChild(memoryContent);
       memoryDiv.role = "img";
       // memoryDiv.ariaLabel = `${memory.name}.`;
-      // TODO - hint emojis aren't being read out
       memoryDiv.ariaDescription =
           `${memory.name}. ${difficultyRating.ariaLabel}.${memory.achieved ? ` ${memory.description}.` : ''}${memory.achieved && memory.imageName ? ` ${memory.imageAlt}` : ` ${hintToUnlockText}`}`;
 
@@ -2512,6 +2627,7 @@ class Player {
   setQueasyCounter(queasyCounter) {
     this.queasyCounter = queasyCounter;
     updateCssVar('--queasy-count-dashes', `"${'_ '.repeat(this.queasyCounter).trim()}"`);
+    updateCssVar('--queasy-count-alt', this.queasyCounter ? `"Queasy for ${this.queasyCounter} more step${this.queasyCounter === 1 ? "" : "s"}"` : `""`);
   }
 
   gainMaxStamina(amount) {
@@ -2583,7 +2699,7 @@ class Player {
 
   disposeItem(heldItemIndex) {
     const heldItem = this.heldItems.splice(heldItemIndex, 1)[0];
-    this.actionMessage = `Tossed the <span class="no-wrap">${wrapInBadge(heldItem.name)}!</span>`;
+    this.actionMessage = `Tossed the <span class="no-wrap">${wrapInBadge(heldItem.getFullName())}!</span>`;
 
     // Returns true if replacing default behavior
     if (heldItem.onDispose == null || !heldItem.onDispose(this)) {
@@ -2643,7 +2759,7 @@ class Game {
 
   constructor(loadedGame = {}) {
     this.pathOptionsMap = new Map(pathOptions.map(pathOption => {
-      return [pathOption.id, {...deepCopy(pathOption), ...loadedGame.pathOptionsMap?.get(pathOption.id)}];
+      return [pathOption.id, {...deepCopy(pathOption), ...(loadedGame?.gameActive ? loadedGame.pathOptionsMap?.get(pathOption.id) : [])}];
     }));
     this.player = new Player(loadedGame.player);
     this.album = new Album(loadedGame.album);
@@ -2729,7 +2845,7 @@ class Game {
     }
 
     this.player.actionMessage =
-        `Traded ${wrapInBadge(tradeRequest.emojis)} for <span class="no-wrap">${wrapInBadge(tradeOffer.emojis)}!</span>`;
+        `Traded ${wrapInBadge(tradeRequest.getEmojisMarkup())} for <span class="no-wrap">${wrapInBadge(tradeOffer.getEmojisMarkup())}!</span>`;
     this.player.environment = null;
 
     this.album.memoriesMap.get("trusty-trader").checkAchieved(this.player);
@@ -2754,21 +2870,21 @@ class Game {
 
     if (this.player.stamina === 0) {
       staminaCountDisplay.classList.add('low');
-      staminaStatus.innerHTML = '😩';
+      staminaStatus.innerHTML = getEmojiMarkup('😩', true);
     } else if (this.player.stamina <= 5) {
       staminaCountDisplay.classList.add('low');
-      staminaStatus.innerHTML = this.player.queasyCounter > 0 ? '🤢' : '🥵'; // 😰
+      staminaStatus.innerHTML = getEmojiMarkup(this.player.queasyCounter > 0 ? '🤢' : '🥵', true); // 😰
     } else {
       staminaCountDisplay.classList.remove('low');
 
       if (this.player.queasyCounter > 0) {
-        staminaStatus.innerHTML = '🤢';
+        staminaStatus.innerHTML = getEmojiMarkup('🤢', true);
       } else if (this.player.stamina <= 10) {
-        staminaStatus.innerHTML = '🙁'; // 😐🫤😓
+        staminaStatus.innerHTML = getEmojiMarkup('😐', true); // 😐🫤😓
       } else if (this.player.stamina <= 15) {
-        staminaStatus.innerHTML = '🙂';
+        staminaStatus.innerHTML = getEmojiMarkup('🙂', true);
       } else {
-        staminaStatus.innerHTML = '😊';
+        staminaStatus.innerHTML = getEmojiMarkup('😊', true);
       }
     }
   }
@@ -2792,9 +2908,10 @@ class Game {
 
       const achievedMemories = game.album.getAchievedMemories();
       const totalAchievementDifficulty = achievedMemories.reduce((total, memory) => total + memory.difficulty, 0);
-      const starsMessage = totalAchievementDifficulty === 0 ? "" : `\n${
+      const starsMessage = totalAchievementDifficulty === 0 ? "" : `\n<span role="img" aria-label="${
+          totalAchievementDifficulty} star${totalAchievementDifficulty === 1 ? "" : "s"} in all.">${
           "⭐".repeat(totalAchievementDifficulty).split("⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐").map(tenStars => tenStars.length ? tenStars : "⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐").join("\n")
-      }`;
+      }</span>`;
 
       let didNotOpenMessage = "";
 
@@ -2880,12 +2997,12 @@ class Game {
 
       const itemName = document.createElement('dt');
       itemName.classList.add('item-name');
-      itemName.innerText = heldItem.name;
+      itemName.innerHTML = heldItem.getFullName();
       itemDisplay.appendChild(itemName);
 
       const itemDescription = document.createElement('dd');
       itemDescription.classList.add('item-description');
-      itemDescription.innerText = heldItem.getDescription ? heldItem.getDescription() : heldItem.description;
+      itemDescription.innerHTML = heldItem.getDescription ? heldItem.getDescription() : heldItem.description;
       itemDisplay.appendChild(itemDescription);
 
       if (heldItem.id === "tangerine") {
@@ -2929,13 +3046,12 @@ class Game {
       capacityWeightDisplay.ariaLabel = `This item takes up ${capacityWeight} capacity slot${capacityWeight !== 1 ? "s" : ""}.`;
 
       const itemThumbnail = document.createElement('span');
-      itemThumbnail.innerText = heldItem.emoji;
+      heldItemsThumbnails.appendChild(itemThumbnail);
+      itemThumbnail.outerHTML = getEmojiMarkup(heldItem.emoji, true);
 
       if (capacityCounter > this.player.capacity) {
         itemThumbnail.classList.add('notify');
       }
-
-      heldItemsThumbnails.appendChild(itemThumbnail);
 
       if (this.player.environment === "trading-post") {
         const tradeRequest = tradeRequestsMap.get(game.nextTradeRequestId);
@@ -2944,7 +3060,7 @@ class Game {
           const tradeButton = document.createElement('button');
           tradeButton.type = "button";
           tradeButton.disabled = this.gameActive === false || this.chanceTime.awaitingSelection;
-          tradeButton.innerText = TRADING_POST_EMOJI;
+          tradeButton.innerHTML = getEmojiMarkup(TRADING_POST_EMOJI);
           tradeButton.ariaLabel = "Trade";
           tradeButton.onclick = () => {
             game.tradeItems();
@@ -2971,7 +3087,7 @@ class Game {
         disposeButton.type = "button";
         disposeButton.disabled = this.gameActive === false || this.chanceTime.awaitingSelection;
         // Need to keep track of exceptions
-        disposeButton.innerText = this.player.environment === "receptacle" && heldItem.tags.includes("trashable") ? "🚮" : "X";
+        disposeButton.innerHTML = this.player.environment === "receptacle" && heldItem.tags.includes("trashable") ? getEmojiMarkup("🚮") : getEmojiMarkup("X", true, "Dispose");
         disposeButton.ariaLabel = "Dispose";
         disposeButton.onclick = () => {
           this.player.disposeItem(i);
@@ -3012,7 +3128,7 @@ class Game {
         const stepOption = this.pathOptionsMap.get(stepOptionId);
         const optionDisplay = document.createElement('button');
         optionDisplay.type = "button";
-        optionDisplay.innerHTML = stepOption.name;
+        optionDisplay.innerHTML = stepOption.getFullName();
 
         if (stepOptionId === "tracks" && -this.player.trackCounter >= this.player.trackPathLength) {
           optionDisplay.innerHTML = "❔❔❔";
@@ -3149,6 +3265,8 @@ class Game {
     // TODO - album needs to reset so long as it's used for assessing the hike, but would be nice for it to persist...
     this.album = new Album();
     this.historyLog = new HistoryLog();
+
+    this.pathOptionsMap = new Map(pathOptions.map(pathOption => [pathOption.id, deepCopy(pathOption)]));
 
     this.player = new Player();
     this.player.encounterPathOptionById("lunch");
