@@ -142,6 +142,7 @@ const supportsLatestEmojis = (function() {
 // TODO - 🪦(fallback: ⚰️)🥀↔️🧺🧶🐚💎🫙🥤🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢🌳🌲🌿🎒
 // Move scripts into separate module files
 // Sound effects
+// Indicate berry streak?
 // Make into a progressive web app?
 // Shore/mountain locales?
 // Graves/shrines for secret bouquet codes or to adjust encounter chances?
@@ -309,7 +310,7 @@ function deepFreeze(obj) {
 }
 
 function deepCopy(obj) {
-    const copy = {};
+  const copy = {};
 
   // First pass: copy all non-function properties
   for (const key in obj) {
@@ -344,8 +345,11 @@ function deepCopy(obj) {
     const descriptor = Object.getOwnPropertyDescriptor(obj, key);
 
     if (typeof descriptor.value === 'function') {
-      // Bind methods to the new copy (after all properties exist)
-      copy[key] = descriptor.value.bind(copy);
+      // Create a new function that properly references the copy's properties
+      const originalFunction = descriptor.value;
+      copy[key] = function(...args) {
+        return originalFunction.apply(copy, args);
+      };
     }
   }
 
@@ -1272,7 +1276,7 @@ const pathOptions = deepFreeze([
         const nonFlowers = player.heldItems.filter(heldItem => heldItem.tags.includes("flower") === false);
         player.heldItems = nonFlowers;
 
-        const bouquet = deepCopy(game.pathOptionsMap.get("bouquet"));
+        const bouquet = deepCopy(pathOptionsReferenceMap.get("bouquet"));
         bouquet.flowers = heldFlowers.map(heldItem => heldItem.id);
         player.encounterPathOption(bouquet);
 
@@ -2677,7 +2681,7 @@ class Player {
   }
 
   encounterPathOptionById(optionId) {
-    this.encounterPathOption(deepCopy(game.pathOptionsMap.get(optionId)));
+    this.encounterPathOption(deepCopy(pathOptionsReferenceMap.get(optionId)));
   }
 
   encounterPathOption(option) {
