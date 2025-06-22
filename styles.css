@@ -757,6 +757,11 @@ dialog.sidebar {
       .notify {
         animation: scaleFlareSmall 2s ease-in-out infinite;
         filter: drop-shadow(0 1px 5px red);
+
+        @media (prefers-reduced-motion: reduce) {
+          animation-iteration-count: 1.5;
+          animation-fill-mode: forwards;
+        }
       }
     }
   }
@@ -984,6 +989,11 @@ button.path-option {
       transform-origin: center 60%;
       animation: scaleFlareSmall 2s ease-in-out infinite;
       filter: drop-shadow(0 1px 5px red);
+
+      @media (prefers-reduced-motion: reduce) {
+        animation-iteration-count: 1.5;
+        animation-fill-mode: forwards;
+      }
     }
   }
 }
@@ -1123,6 +1133,13 @@ button.path-option {
       right: 0.5em;
       transform: scale(1.5);
       animation: scaleFlare 2s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &, &::after {
+        animation-iteration-count: 1.5;
+        animation-fill-mode: forwards;
+      }
     }
   }
 }

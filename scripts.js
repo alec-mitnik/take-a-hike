@@ -139,9 +139,10 @@ const supportsLatestEmojis = (function() {
 
 // WITH PROGRESS PERSISTING, NEED TO CONSIDER BACKWARD COMPATIBILITY FOR ALL UPDATES!
 
-// TODO - 🪦(fallback: ⚰️)🥀↔️🧺🧶🐚💎🫙🥤🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢🌳🌲🌿🎒
+// TODO - 🪦(fallback: ⚰️)🥀↔️🧶🐚💎🫙🥤🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢🌳🌲🌿🎒
 // Move scripts into separate module files
 // Sound effects
+// Sort items?
 // Indicate berry streak?
 // Make into a progressive web app?
 // Shore/mountain locales?
@@ -152,10 +153,14 @@ const supportsLatestEmojis = (function() {
 // Refer to stars as "inspiration," which lets you "buy" blank or templated canvases for Color Bloom Art Maker?
 // Unlock new starting items (by achieving related memory?):
 // - 🍫 Snackbar (default)
-// - 📙 Mushroom Encyclopedia - see the effects of mushrooms on pickup rather than on consume
-// - 🗑️ Litter Bag - trash is held for free (to a point?)
-// - 👓 Binoculars - can use 1 stamina to see farther and recovers stamina from bird encounters
-// - 🧺 Flower Basket - holds bouquets for free, and using ribbons doesn't take stamina
+// - 📙 Mushroom Encyclopedia - see the effects of mushrooms on pickup rather than on consume, and mushrooms recover +1 stamina
+// - 🗑️ Litter Bag - takes up no capacity, and holds up to 3 trash pieces for free (buttons to fill/empty)
+// - 👓 Binoculars - takes up no capacity, can use 1 stamina to see farther, and bird encounters recover (+)1 stamina
+// - 🧺 Flower Basket - takes up no capacity, holds up to 2 flowers/bouquets for free, and using ribbons takes -2 stamina
+// - ⛏️ Shovel - can dig in empty spaces (once each?) to find nothing, a rock, a turd, a mushroom, a parcel, trash, a bag, or a special find (fossil?) that recovers stamina from excitement, can shoo away bugs, too dirty for nuts?
+// - 🔦 Flashlight - has limited charges (4?), can use a charge to reroll path options or give (up to 1) extra chance time selection
+// - 🔋 Battery - can be used up to recharge Flashlight or potentially other tools?
+// Make it possible to still collect these items on a run, like with Snackbar, so give them effects that stack?
 // Cute/heartfelt thank-you cards for completing quests?
 
 // Emojis dated after 2019 need fallbacks
@@ -3049,9 +3054,10 @@ class Game {
       const capacityWeight = capacityWeightDisplay.childElementCount;
       capacityWeightDisplay.ariaLabel = `This item takes up ${capacityWeight} capacity slot${capacityWeight !== 1 ? "s" : ""}.`;
 
-      const itemThumbnail = document.createElement('span');
+      let itemThumbnail = document.createElement('span');
       heldItemsThumbnails.appendChild(itemThumbnail);
       itemThumbnail.outerHTML = getEmojiMarkup(heldItem.emoji, true);
+      itemThumbnail = heldItemsThumbnails.lastElementChild;
 
       if (capacityCounter > this.player.capacity) {
         itemThumbnail.classList.add('notify');
