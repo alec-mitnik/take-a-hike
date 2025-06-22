@@ -41,7 +41,7 @@ body {
   font-size: max(12px, 1rem);
 }
 
-h1, h2, h3, h4, h5, h6, p, ul, ol {
+h1, h2, h3, h4, h5, h6, p, ul, ol, dl {
   margin: 0;
 }
 
@@ -520,6 +520,10 @@ dialog.sidebar {
   max-width: none;
   transition: all 0.4s linear allow-discrete;
 
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 0s;
+  }
+
   &::backdrop {
     backdrop-filter: blur(3px);
   }
@@ -556,12 +560,22 @@ dialog.sidebar {
       .close-button {
         right: 120px;
       }
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+        opacity: 1;
+      }
     }
 
     &[open] .panel {
       /* Opacity and delay hack needed to get slide in from right animation to work */
       opacity: 0;
       animation: slide-in-from-right 0.4s 0.001s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+        opacity: 1;
+      }
     }
   }
 
@@ -575,11 +589,21 @@ dialog.sidebar {
       .close-button {
         right: 20px;
       }
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+        opacity: 1;
+      }
     }
 
     &[open] .panel {
       opacity: 0;
       animation: slide-in-from-left 0.4s 0.001s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+        opacity: 1;
+      }
     }
   }
 }
