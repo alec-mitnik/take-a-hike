@@ -1227,11 +1227,9 @@ button.path-option {
 }
 
 #portfolio-link {
-  margin-bottom: 1.25rem;
-  /* padding: 6px 10px; */
+  margin-bottom: 40px;
   padding: 6px;
   box-shadow: 0 0 4px 0 #f9b70f;
-  /* border-radius: 10px; */
   border-radius: 99999px;
   border-color: rgba(255, 255, 255, 0.5);
   font-weight: bold;
@@ -1242,7 +1240,6 @@ button.path-option {
   gap: 6px;
 
   > img {
-    /* height: 1rem; */
     height: 4rem;
     border-radius: 99999px;
   }
