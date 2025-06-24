@@ -1,0 +1,20 @@
+{
+  "name": "Take a Hike",
+  "short_name": "Take a Hike",
+  "description": "A web game about taking a hike and making nice memories",
+  "icons": [
+    {
+      "src": "/images/icons/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/icons/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#888888",
+  "background_color": "#888888",
+  "display": "standalone"
+}

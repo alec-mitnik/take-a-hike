@@ -28,8 +28,6 @@ html, body {
   margin: 0;
 }
 
-/* TODO - light mode? */
-
 body {
   background: black url(images/forest-path-edited.webp) bottom no-repeat fixed;
   background-size: cover;
@@ -461,7 +459,7 @@ li {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    min-width: 275px;
+    min-width: min(275px, 100%);
     aspect-ratio: 1;
 
     &.not-achieved {
@@ -1058,7 +1056,7 @@ button.path-option {
   padding: 0.625rem 0;
   background: linear-gradient(to right, transparent, #ffffff40, transparent);
   font-size: 1.25rem;
-  width: 100%;
+  width: 115%;
 
   > div {
     margin: auto;
@@ -1069,6 +1067,8 @@ button.path-option {
     min-width: 55%;
     width: 500px;
     max-width: 100%;
+    flex-wrap: wrap;
+    align-content: center;
 
     > * {
       flex: 1;
