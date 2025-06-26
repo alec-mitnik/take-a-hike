@@ -77,7 +77,7 @@ fieldset {
   max-width: 100%;
   padding: 0 20px;
   height: 100%;
-  min-height: min-content;
+  /* min-height: min-content; */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -93,13 +93,13 @@ fieldset {
   }
 
   #title-viewport {
+    /* height: 100%;
+    min-height: min-content; */
     flex: 1 0 100%;
     display: grid;
     grid-template-rows: minmax(min-content, 1fr) minmax(min-content, auto) minmax(min-content, 1fr);
     grid-template-columns: 1fr;
     gap: 1rem;
-    height: 100%;
-    min-height: min-content;
     text-align: center;
 
     > *, header {
@@ -172,7 +172,7 @@ fieldset {
 
 #hike-wrapper {
   height: 100%;
-  min-height: min-content;
+  /* min-height: min-content; */
   display: none;
   flex-direction: column;
   justify-content: flex-start;
@@ -660,8 +660,8 @@ dialog.sidebar {
 }
 
 #viewport-display {
-  height: 100%;
-  min-height: min-content;
+  /* height: 100%;
+  min-height: min-content; */
   width: 100%;
   flex: 1 0 100%;
   display: flex;
