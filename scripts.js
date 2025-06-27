@@ -1815,16 +1815,16 @@ class Guidebook {
 
   constructor(loadedGuidebook = {}) {
     this.notesMap = new Map(pathOptionsReferenceMap.values().filter(pathOption => pathOption.id !== "blank").map(pathOption => [pathOption.id, {
-      ...pathOption,
       encountered: false,
       seen: false,
       ...loadedGuidebook.notesMap?.get(pathOption.id),
+      ...pathOption,
       specialConditions: new Map(pathOption.specialConditions ?
           pathOption.specialConditions.map(condition => [condition.id, {
-            ...condition,
             encountered: false,
             seen: false,
             ...loadedGuidebook.notesMap?.get(pathOption.id)?.specialConditions?.get(condition.id),
+            ...condition,
           }])
           : null),
     }]));
@@ -2802,6 +2802,107 @@ class Game {
     }));
   }
 
+  startGame() {
+    // TODO - album needs to reset so long as it's used for assessing the hike, but would be nice for it to persist...
+    this.album = new Album();
+    this.historyLog = new HistoryLog();
+
+    this.pathOptionsMap = new Map(pathOptions.map(pathOption => [pathOption.id, deepCopy(pathOption)]));
+
+    this.player = new Player();
+    this.player.encounterPathOptionById("lunch");
+    this.player.encounterPathOptionById("snackbar");
+
+    this.gameActive = true;
+    this.pathDeck = [];
+    this.pathStepOptions = [];
+
+    this.pathSize = 3;
+    updateCssVar('--path-size', 3);
+
+    this.pathVisibility = 3;
+    updateCssVar('--path-visibility', 3);
+
+    this.determineNextTrade();
+
+    for (const pathOption of this.pathOptionsMap.values()) {
+      pathOption.negativeModifier = 0;
+      pathOption.positiveModifier = 0;
+    }
+
+    this.iterationsCount = 0;
+    this.stepCount = 0;
+    this.addToPathDeck();
+
+    for (let i = 0; i < this.pathVisibility; i++) {
+      this.addToPathStepOptions();
+    }
+
+    this.player.actionMessage = 'Time to take a hike!  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>';
+
+    this.updateDisplaysForStartOrLoad();
+  }
+
+  updateDisplaysForStartOrLoad(forLoad = false) {
+    updateCssVar('--path-size', 3);
+    updateCssVar('--path-visibility', 3);
+
+    this.updateMessagesDisplay(forLoad);
+    this.updatePathDisplay();
+    this.updateHeldItemsDisplay();
+    this.updateStaminaDisplay();
+
+    const titleScreen = document.getElementById('title-screen');
+    titleScreen.style.display = "none";
+
+    const hikeWrapper = document.getElementById('hike-wrapper');
+    hikeWrapper.style.display = "flex";
+
+    const restartButton = document.getElementById('restart-button');
+    restartButton.style.display = "none";
+
+    const endButtonWrapper = document.getElementById('end-button-wrapper');
+    endButtonWrapper.style.display = null;
+
+    const messagesDisplay = document.getElementById('messages');
+    messagesDisplay.focus();
+
+    document.getElementById('scroll-mode-checkbox').checked = this.scrollModeManual;
+
+    if (forLoad) {
+      this.player.setQueasyCounter(this.player.queasyCounter);
+
+      if (this.chanceTime.awaitingSelection) {
+        this.chanceTime.initiate(
+          this.chanceTime.callerId,
+          this.chanceTime.message,
+          this.chanceTime.cols,
+          this.chanceTime.selectionsToMake,
+          this.chanceTime.startingOptions,
+          this.chanceTime.callback.bind(this.pathOptionsMap.get(this.chanceTime.callerId)),
+          this.chanceTime.smallIcons,
+          this.chanceTime.shroudedFunction.bind(this.pathOptionsMap.get(this.chanceTime.callerId)),
+          true,
+        );
+      }
+    }
+  }
+
+  gameOver() {
+    if (this.gameActive) {
+      this.updateMessagesDisplay(false, true);
+      this.gameActive = false;
+      this.updatePathDisplay();
+      this.updateHeldItemsDisplay();
+
+      const restartButton = document.getElementById('restart-button');
+      restartButton.style.display = null;
+
+      const endButtonWrapper = document.getElementById('end-button-wrapper');
+      endButtonWrapper.style.display = "none";
+    }
+  }
+
   determineNextTrade() {
     this.nextTradeRequestId = randomDraw(tradeRequests, false).id;
     this.nextTradeOfferId = randomDraw(tradeOffers, false).id;
@@ -3269,107 +3370,6 @@ class Game {
     }
 
     this.pathStepOptions.push(stepOptions);
-  }
-
-  startGame() {
-    // TODO - album needs to reset so long as it's used for assessing the hike, but would be nice for it to persist...
-    this.album = new Album();
-    this.historyLog = new HistoryLog();
-
-    this.pathOptionsMap = new Map(pathOptions.map(pathOption => [pathOption.id, deepCopy(pathOption)]));
-
-    this.player = new Player();
-    this.player.encounterPathOptionById("lunch");
-    this.player.encounterPathOptionById("snackbar");
-
-    this.gameActive = true;
-    this.pathDeck = [];
-    this.pathStepOptions = [];
-
-    this.pathSize = 3;
-    updateCssVar('--path-size', 3);
-
-    this.pathVisibility = 3;
-    updateCssVar('--path-visibility', 3);
-
-    this.determineNextTrade();
-
-    for (const pathOption of this.pathOptionsMap.values()) {
-      pathOption.negativeModifier = 0;
-      pathOption.positiveModifier = 0;
-    }
-
-    this.iterationsCount = 0;
-    this.stepCount = 0;
-    this.addToPathDeck();
-
-    for (let i = 0; i < this.pathVisibility; i++) {
-      this.addToPathStepOptions();
-    }
-
-    this.player.actionMessage = 'Time to take a hike!  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span>';
-
-    this.updateDisplaysForStartOrLoad();
-  }
-
-  updateDisplaysForStartOrLoad(forLoad = false) {
-    updateCssVar('--path-size', 3);
-    updateCssVar('--path-visibility', 3);
-
-    this.updateMessagesDisplay(forLoad);
-    this.updatePathDisplay();
-    this.updateHeldItemsDisplay();
-    this.updateStaminaDisplay();
-
-    const titleScreen = document.getElementById('title-screen');
-    titleScreen.style.display = "none";
-
-    const hikeWrapper = document.getElementById('hike-wrapper');
-    hikeWrapper.style.display = "flex";
-
-    const restartButton = document.getElementById('restart-button');
-    restartButton.style.display = "none";
-
-    const endButtonWrapper = document.getElementById('end-button-wrapper');
-    endButtonWrapper.style.display = null;
-
-    const messagesDisplay = document.getElementById('messages');
-    messagesDisplay.focus();
-
-    document.getElementById('scroll-mode-checkbox').checked = this.scrollModeManual;
-
-    if (forLoad) {
-      this.player.setQueasyCounter(this.player.queasyCounter);
-
-      if (this.chanceTime.awaitingSelection) {
-        this.chanceTime.initiate(
-          this.chanceTime.callerId,
-          this.chanceTime.message,
-          this.chanceTime.cols,
-          this.chanceTime.selectionsToMake,
-          this.chanceTime.startingOptions,
-          this.chanceTime.callback.bind(this.pathOptionsMap.get(this.chanceTime.callerId)),
-          this.chanceTime.smallIcons,
-          this.chanceTime.shroudedFunction.bind(this.pathOptionsMap.get(this.chanceTime.callerId)),
-          true,
-        );
-      }
-    }
-  }
-
-  gameOver() {
-    if (this.gameActive) {
-      this.updateMessagesDisplay(false, true);
-      this.gameActive = false;
-      this.updatePathDisplay();
-      this.updateHeldItemsDisplay();
-
-      const restartButton = document.getElementById('restart-button');
-      restartButton.style.display = null;
-
-      const endButtonWrapper = document.getElementById('end-button-wrapper');
-      endButtonWrapper.style.display = "none";
-    }
   }
 }
 
