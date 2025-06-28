@@ -2790,16 +2790,18 @@ class Game {
   }
 
   saveData() {
-    localStorage.setItem("game", JSON.stringify(this, (_key, value) => {
-      if (value instanceof Map) {
-        return {
-          dataType: 'Map',
-          value: Array.from(value.entries()),
-        };
-      } else {
-        return value;
-      }
-    }));
+    if (localStorageAvailable()) {
+      localStorage.setItem("game", JSON.stringify(this, (_key, value) => {
+        if (value instanceof Map) {
+          return {
+            dataType: 'Map',
+            value: Array.from(value.entries()),
+          };
+        } else {
+          return value;
+        }
+      }));
+    }
   }
 
   startGame() {
