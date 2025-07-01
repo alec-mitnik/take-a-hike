@@ -2860,6 +2860,8 @@ class Game {
     const hikeWrapper = document.getElementById('hike-wrapper');
     hikeWrapper.style.display = "flex";
 
+    document.body.scrollTop = 0;
+
     const restartButton = document.getElementById('restart-button');
     restartButton.style.display = "none";
 
