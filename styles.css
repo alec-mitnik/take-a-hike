@@ -309,11 +309,11 @@ button, input[type="checkbox"] {
   }
 
   &::before {
-    content: '🙞🙟  ';
+    content: '🙞🙟  ' / '';
   }
 
   &::after {
-    content: '  🙝🙜';
+    content: '  🙝🙜' / '';
   }
 
   @media (width <= 500px) {
