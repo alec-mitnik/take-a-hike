@@ -28,6 +28,8 @@
   </head>
 
   <body>
+    <div id="sr-announcements" aria-live="polite" class="sr-only"></div>
+
     <div id="fog-back" aria-hidden="true"></div>
     <div id="fog-front" aria-hidden="true"></div>
 
@@ -115,13 +117,13 @@
       </dialog>
 
       <div id="viewport-display">
-        <div id="path" role="group" aria-label="Path Options"></div>
+        <section id="path" role="group" aria-label="Path Options"></section>
         <div id="path-arrows" aria-hidden="true">
           <span>▲</span>
           <span>▲</span>
           <span>▲</span>
         </div>
-        <div id="player-display">
+        <section id="player-display" aria-label="Status Info">
           <div id="status-bar">
             <div>
               <button type="button" id="memories-button" class="shadowed-button" aria-label="Open Memories Album" onclick="game.album.show();"><span><span role="img" aria-hidden="true" style="pointer-events: none;">📷</span> Memories</span></button>
@@ -133,14 +135,16 @@
           <button type="button" class="shadowed-button" aria-label="Open History Log" onclick="game.historyLog.show();"><span><span id="history-log-emoji" role="img" aria-hidden="true" style="pointer-events: none;">🪶</span> History Log</span></button>
 
           <div id="messages-wrapper">
-            <!-- aria-live="assertive" gets read multiple times, and "polite" gets skipped sometimes... -->
+            <!-- aria-live="assertive" gets read multiple times, and "polite" gets skipped sometimes,
+            plus with the message being focusable it makes the message get read multiple times on focus,
+            and focusing the message after actions is useful since original focus could be lost -->
             <div id="messages" class="shadowed-text" tabindex="0"></div>
           </div>
 
           <button type="button" id="chance-time-button" class="shadowed-button notify" aria-label="Open Chance Time" onclick="game.chanceTime.show();"><span><span role="img" aria-hidden="true" style="pointer-events: none;">🎲</span> Chance Time</span></button>
           <button type="button" id="restart-button" class="main-button" onclick="game.startGame();">Go Again</button>
 
-          <div id="held-items-wrapper">
+          <section id="held-items-wrapper" aria-labelledby="held-items">
             <dl
               id="held-items"
               aria-label="Held Items"
@@ -159,14 +163,14 @@
                 onclick="onHeldItemsThumbnailsClick(event)"
               ></span>
             </div>
-          </div>
-        </div>
+          </section>
+        </section>
       </div>
 
-      <span id="end-button-wrapper" class="danger-button-wrapper">
+      <section id="end-button-wrapper" class="danger-button-wrapper" aria-label="Call It a Day">
         <button type="button" class="main-button smaller needs-confirm-button" onclick="callItADay();">Call It a Day</button>
         <button type="button" id="confirm-end-button" class="main-button smaller confirm-button" onclick="game.player.loseStamina(game.player.stamina);">⚠️ Really End the Hike ⚠️</button>
-      </span>
+      </section>
     </main>
   </body>
 </html>

@@ -1923,12 +1923,14 @@ class Guidebook {
   }
 }
 
-function notifyAchievement(_achievement, player) {
+function notifyAchievement(achievement, player) {
   document.getElementById("memories-button").classList.add("notify");
   game.album.memoriesMap.get("memory-maker").checkAchieved(player);
 
   // Doesn't work if message already updated, and don't want to update again because that would cause a repeated history log entry
   // player.actionMessage += `${player.actionMessage.length ? "\n\n" : ""}Made a special memory: ${achievement.name}!`;
+
+  announceForScreenReader(`Made a special memory: ${achievement.name}!`);
 }
 
 // Keep divisible by 6 so that you always have a full row at the end
@@ -2679,6 +2681,8 @@ class Player {
 
     this.environment = null;
     this.actionMessage = "";
+
+    announceForScreenReader('Took a step.');
 
     this.encounterPathOptionById(pathOptionId);
 
@@ -3481,4 +3485,11 @@ function smoothScrollX(element, targetX) {
 
   cancelAnimationFrame(smoothScrollAnimationId);
   smoothScrollAnimationId = requestAnimationFrame(scrollStep);
+}
+
+function announceForScreenReader(announcement) {
+  const announcer = document.getElementById('sr-announcements');
+  announcer.innerHTML = announcement;
+
+  setTimeout(() => announcer.innerHTML = '');
 }
