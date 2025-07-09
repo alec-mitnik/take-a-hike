@@ -474,6 +474,10 @@ li {
     &.not-achieved {
       background: #ffffff80;
     }
+
+    @media (prefers-contrast: more) {
+      border: 1px solid white;
+    }
   }
 
   .album-memory__content {
@@ -485,6 +489,10 @@ li {
     background: #111;
     font-size: 1.75rem;
 
+    @media (prefers-contrast: more) {
+      border: 1px solid white;
+    }
+
     > dd {
       margin: 10px;
       text-align: center;
@@ -495,6 +503,10 @@ li {
       width: 100%;
       height: 100%;
       object-fit: cover;
+
+      @media (prefers-contrast: more) {
+        border: none;
+      }
     }
   }
 
@@ -572,6 +584,10 @@ dialog.sidebar {
         animation: none;
         opacity: 1;
       }
+
+      @media (prefers-contrast: more) {
+        border-left: 1px solid white;
+      }
     }
 
     &[open] .panel {
@@ -600,6 +616,10 @@ dialog.sidebar {
       @media (prefers-reduced-motion: reduce) {
         animation: none;
         opacity: 1;
+      }
+
+      @media (prefers-contrast: more) {
+        border-right: 1px solid white;
       }
     }
 
@@ -692,6 +712,8 @@ dialog.sidebar {
   font-size: 2rem;
   display: flex;
   justify-content: space-around;
+  position: relative;
+  z-index: -1;
 
   > span {
     transform: scaleX(5);
@@ -1099,8 +1121,13 @@ button.path-option {
     #stamina-display {
       position: relative;
 
-      #stamina-count.low {
-        color: #ff7c7c;
+      #stamina-text {
+        /* Make sure this isn't obscured by the queasy dashes in high-contrast mode */
+        position: relative;
+
+        #stamina-count.low {
+          color: #ff7c7c;
+        }
       }
 
       #stamina-status {
@@ -1123,7 +1150,6 @@ button.path-option {
 
 .shadowed-text, .shadowed-button {
   white-space-collapse: preserve;
-  background: #0008;
   color: white;
   padding: 0.5rem 12px;
   border-radius: 6px;
@@ -1132,6 +1158,11 @@ button.path-option {
   align-items: center;
   gap: 1rem;
   border: 1px solid transparent;
+  background: #0008;
+
+  @media (prefers-contrast: more) {
+    background: black;
+  }
 
   &:empty {
     display: none;
