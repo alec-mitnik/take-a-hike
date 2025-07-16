@@ -1620,7 +1620,9 @@ class ChanceTime {
     chanceTimeKeepLooking.style.display = "none";
 
     const chanceTimeGrid = document.getElementById("chance-time-grid");
-    chanceTimeGrid.innerHTML = "";
+
+    // Important to use instead of `innerHTML = ""` for proper event listener cleanup
+    chanceTimeGrid.replaceChildren();
 
     let optionsToPopulate = [...this.startingOptions];
 
@@ -3100,8 +3102,9 @@ class Game {
     const scrolledToEnd = scrollLeft > 1 && scrollLeft + heldItemsDisplay.clientWidth + 1 >= heldItemsDisplay.scrollWidth;
     let capacityCounter = 0;
 
-    heldItemsThumbnails.innerHTML = "";
-    heldItemsDisplay.innerHTML = "";
+    // Important to use instead of `innerHTML = ""` for proper event listener cleanup
+    heldItemsThumbnails.replaceChildren();
+    heldItemsDisplay.replaceChildren();
 
     for (let i = 0; i < this.player.heldItems.length; i++) {
       const heldItem = this.player.heldItems[i];
@@ -3240,7 +3243,8 @@ class Game {
     const pathDisplay = document.getElementById('path');
     const focusedIndex = [...pathDisplay.children].indexOf(document.activeElement);
 
-    pathDisplay.innerHTML = "";
+    // Important to use instead of `innerHTML = ""` for proper event listener cleanup
+    pathDisplay.replaceChildren();
 
     for (let i = 0; i < this.pathStepOptions.length; i++) {
       for (const stepOptionId of this.pathStepOptions[i]) {
