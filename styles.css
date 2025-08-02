@@ -64,10 +64,9 @@ dd {
 }
 
 fieldset {
-  appearance: none;
-  border: none;
-  margin: 0;
-  padding: 0;
+  /* Easy CSS reset */
+    all: unset;
+    outline: revert;
 }
 
 #title-screen {
@@ -198,12 +197,9 @@ button, input[type="checkbox"] {
   text-align: center;
 
   input[type="checkbox"] {
-    /* Using appearance: none keeps the input visible for focus styles
-    but removes the default checkbox appearance */
-    appearance: none;
-    /* Needed for iOS */
-    background: transparent;
-    margin: 0;
+    /* Easy CSS reset */
+    all: unset;
+    outline: revert;
 
     /* Make the input fill the full size of the button */
     position: absolute;
