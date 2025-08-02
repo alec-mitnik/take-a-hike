@@ -178,14 +178,14 @@ fieldset {
   align-items: center;
 }
 
-button, input[type="checkbox"] {
+button, label:has(input[type="checkbox"]) {
   user-select: none;
   cursor: pointer;
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
 
-  &:disabled {
+  &:disabled, &:has(:disabled) {
     cursor: default;
   }
 }
@@ -381,6 +381,7 @@ button, input[type="checkbox"] {
             + span::after {
               content: '❔' / '';
               position: absolute;
+              filter: drop-shadow(0 0 1px black);
             }
           }
         }
