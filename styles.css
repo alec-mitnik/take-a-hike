@@ -775,7 +775,7 @@ dialog.sidebar {
       accent-color: black;
     }
 
-    @media not ((hover: hover) and (pointer: coarse)) {
+    @media not ((hover: hover) and (pointer: fine)) {
       display: none;
     }
   }
