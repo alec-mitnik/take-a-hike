@@ -232,7 +232,7 @@ button, label:has(input[type="checkbox"]) {
     border-color: var(--gold);
   }
 
-  @media (hover: hover) {
+  @media (hover: hover) and (pointer: fine) {
     input:not(:disabled):hover + span {
       background: white;
       color: black;
@@ -841,7 +841,7 @@ dialog.sidebar {
     margin: 2px;
   }
 
-  @media (hover: hover) {
+  @media (hover: hover) and (pointer: fine) {
     &:hover:not(:disabled) {
       background: white;
       border-color: white;
@@ -880,7 +880,7 @@ button.path-option {
   color: white;
   min-height: 70px;
 
-  @media (hover: hover) {
+  @media (hover: hover) and (pointer: fine) {
     &:hover:not(:disabled) {
       background: white;
       color: black;
@@ -1009,7 +1009,7 @@ button.path-option {
       background: #262626;
       color: white;
 
-      @media (hover: hover) {
+      @media (hover: hover) and (pointer: fine) {
         &:hover:not(:disabled) {
           background: white;
           border-color: white;
@@ -1169,7 +1169,7 @@ button.path-option {
 .shadowed-button {
   border-color: #999;
 
-  @media (hover: hover) {
+  @media (hover: hover) and (pointer: fine) {
     &:hover:not(:disabled) {
       background: white;
       border-color: white;

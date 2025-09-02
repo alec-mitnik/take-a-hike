@@ -3434,7 +3434,7 @@ function heldItemsThumbnailsMoveHandler(currentTarget, target) {
 }
 
 function onHeldItemsMouseMove(event) {
-  if (!game.scrollModeManual && window.matchMedia('(hover: hover)').matches) {
+  if (!game.scrollModeManual && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
     const rect = event.currentTarget.getBoundingClientRect();
 
     // Avoid scrolling for the bottom of the container where the item buttons are
