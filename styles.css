@@ -1,7 +1,17 @@
 /* Font that can render the decorative unicode characters (which otherwise don't display on iOS Safari) */
 @font-face {
   font-family: "Symbola";
-  src: url("./Symbola.ttf");
+  src: url("./fonts/Symbola/Symbola-AjYx.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Parkinsans';
+  src: url('./fonts/Parkinsans/Parkinsans-VariableFont_wght.woff2') format('woff2');
+  font-weight: 300 800; /* Range of supported weights */
+  font-style: normal;
 }
 
 *, ::before, ::after {
@@ -29,7 +39,16 @@ html, body {
 }
 
 body {
-  background: black url(images/forest-path-edited.webp) bottom no-repeat fixed;
+  background-color: black;
+  background-image: url(images/forest-path-edited-progressive.jpg),
+      /* Need to darken the placeholder to transition more smoothly from the black background,
+      but a flat CSS overlay like this, while flexible, makes it look washed-out compared to
+      the brightness adjustment possible in an image editor, so that's what I'm going with */
+      /* linear-gradient(rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.35)), */
+      url(images/forest-path-placeholder.webp);
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   background-size: cover;
   color: white;
   line-height: 1.5;

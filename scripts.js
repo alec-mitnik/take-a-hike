@@ -41,8 +41,13 @@ function init() {
   }
 }
 
-// This fires when the entire page, including all resources like images and stylesheets, has fully loaded
-window.addEventListener('load', () => {
+// This fires when the entire page, including all resources like images and stylesheets,
+// has fully loaded, but only counts resources initially in use on the page,
+// so not the Symbola font unless preloaded.
+// Now that I'm using a progressive image, it's unnecessary to wait for it to fully load,
+// so just wait for the fonts to load instead.
+/* window.addEventListener('load', () => { */
+document.fonts.ready.then(() => {
   document.getElementById('title-screen').inert = false;
 });
 
@@ -50,7 +55,7 @@ function localStorageAvailable() {
   let storage;
 
   try {
-    storage = window["localStorage"];
+    storage = window.localStorage;
     const x = "__storage_test__";
     storage.setItem(x, x);
     storage.removeItem(x);
@@ -105,8 +110,12 @@ function clearAllDataConfirm() {
 }
 
 function clearAllData() {
-  localStorage.clear();
-  location.reload();
+  try {
+    localStorage.clear();
+    location.reload();
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 function splitEmojiString(emojiString) {
@@ -142,6 +151,7 @@ const supportsLatestEmojis = (function() {
 // TODO - 🪦(fallback: ⚰️)🥀↔️🧶🐚💎🫙🥤🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢🌳🌲🌿🎒
 // Move scripts into separate module files
 // Sound effects
+// Show unlocked memories as a slideshow with backing music, at end of run, or from the title screen?
 // Sort items?
 // Indicate berry streak?
 // Make into a progressive web app?
@@ -154,14 +164,14 @@ const supportsLatestEmojis = (function() {
 // Unlock new starting items (by achieving related memory?):
 // - 🍫 Snackbar (default)
 // - 📙 Mushroom Encyclopedia - see the effects of mushrooms on pickup rather than on consume, and mushrooms recover +1 stamina
-// - 🗑️ Litter Bag - takes up no capacity, and holds up to 3 trash pieces for free (buttons to fill/empty)
+// - 🗑️ Litter Bag - takes up no capacity, and holds up to 3 trash pieces for free (buttons to fill/empty - or just show this icon above them instead of the hand)
 // - 👓 Binoculars - takes up no capacity, can use 1 stamina to see farther, and bird encounters recover (+)1 stamina
 // - 🧺 Flower Basket - takes up no capacity, holds up to 2 flowers/bouquets for free, and using ribbons takes -2 stamina
 // - ⛏️ Shovel - can dig in empty spaces (once each?) to find nothing, a rock, a turd, a mushroom, a parcel, trash, a bag, or a special find (fossil?) that recovers stamina from excitement, can shoo away bugs, too dirty for nuts?
 // - 🔦 Flashlight - has limited charges (4?), can use a charge to reroll path options or give (up to 1) extra chance time selection
 // - 🔋 Battery - can be used up to recharge Flashlight or potentially other tools?
 // Make it possible to still collect these items on a run, like with Snackbar, so give them effects that stack?
-// Cute/heartfelt thank-you cards for completing quests?
+// Cute/heartfelt thank-you cards/photos for completing quests?
 
 // Emojis dated after 2019 need fallbacks
 const MUSHROOM_EMOJI = supportsLatestEmojis() ? '🍄‍🟫' : '🍄';

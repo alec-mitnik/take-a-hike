@@ -12,14 +12,12 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/images/icons/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Preload the font so that it is immediately applied when first used
+    despite not being applied on the page initially.  Gives CORS error when local,
+    but complains about request credentials mode not matching without crossorigin.
+    Gives a warning about not being used within a few seconds, which just needs to be ignored. -->
+    <link rel="preload" as="font" href="./fonts/Symbola/Symbola-AjYx.woff2" type="font/woff2" crossorigin>
 
-    <!-- Preload the fonts so that they are immediately applied when first used (gives CORS error when local) -->
-    <link rel="preload" as="font" href="./Symbola.ttf" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap">
-
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap">
     <link rel="stylesheet" href="./styles.css">
 
     <title>Take a Hike</title>
@@ -45,7 +43,7 @@
           <div id="title-message" class="shadowed-text">
             <p>Explore, keep your stamina up, and make some nice memories!  <span class="no-wrap" role="img" aria-label="Smiley face">:)</span></p>
             <p>The game may continue to be updated as I work on it.  Progress is automatically saved through the browser's local storage.</p>
-            <p class="show-if-save-disabled">⚠️ Local storage not enabled! ⚠️</p>
+            <p class="show-if-save-disabled">⚠️ Local storage is unavailable! ⚠️</p>
             <p id="local-storage-warning" class="show-if-save-disabled">Data will not persist.</p>
           </div>
 
