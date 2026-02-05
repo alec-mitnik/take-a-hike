@@ -806,6 +806,9 @@ dialog.sidebar {
     cursor: default;
     user-select: none;
 
+    /* Prevents the browser from hijacking touch drags for horizontal scrolling */
+    touch-action: pan-y;
+
     > span {
       display: inline-flex;
       flex-wrap: wrap;

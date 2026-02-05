@@ -3399,22 +3399,16 @@ function onHeldItemsThumbnailsClick(event) {
   heldItemsThumbnailsMoveHandler(event.currentTarget, event.target);
 }
 
-function onHeldItemsThumbnailsTouchMove(event) {
-  if (event.touches.length === 1) {
-    const touch = event.touches[0];
-    const target = document.elementFromPoint(touch.clientX, touch.clientY);
-    heldItemsThumbnailsMoveHandler(event.currentTarget, target);
-    event.preventDefault();
-  }
-}
-
-function onHeldItemsThumbnailsMouseMove(event) {
-  if (game.scrollModeManual && event.buttons !== 1) {
-    // Require left mouse button
+function onHeldItemsThumbnailsPointerMove(event) {
+  if (!event.isPrimary || game.scrollModeManual && event.buttons !== 1) {
+    // Require first touch, or left mouse button if scrolling is manual
+    // (event.buttons is 1 for touches regardless)
     return;
   }
 
-  heldItemsThumbnailsMoveHandler(event.currentTarget, event.target);
+  // For a touch, event.target remains where the touch first started
+  const target = document.elementFromPoint(event.clientX, event.clientY);
+  heldItemsThumbnailsMoveHandler(event.currentTarget, target);
 }
 
 function heldItemsThumbnailsMoveHandler(currentTarget, target) {
