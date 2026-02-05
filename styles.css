@@ -1219,7 +1219,7 @@ button.path-option {
     animation: shadowFlare 2s ease-in-out infinite;
 
     &::after {
-      content: '✨';
+      content: '✨' / '';
       position: absolute;
       top: -1em;
       right: 0.5em;
