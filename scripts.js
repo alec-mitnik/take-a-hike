@@ -172,6 +172,12 @@ const supportsLatestEmojis = (function() {
 // - 🔋 Battery - can be used up to recharge Flashlight or potentially other tools?
 // Make it possible to still collect these items on a run, like with Snackbar, so give them effects that stack?
 // Cute/heartfelt thank-you cards/photos for completing quests?
+// Encourage daily hikes:
+// - Rotating starting items
+// - Rotating goals that upgrade the more you succeed at them (e.g. Collect 5->7->9->11 flowers, etc.)
+// - Includes a goal of unlocking a new thing, while you have new things to unlock
+// - Success also lets you pick from more goals and starting items
+// - Have to meet all goals for success, but encouraged to pick multiple because you can only do one run per day
 
 // Emojis dated after 2019 need fallbacks
 const MUSHROOM_EMOJI = supportsLatestEmojis() ? '🍄‍🟫' : '🍄';
