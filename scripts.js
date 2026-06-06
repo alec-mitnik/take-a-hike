@@ -3430,7 +3430,7 @@ function heldItemsThumbnailsMoveHandler(currentTarget, target) {
   }
 
   const heldItemsDisplay = document.getElementById('held-items');
-  const xPadding = 10;
+  const xPadding = parseInt(getComputedStyle(heldItemsDisplay).scrollPaddingInline);
   const containerRect = heldItemsDisplay.getBoundingClientRect();
   const containerLeft = containerRect.left + xPadding;
   const containerRight = containerRect.right - xPadding;

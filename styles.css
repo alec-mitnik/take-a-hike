@@ -739,10 +739,12 @@ dialog.sidebar {
 }
 
 #player-display {
+  --player-display-inline-padding: 20px;
+
   flex: 1 1 auto;
   width: 100%;
   margin-top: 1.25rem;
-  padding: 0 20px;
+  padding: 0 var(--player-display-inline-padding);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -769,16 +771,21 @@ dialog.sidebar {
     display: flex;
     gap: 10px;
     align-items: stretch;
-    max-width: 100%;
+    max-width: calc(100% + (2 * var(--player-display-inline-padding)));
     overflow: auto;
     scrollbar-width: none;
-    scroll-padding-inline: 200px;
-    padding: 3.75rem 10px 10px;
-    margin-top: -1.25rem;
+    scroll-padding-inline: 50px;
+    padding: 3.75rem 50px 10px;
+    margin: -1.25rem calc(-1 * var(--player-display-inline-padding)) 0;
+    mask-image: linear-gradient(to right, transparent, black 50px),
+              linear-gradient(to left, transparent, black 50px);
+    mask-size: 50% 100%;
+    mask-repeat: no-repeat;
+    mask-position: left, right;
   }
 
   #scroll-mode-toggle {
-    margin-bottom: 10px;
+    margin: 0 29px 10px;
     border: 0;
     align-self: flex-start;
     padding: 0.25rem 9px;
