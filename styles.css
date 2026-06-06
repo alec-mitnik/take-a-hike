@@ -590,7 +590,7 @@ dialog.sidebar {
       right: 0;
       margin: 0 -100px 0 0;
       padding: 0 100px 0 0;
-      animation: slide-out-right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      animation: slide-out-right 0.1s linear forwards;
 
       .close-button {
         right: 120px;
@@ -607,9 +607,9 @@ dialog.sidebar {
     }
 
     &[open] .panel {
-      /* Opacity and delay hack needed to get slide in from right animation to work */
+      /* Opacity and delay hack needed to get slide in from right animation to work (especially for iOS) */
       opacity: 0;
-      animation: slide-in-from-right 0.4s 10ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      animation: slide-in-from-right 0.4s 100ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 
       @media (prefers-reduced-motion: reduce) {
         animation: none;
@@ -623,7 +623,7 @@ dialog.sidebar {
       left: 0;
       margin: 0 0 0 -100px;
       padding: 0 0 0 100px;
-      animation: slide-out-left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      animation: slide-out-left 0.1s linear forwards;
 
       .close-button {
         right: 20px;
@@ -641,7 +641,7 @@ dialog.sidebar {
 
     &[open] .panel {
       opacity: 0;
-      animation: slide-in-from-left 0.4s 10ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      animation: slide-in-from-left 0.4s 100ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 
       @media (prefers-reduced-motion: reduce) {
         animation: none;
