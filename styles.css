@@ -960,28 +960,21 @@ button.path-option {
     background: linear-gradient(to left top, #ec014b, #06cced);
     opacity: 0.35;
 
+    /* Get this to render correctly in iOS Safari */
+    transform: translateZ(0);
+
     > * {
       position: absolute;
       inset: 0;
       border-radius: inherit;
     }
 
-    /* Using just one layer doesn't render correctly in iOS Safari */
     > :first-child {
       z-index: 1;
-      isolation: isolate;
+      background: repeating-linear-gradient(30deg, #000, #999, #000 5%), repeating-linear-gradient(-60deg, #000, #999, #000 5%), radial-gradient(circle at top, #777, #000);
+      background-blend-mode: screen;
       mix-blend-mode: multiply;
       filter: contrast(10);
-
-      /* Pattern lives on an inner layer, so the filter sees a flattened result */
-      &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: repeating-linear-gradient(30deg, #000, #999, #000 5%), repeating-linear-gradient(-60deg, #000, #999, #000 5%), radial-gradient(circle at top, #777, #000);
-        background-blend-mode: screen;
-        border-radius: inherit;
-      }
     }
 
     > :last-child {
