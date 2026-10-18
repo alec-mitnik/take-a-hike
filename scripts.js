@@ -145,11 +145,12 @@ const supportsLatestEmojis = (function() {
 // WITH PROGRESS PERSISTING, NEED TO CONSIDER BACKWARD COMPATIBILITY FOR ALL UPDATES!
 
 // TODO - 🪦(fallback: ⚰️)🥀↔️🧶🐚💎🫙🥤🍃🍂🍁🐌🐞🦗🐛🦋🐝🦨🐿️🦌🦔🐁🦎🐍🐢🌳🌲🌿🎒
+// Add to the title screen a way to browse unlocked memories and see guidebook completion stats
 // Move scripts into separate module files
 // Sound effects
 // Show unlocked memories as a slideshow with backing music, at end of run, or from the title screen?
-// Sort items?
-// Indicate berry streak?
+// Sort held items?
+// Indicate berry streak progress?
 // Make into a progressive web app?
 // Shore/mountain locales?
 // Graves/shrines for secret bouquet codes or to adjust encounter chances?
