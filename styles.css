@@ -779,7 +779,9 @@ dialog.sidebar {
     margin: -1.25rem calc(-1 * var(--player-display-inline-padding)) 0;
     mask-image: linear-gradient(to right, transparent, black 50px),
               linear-gradient(to left, transparent, black 50px);
-    mask-size: 50% 100%;
+
+    /* 50% sometimes makes a thin line appear in the center */
+    mask-size: 51% 100%;
     mask-repeat: no-repeat;
     mask-position: left, right;
   }
@@ -958,15 +960,16 @@ button.path-option {
     background: linear-gradient(to left top, #ec014b, #06cced);
     opacity: 0.35;
 
-    &::before, &::after {
-      content: '';
+    > * {
       position: absolute;
       inset: 0;
       z-index: 0;
       border-radius: 6px 6px 0 0;
     }
 
-    &::before {
+    /* Using ::before and ::after doesn't render correctly in iOS Safari */
+    > :first-child {
+      z-index: 1;
       --map: radial-gradient(circle at top, #777, #000);
       --pattern: repeating-linear-gradient(30deg, #000, #999, #000 5%), repeating-linear-gradient(-60deg, #000, #999, #000 5%);
 
@@ -976,7 +979,7 @@ button.path-option {
       filter: contrast(10);
     }
 
-    &::after {
+    > :last-child {
       background: linear-gradient(to bottom, #0000, #0008 90%, black 100%);
 
       /* Ensure this fully covers the decoration background edge */
@@ -1283,10 +1286,12 @@ button.path-option {
   border-radius: 4px;
 }
 
-.danger-button-wrapper {
+.below-fold-section {
   margin-top: 200px;
   padding-bottom: 30px;
+}
 
+.danger-button-wrapper {
   &.confirm {
     > :not(.confirm-button) {
       display: none;
@@ -1298,6 +1303,13 @@ button.path-option {
       display: none;
     }
   }
+}
+
+#exit-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
 }
 
 .no-wrap {

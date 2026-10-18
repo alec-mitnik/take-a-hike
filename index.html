@@ -64,7 +64,7 @@
         </footer>
       </div>
 
-      <span id="clear-data-button-wrapper" class="danger-button-wrapper">
+      <span id="clear-data-button-wrapper" class="danger-button-wrapper below-fold-section">
         <button type="button" class="main-button smaller needs-confirm-button" onclick="clearAllDataConfirm();">Clear All Data</button>
         <button type="button" id="confirm-clear-data-button" class="main-button smaller confirm-button" onclick="clearAllData();">⚠️ Really Clear All Data ⚠️</button>
       </span>
@@ -97,8 +97,8 @@
               <fieldset id="chance-time-grid" aria-labelledby="chance-time-message"></fieldset>
             </div>
             <p id="chance-time-progress"><span id="chance-time-progress__total">0</span>/<span id="chance-time-progress__goal">0</span></p>
-            <button type="button" id="chance-time-try-again" class="main-button" onclick="game.chanceTime.tryAgain();">🍀 Try Again</button>
-            <button type="button" id="chance-time-keep-looking" class="main-button" onclick="game.chanceTime.keepLooking();">💪💦 Keep Looking</button>
+            <button type="button" id="chance-time-try-again" class="main-button" onclick="game.chanceTime.tryAgain();"><span role="img" aria-label="Lucky Clover">🍀</span> Do Over</button>
+            <button type="button" id="chance-time-keep-looking" class="main-button" onclick="game.chanceTime.keepLooking();"><span role="img" aria-label="Exert Stamina">💪💦</span>  Keep Looking</button>
             <button type="button" id="chance-time-done" class="main-button" onclick="game.chanceTime.done();">Done</button>
           </div>
         </div>
@@ -164,9 +164,13 @@
         </section>
       </div>
 
-      <section id="end-button-wrapper" class="danger-button-wrapper" aria-label="Call It a Day">
-        <button type="button" class="main-button smaller needs-confirm-button" onclick="callItADay();">Call It a Day</button>
-        <button type="button" id="confirm-end-button" class="main-button smaller confirm-button" onclick="game.player.loseStamina(game.player.stamina);">⚠️ Really End the Hike ⚠️</button>
+      <section id="exit-section" class="below-fold-section" aria-label="Exit Options">
+        <button type="button" class="main-button" aria-label="Back to Title Screen" onclick="game.backToTitleScreen();"><span role="img" aria-hidden="true" style="pointer-events: none;">🏠</span> Back to Title Screen</button>
+
+        <div id="end-button-wrapper" class="danger-button-wrapper">
+          <button type="button" class="main-button smaller needs-confirm-button" onclick="callItADay();">Call It a Day</button>
+          <button type="button" id="confirm-end-button" class="main-button smaller confirm-button" onclick="game.player.loseStamina(game.player.stamina);">⚠️ Really End the Hike ⚠️</button>
+        </div>
       </section>
     </main>
   </body>

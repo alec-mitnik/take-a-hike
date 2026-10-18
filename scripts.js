@@ -5,7 +5,7 @@ let game;
 window.addEventListener('DOMContentLoaded', init);
 window.addEventListener('pageshow', init);
 
-function init() {
+async function init() {
   if (document.readyState === "loading") {
     return;
   }
@@ -39,17 +39,13 @@ function init() {
     game = new Game();
     document.getElementById('title-message').classList.add('storage-failed');
   }
-}
 
-// This fires when the entire page, including all resources like images and stylesheets,
-// has fully loaded, but only counts resources initially in use on the page,
-// so not the Symbola font unless preloaded.
-// Now that I'm using a progressive image, it's unnecessary to wait for it to fully load,
-// so just wait for the fonts to load instead.
-/* window.addEventListener('load', () => { */
-document.fonts.ready.then(() => {
+  // Ensure all fonts are loaded
+  await document.fonts.ready;
+
+  // Enable page interaction
   document.getElementById('title-screen').inert = false;
-});
+}
 
 function localStorageAvailable() {
   let storage;
@@ -167,7 +163,7 @@ const supportsLatestEmojis = (function() {
 // - 🗑️ Litter Bag - takes up no capacity, and holds up to 3 trash pieces for free (buttons to fill/empty - or just show this icon above them instead of the hand)
 // - 👓 Binoculars - takes up no capacity, can use 1 stamina to see farther, and bird encounters recover (+)1 stamina
 // - 🧺 Flower Basket - takes up no capacity, holds up to 2 flowers/bouquets for free, and using ribbons takes -2 stamina
-// - ⛏️ Shovel - can dig in empty spaces (once each?) to find nothing, a rock, a turd, a mushroom, a parcel, trash, a bag, or a special find (fossil?) that recovers stamina from excitement, can shoo away bugs, too dirty for nuts?
+// - ⛏️ Shovel - can dig in empty spaces (once each?) to find nothing, a rock, a turd(?), a mushroom, a parcel, trash, a bag, or a special find (fossil?) that recovers stamina from excitement, can shoo away bugs, too dirty for nuts?
 // - 🔦 Flashlight - has limited charges (4?), can use a charge to reroll path options or give (up to 1) extra chance time selection
 // - 🔋 Battery - can be used up to recharge Flashlight or potentially other tools?
 // Make it possible to still collect these items on a run, like with Snackbar, so give them effects that stack?
@@ -635,9 +631,12 @@ const pathOptions = deepFreeze([
     name: "Bright Bird",
     getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["bird"],
-    description: 'Normally just flies away...  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>',
     chance: 1,
     specialConditions: [
+      {
+        id: "flies-away",
+        description: 'Normally just flies away...  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>',
+      },
       {
         id: "feed",
         get description() {
@@ -667,6 +666,7 @@ const pathOptions = deepFreeze([
         player.setQueasyCounter(0);
         player.actionMessage = `I got to feed a ${wrapInBadge(berryItem.getFullName())} to the <span class="no-wrap">${wrapInBadge(this.getFullName())}!</span>  Feeling great.  <span class="no-wrap" role="img" aria-label="Elated face">:D</span>`;
       } else {
+        game.guidebook.notesMap.get(this.id).specialConditions.get("flies-away").encountered = true;
         player.actionMessage = 'Aw, the bird flew away.  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>';
       }
 
@@ -679,9 +679,12 @@ const pathOptions = deepFreeze([
     name: "Dark Bird",
     getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["bird"],
-    description: 'Normally just flies away...  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>',
     chance: 1,
     specialConditions: [
+      {
+        id: "flies-away",
+        description: 'Normally just flies away...  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>',
+      },
       {
         id: "feed",
         get description() {
@@ -711,6 +714,7 @@ const pathOptions = deepFreeze([
         player.setQueasyCounter(0);
         player.actionMessage = `I got to feed a ${wrapInBadge(nutItem.getFullName())} to the <span class="no-wrap">${wrapInBadge(this.getFullName())}!</span>  Feeling great.  <span class="no-wrap" role="img" aria-label="Elated face">:D</span>`;
       } else {
+        game.guidebook.notesMap.get(this.id).specialConditions.get("flies-away").encountered = true;
         player.actionMessage = 'Aw, the bird flew away.  <span class="no-wrap" role="img" aria-label="Sad face">:(</span>';
       }
 
@@ -939,6 +943,7 @@ const pathOptions = deepFreeze([
 
       if (nonFruitSelections.length === 0) {
         // Success
+        game.player.setQueasyCounter(0);
         game.player.actionMessage = `${this.getChanceTimeActionMessage()}\nI did it!  That got me so pumped that I instantly peeled and ate them all.  <span class="no-wrap" role="img" aria-label="Mischievous face with tongue sticking out">&gt;:P</span>`;
         game.player.recoverStamina(7 * 3);
         game.guidebook.notesMap.get(this.id).specialConditions.get("success").encountered = true;
@@ -971,7 +976,7 @@ const pathOptions = deepFreeze([
     onConsume(player) {
       if (this.stepsLeftToPeel <= 0) {
         player.recoverStamina(7);
-        player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.name)}.</span>  It took some work, but it was worth it.  <span class="no-wrap" role="img" aria-label="Face with tongue sticking out">:P</span>`;
+        player.actionMessage = `Ate the <span class="no-wrap">${wrapInBadge(this.getFullName())}.</span>  It took some work, but it was worth it.  <span class="no-wrap" role="img" aria-label="Face with tongue sticking out">:P</span>`;
         return true;
       }
 
@@ -1044,18 +1049,21 @@ const pathOptions = deepFreeze([
     }
   },
   {
-    id: "mosquito",
-    emoji: "🦟",
-    name: "Nasty Nuisance",
+    id: "roach",
+    emoji: CREEPY_CRAWLY_EMOJI,
+    name: "Creepy Crawly",
     getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["obstacle", "bug"],
-    description: "Nope!  No thanks.  I'll just run past it until I can't see it anymore.",
     chance: 0,
     specialConditions: [
       {
+        id: "no-rock",
+        description: "Nope!  No thanks.  I'll run past it if I have to, until I can't see it anymore.",
+      },
+      {
         id: "shoo",
         get description() {
-          return `I'll shoo it away instead if I have a ${wrapInBadge(pathOptionsReferenceMap.get("rock").getFullName())} I can use up.  Good riddance!`;
+          return `I'll just shoo it away if I have a ${wrapInBadge(pathOptionsReferenceMap.get("rock").getFullName())} I can use up.  Good riddance!`;
         },
       },
     ],
@@ -1074,6 +1082,8 @@ const pathOptions = deepFreeze([
         game.guidebook.notesMap.get("rock").specialConditions.get("bug").encountered = true;
         game.album.memoriesMap.get("bug-banisher").checkAchieved(player);
       } else {
+        game.guidebook.notesMap.get(this.id).specialConditions.get("no-rock").encountered = true;
+
         for (let i = 0; i < game.pathVisibility - 1; i++) {
           game.takePathStep();
         }
@@ -1085,18 +1095,21 @@ const pathOptions = deepFreeze([
     },
   },
   {
-    id: "roach",
-    emoji: CREEPY_CRAWLY_EMOJI,
-    name: "Creepy Crawly",
+    id: "mosquito",
+    emoji: "🦟",
+    name: "Nasty Nuisance",
     getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["obstacle", "bug"],
-    description: "Nope!  No thanks.  I'll just run past it until I can't see it anymore.",
     chance: 0,
     specialConditions: [
       {
+        id: "no-rock",
+        description: `Yikes!  I always end up dropping something when I encounter it.  <span class="no-wrap" role="img" aria-label="Angry face">&gt;:(</span>`,
+      },
+      {
         id: "shoo",
         get description() {
-          return `I'll shoo it away instead if I have a ${wrapInBadge(pathOptionsReferenceMap.get("rock").getFullName())} I can use up.  Good riddance!`;
+          return `I'll just shoo it away if I have a ${wrapInBadge(pathOptionsReferenceMap.get("rock").getFullName())} I can use up.  Good riddance!`;
         },
       },
     ],
@@ -1115,11 +1128,22 @@ const pathOptions = deepFreeze([
         game.guidebook.notesMap.get("rock").specialConditions.get("bug").encountered = true;
         game.album.memoriesMap.get("bug-banisher").checkAchieved(player);
       } else {
-        for (let i = 0; i < game.pathVisibility - 1; i++) {
-          game.takePathStep();
-        }
+        game.guidebook.notesMap.get(this.id).specialConditions.get("no-rock").encountered = true;
 
-        player.actionMessage = "Gah, a bug!  Managed to run passed it.";
+        if (player.heldItems.length) {
+          // Drop a random held item
+          const randomHeldItem = randomDraw(player.heldItems);
+          player.actionMessage = `Gah, a bug!  Made me drop my ${wrapInBadge(randomHeldItem.getFullName())}.  <span class="no-wrap" role="img" aria-label="Angry face">&gt;:(</span>`;
+
+          setTimeout(() => {
+            game.player.heldItems.splice(game.player.heldItems.indexOf(randomHeldItem), 1);
+            game.updateHeldItemsDisplay();
+            game.updatePathDisplay();
+            game.updateMessagesDisplay(true);
+          });
+        } else {
+          player.actionMessage = `Gah, a bug!  At least I wasn't carrying anything to drop.`;
+        }
       }
 
       return true;
@@ -1162,7 +1186,7 @@ const pathOptions = deepFreeze([
       if (tracksSelections.length >= 3) {
         // Success
         game.player.actionMessage = `${this.getChanceTimeActionMessage()}\nI see it in the distance, wow!`;
-        game.player.trackPathLength = tracksSelections.length - 1;
+        game.player.trackPathLength = tracksSelections.length;
         tracksOptionId = "bunny";
         game.guidebook.notesMap.get(this.id).specialConditions.get("sighting").encountered = true;
       } else {
@@ -1288,7 +1312,7 @@ const pathOptions = deepFreeze([
     name: "Ribbon",
     getFullName() { return `${getEmojiMarkup(this.emoji)} ${this.name}`; },
     tags: ["tool", "trashable"],
-    description: "With some effort, I can use this to turn all my flowers into a bouquet.",
+    description: "With some effort, I can use this to turn all my loose flowers into a bouquet.",
     chance: 1,
     onConsume(player) {
       const heldFlowers = player.heldItems.filter(heldItem => heldItem.tags.includes("flower"));
@@ -1837,6 +1861,12 @@ class Guidebook {
       seen: false,
       ...loadedGuidebook.notesMap?.get(pathOption.id),
       ...pathOption,
+
+      // Ensure description removals get applied to stored data
+      description: pathOptionsReferenceMap.get(pathOption.id).description,
+      getDescription: pathOptionsReferenceMap.get(pathOption.id).getDescription?.bind(pathOptionsReferenceMap.get(pathOption.id)),
+
+      pathOptionId: pathOption.id,
       specialConditions: new Map(pathOption.specialConditions ?
           pathOption.specialConditions.map(condition => [condition.id, {
             encountered: false,
@@ -1906,15 +1936,17 @@ class Guidebook {
 
       noteDiv.appendChild(noteName);
 
-      const noteDescription = document.createElement("dd");
-      noteDescription.innerHTML = note.encountered ? (note.getDescription ? note.getDescription(true) : note.description) : "???";
+      if (note.getDescription ?? note.description) {
+        const noteDescription = document.createElement("dd");
+        noteDescription.innerHTML = note.encountered ? (note.getDescription ? note.getDescription(true) : note.description) : "???";
 
-      if (!note.encountered) {
-        noteDescription.role = "img";
-        noteDescription.ariaLabel = "Undiscovered Insights";
+        if (!note.encountered) {
+          noteDescription.role = "img";
+          noteDescription.ariaLabel = "Undiscovered Insights";
+        }
+
+        noteDiv.appendChild(noteDescription);
       }
-
-      noteDiv.appendChild(noteDescription);
 
       for (const specialCondition of note.specialConditions.values()) {
         const conditionDescription = document.createElement("dd");
@@ -2645,6 +2677,8 @@ class Player {
       return {
         ...heldItemTemplate,
         ...heldItemData,
+        description: heldItemTemplate.description,
+        getDescription: heldItemTemplate.getDescription,
       }
     });
   }
@@ -2831,6 +2865,8 @@ class Game {
     this.album = new Album();
     this.historyLog = new HistoryLog();
 
+    this.chanceTime.awaitingSelection = false;
+
     this.pathOptionsMap = new Map(pathOptions.map(pathOption => [pathOption.id, deepCopy(pathOption)]));
 
     this.player = new Player();
@@ -2867,6 +2903,19 @@ class Game {
     this.updateDisplaysForStartOrLoad();
   }
 
+  backToTitleScreen() {
+    const startButtons = document.getElementById('start-buttons');
+    startButtons.classList.toggle('hike-in-progress', game.gameActive);
+
+    const titleScreen = document.getElementById('title-screen');
+    titleScreen.style.display = null;
+
+    const hikeWrapper = document.getElementById('hike-wrapper');
+    hikeWrapper.style.display = "none";
+
+    document.body.scrollTop = 0;
+  }
+
   updateDisplaysForStartOrLoad(forLoad = false) {
     updateCssVar('--path-size', 3);
     updateCssVar('--path-visibility', 3);
@@ -2882,13 +2931,13 @@ class Game {
     const hikeWrapper = document.getElementById('hike-wrapper');
     hikeWrapper.style.display = "flex";
 
-    document.body.scrollTop = 0;
-
     const restartButton = document.getElementById('restart-button');
     restartButton.style.display = "none";
 
     const endButtonWrapper = document.getElementById('end-button-wrapper');
     endButtonWrapper.style.display = null;
+
+    document.body.scrollTop = 0;
 
     const messagesDisplay = document.getElementById('messages');
     messagesDisplay.focus();
@@ -2916,6 +2965,11 @@ class Game {
 
   gameOver() {
     if (this.gameActive) {
+      // End chance time
+      const chanceTimeButton = document.getElementById("chance-time-button");
+      chanceTimeButton.style.display = null;
+      this.chanceTime.awaitingSelection = false;
+
       this.updateMessagesDisplay(false, true);
       this.gameActive = false;
       this.updatePathDisplay();
@@ -3131,6 +3185,10 @@ class Game {
       const itemBackgroundDecoration = document.createElement('div');
       itemBackgroundDecoration.classList.add('item-background-decoration');
       itemDisplay.appendChild(itemBackgroundDecoration);
+
+      // Using ::before and ::after doesn't render correctly in iOS Safari
+      itemBackgroundDecoration.appendChild(document.createElement('div'));
+      itemBackgroundDecoration.appendChild(document.createElement('div'));
 
       const itemName = document.createElement('dt');
       itemName.classList.add('item-name');
