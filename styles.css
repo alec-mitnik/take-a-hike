@@ -963,23 +963,29 @@ button.path-option {
     > * {
       position: absolute;
       inset: 0;
-      z-index: 0;
-      border-radius: 6px 6px 0 0;
+      border-radius: inherit;
     }
 
-    /* Using ::before and ::after doesn't render correctly in iOS Safari */
+    /* Using just one layer doesn't render correctly in iOS Safari */
     > :first-child {
       z-index: 1;
-      --map: radial-gradient(circle at top, #777, #000);
-      --pattern: repeating-linear-gradient(30deg, #000, #999, #000 5%), repeating-linear-gradient(-60deg, #000, #999, #000 5%);
-
-      background: var(--pattern, repeating-linear-gradient(45deg, #000, #999, #000 5%)), var(--map, linear-gradient(45deg, #777, #000));
-      background-blend-mode: screen;
+      isolation: isolate;
       mix-blend-mode: multiply;
       filter: contrast(10);
+
+      /* Pattern lives on an inner layer, so the filter sees a flattened result */
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(30deg, #000, #999, #000 5%), repeating-linear-gradient(-60deg, #000, #999, #000 5%), radial-gradient(circle at top, #777, #000);
+        background-blend-mode: screen;
+        border-radius: inherit;
+      }
     }
 
     > :last-child {
+      z-index: 0;
       background: linear-gradient(to bottom, #0000, #0008 90%, black 100%);
 
       /* Ensure this fully covers the decoration background edge */

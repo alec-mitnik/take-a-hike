@@ -3186,7 +3186,7 @@ class Game {
       itemBackgroundDecoration.classList.add('item-background-decoration');
       itemDisplay.appendChild(itemBackgroundDecoration);
 
-      // Using ::before and ::after doesn't render correctly in iOS Safari
+      // Using just ::before and ::after doesn't render correctly in iOS Safari
       itemBackgroundDecoration.appendChild(document.createElement('div'));
       itemBackgroundDecoration.appendChild(document.createElement('div'));
 
