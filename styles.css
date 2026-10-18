@@ -963,13 +963,14 @@ button.path-option {
     /* Get this to render correctly in iOS Safari */
     transform: translateZ(0);
 
-    > * {
+    &::before, &::after {
+      content: '';
       position: absolute;
       inset: 0;
       border-radius: inherit;
     }
 
-    > :first-child {
+    &::before {
       z-index: 1;
       background: repeating-linear-gradient(30deg, #000, #999, #000 5%), repeating-linear-gradient(-60deg, #000, #999, #000 5%), radial-gradient(circle at top, #777, #000);
       background-blend-mode: screen;
@@ -977,7 +978,7 @@ button.path-option {
       filter: contrast(10);
     }
 
-    > :last-child {
+    &::after {
       z-index: 0;
       background: linear-gradient(to bottom, #0000, #0008 90%, black 100%);
 
